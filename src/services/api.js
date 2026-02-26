@@ -17,26 +17,27 @@ const PUBLIC_ENDPOINTS = [
   '/verify-registration-otp',
   '/reset-password',
   '/ai/chat',
-  '/auth/google-login'
+  '/auth/google-login',
+  '/orders/validate'
 ];
 // Hàm gắn interceptor
 export const setupInterceptors = (contextLogout) => {
   api.interceptors.request.use(
     async (config) => {
-     const isPublicPage = PUBLIC_ENDPOINTS.some(endpoint => config.url.endsWith(endpoint));
-      if(isPublicPage){
+      const isPublicPage = PUBLIC_ENDPOINTS.some(endpoint => config.url.endsWith(endpoint));
+      if (isPublicPage) {
         return config;
       }
-      try{
-      const token = await getValidAccessToken();
-if (!token) {
+      try {
+        const token = await getValidAccessToken();
+        if (!token) {
           console.warn("⚠️ No valid token found, logging out...");
           contextLogout();
           return Promise.reject(new Error("Token không hợp lệ hoặc đã hết hạn"));
         }
-      config.headers.Authorization = `Bearer ${token}`;
-      return config;
-    }catch (error) {
+        config.headers.Authorization = `Bearer ${token}`;
+        return config;
+      } catch (error) {
         contextLogout();
         return Promise.reject(error);
       }

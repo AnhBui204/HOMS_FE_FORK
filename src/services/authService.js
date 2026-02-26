@@ -1,4 +1,4 @@
-import api from './api'; 
+import api from './api';
 export const login = (data) =>
   api.post("/auth/login", data, { withCredentials: true });
 export const register = (data) => api.post('/auth/register', data);
@@ -27,15 +27,23 @@ let _expireTime = 0;
 export const saveAccessToken = (accessToken, expiresInMs) => {
   _accessToken = accessToken;
   console.log("Check expiresInMs from server:", expiresInMs);
-_expireTime = Date.now() + Number(expiresInMs);
+  _expireTime = Date.now() + Number(expiresInMs);
   localStorage.setItem("hasSession", "true");
   sessionStorage.setItem("expireTime", _expireTime);
   console.log(`🔐 [Auth] Đã lưu token mới. Hết hạn sau: ${expiresInMs / 1000}s`);
 };
 
+export const clearAccessToken = () => {
+  console.log('🧹 [Auth] Clearing access token from memory');
+  _accessToken = null;
+  _expireTime = 0;
+  localStorage.removeItem("hasSession");
+  sessionStorage.removeItem("expireTime");
+};
+
 export const getValidAccessToken = async () => {
   const now = Date.now();
-  const threshold = 5 * 1000; 
+  const threshold = 5 * 1000;
 
 
   if (_accessToken && (_expireTime - now > threshold)) {
@@ -57,7 +65,7 @@ export const getValidAccessToken = async () => {
     return newToken;
   } catch (err) {
     localStorage.removeItem("hasSession");
-    return null; 
+    return null;
   } finally {
     isRefreshing = false;
   }
@@ -73,9 +81,9 @@ export const refreshAccessToken = async () => {
     throw error;
   }
 };
-  
+
 
 export const loginGoogle = (googleToken) => {
-  return api.post('/auth/google-login', { token: googleToken },{withCredentials:true});
-  
+  return api.post('/auth/google-login', { token: googleToken }, { withCredentials: true });
+
 };
