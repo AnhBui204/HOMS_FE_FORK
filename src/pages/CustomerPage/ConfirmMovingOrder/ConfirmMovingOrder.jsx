@@ -157,10 +157,10 @@ const ConfirmMovingOrder = () => {
             return;
         }
 
-        console.log('📋 User authenticated, proceeding to deposit');
+        console.log('📋 User authenticated, proceeding to contract page');
 
-        // Navigate to deposit page with all data
-        navigate('/customer/deposit', {
+        // Navigate to moving request contract page with all data
+        navigate('/customer/moving-request-contract', {
             state: {
                 orderData,
                 surveyData,
@@ -448,7 +448,7 @@ const ConfirmMovingOrder = () => {
                             onClick={() => {
                                 setShowAuthModal(false);
                                 navigate('/login', {
-                                    state: { returnUrl: '/customer/deposit' }
+                                    state: { returnUrl: '/customer/moving-request-contract' }
                                 });
                             }}
                             style={{
@@ -469,7 +469,7 @@ const ConfirmMovingOrder = () => {
                             onClick={() => {
                                 setShowAuthModal(false);
                                 navigate('/register', {
-                                    state: { returnUrl: '/customer/deposit' }
+                                    state: { returnUrl: '/customer/moving-request-contract' }
                                 });
                             }}
                             style={{

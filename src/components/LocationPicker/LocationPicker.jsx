@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents, Circle } from 'react-leaflet';
-import { Input, Button, Spin, Tooltip } from 'antd';
+import { Input, Button, Spin, Tooltip, Select, message } from 'antd';
 import { SearchOutlined, AimOutlined } from '@ant-design/icons';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -87,14 +87,376 @@ function LocationMarker({ position, setPosition, icon, detailedAddress, location
 }
 
 const LocationPicker = ({ onLocationChange, initialPosition, locationType = 'pickup', otherLocation = null, currentLocationData = null }) => {
-  const [position, setPosition] = useState(initialPosition || { lat: 10.762622, lng: 106.660172 }); // Default: Ho Chi Minh City
+  const GEOAPIFY_API_KEY = process.env.REACT_APP_GEOAPIFY_API_KEY;
+  const [position, setPosition] = useState(initialPosition || { lat: 16.023779, lng: 108.228200 }); // Default: Da Nang
   const [currentUserLocation, setCurrentUserLocation] = useState(null);
   const [address, setAddress] = useState('');
   const [detailedAddress, setDetailedAddress] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchCandidates, setSearchCandidates] = useState([]);
+  const [selectedCandidateKey, setSelectedCandidateKey] = useState(undefined);
   const [loading, setLoading] = useState(false);
   const [gettingLocation, setGettingLocation] = useState(false);
   const mapRef = useRef(null);
+  const forwardSearchCacheRef = useRef(new Map());
+  const reverseGeocodeCacheRef = useRef(new Map());
+
+  const hasGeoapifyKey = Boolean(GEOAPIFY_API_KEY);
+
+  const fetchJsonWithTimeout = async (url, timeoutMs = 3200) => {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      const response = await fetch(url, { signal: controller.signal });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      return await response.json();
+    } finally {
+      clearTimeout(timeout);
+    }
+  };
+
+  const normalizeDiacritics = (value = '') => value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D');
+
+  const normalizeWhitespace = (value = '') => value
+    .replace(/[|;]+/g, ',')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  const expandVietnameseAbbreviations = (value = '') => value
+    .replace(/\btp\.?\b/gi, 'thành phố')
+    .replace(/\bq\.?\b/gi, 'quận')
+    .replace(/\bp\.?\b/gi, 'phường');
+
+  const extractAddressTokens = (rawQuery = '') => {
+    const normalized = normalizeDiacritics(rawQuery.toLowerCase());
+    return normalized
+      .split(/[^a-z0-9]+/)
+      .filter(token => token && token.length > 1)
+      .filter(token => ![
+        'duong', 'phuong', 'quan', 'huyen', 'thanh', 'pho', 'viet', 'nam',
+        'ki', 'hem', 'ngo', 'ngach', 'so', 'tp'
+      ].includes(token));
+  };
+
+  const buildVietnameseQueryVariants = (rawQuery = '') => {
+    const base = normalizeWhitespace(rawQuery);
+    if (!base) return [];
+
+    const expanded = expandVietnameseAbbreviations(base);
+    const noDiacritics = normalizeDiacritics(expanded);
+    const parts = expanded.split(',').map(part => part.trim()).filter(Boolean);
+    const streetPart = parts[0] || expanded;
+    const areaPart = parts.slice(1).join(', ');
+
+    const variants = new Set([
+      base,
+      expanded,
+      noDiacritics,
+      `${expanded}, Việt Nam`,
+      `${noDiacritics}, Viet Nam`
+    ]);
+
+    const alleyMatch = streetPart.match(/^(kiệt|kiet|hẻm|hem|ngõ|ngo|ngách|ngach)\s*(\d+[a-zA-Z0-9\-/]*)\s+(.+)$/i);
+    if (alleyMatch) {
+      const alleyNumber = alleyMatch[2];
+      const mainStreet = alleyMatch[3];
+
+      variants.add(`${alleyNumber} ${mainStreet}${areaPart ? `, ${areaPart}` : ''}`);
+      variants.add(`${mainStreet} ${alleyNumber}${areaPart ? `, ${areaPart}` : ''}`);
+      variants.add(`${mainStreet}${areaPart ? `, ${areaPart}` : ''}`);
+      variants.add(`${normalizeDiacritics(mainStreet)} ${alleyNumber}${areaPart ? `, ${normalizeDiacritics(areaPart)}` : ''}`);
+      variants.add(`hem ${alleyNumber} ${normalizeDiacritics(mainStreet)}${areaPart ? `, ${normalizeDiacritics(areaPart)}` : ''}`);
+    }
+
+    if (!/viet\s*nam|việt\s*nam/i.test(expanded)) {
+      variants.add(`${expanded}, Đà Nẵng, Việt Nam`);
+      variants.add(`${noDiacritics}, Da Nang, Viet Nam`);
+    }
+
+    return Array.from(variants).map(normalizeWhitespace).filter(Boolean);
+  };
+
+  const scoreNominatimCandidate = (result, originalQuery, variantIndex) => {
+    const queryTokens = extractAddressTokens(originalQuery);
+    const display = normalizeDiacritics((result.display_name || '').toLowerCase());
+    const address = result.address || {};
+
+    let score = 0;
+    score += (result.importance || 0) * 100;
+    score += Math.max(0, 40 - variantIndex * 6);
+
+    queryTokens.forEach(token => {
+      if (display.includes(token)) score += 4;
+    });
+
+    const houseNumberToken = queryTokens.find(token => /^\d+[a-z0-9\-/]*$/i.test(token));
+    if (houseNumberToken && display.includes(houseNumberToken)) {
+      score += 12;
+    }
+
+    if (address.road) score += 5;
+    if (address.house_number) score += 8;
+    if (address.city || address.town || address.village) score += 4;
+
+    const originalNormalized = normalizeDiacritics(originalQuery.toLowerCase());
+    const asksDaNang = originalNormalized.includes('da nang') || originalQuery.toLowerCase().includes('đà nẵng');
+    const cityValue = normalizeDiacritics(`${address.city || ''} ${address.state || ''}`.toLowerCase());
+    if (asksDaNang && cityValue.includes('da nang')) {
+      score += 14;
+    }
+
+    if (/(ki[eẹ]t|h[eẻ]m|ng[oõ]\\?|ng[aá]ch)/i.test(originalQuery)) {
+      if (address.house_number) score += 8;
+      if (display.includes('hem') || display.includes('kiet') || display.includes('ngo') || display.includes('ngach')) {
+        score += 8;
+      }
+    }
+
+    if (result.class === 'building' || result.class === 'highway' || result.type === 'residential') {
+      score += 5;
+    }
+
+    return score;
+  };
+
+  const rankNominatimResults = (results, originalQuery) => {
+    const byCoordinate = new Map();
+
+    results.forEach(result => {
+      const lat = Number(result.lat).toFixed(6);
+      const lon = Number(result.lon).toFixed(6);
+      const key = `${lat},${lon}`;
+
+      const currentScore = scoreNominatimCandidate(result, originalQuery, result.__variantIndex || 0);
+      const existing = byCoordinate.get(key);
+
+      if (!existing || currentScore > existing.__score) {
+        byCoordinate.set(key, {
+          ...result,
+          __key: key,
+          __score: currentScore
+        });
+      }
+    });
+
+    return Array.from(byCoordinate.values()).sort((a, b) => b.__score - a.__score);
+  };
+
+  const mapCandidateAddressDetails = (result) => {
+    const lat = parseFloat(result.lat);
+    const lon = parseFloat(result.lon);
+    const addr = result.address || {};
+
+    return {
+      houseNumber: addr?.house_number || '',
+      road: addr?.road || addr?.street || '',
+      suburb: addr?.suburb || addr?.neighbourhood || '',
+      district: addr?.city_district || addr?.district || '',
+      city: addr?.city || addr?.town || addr?.village || '',
+      state: addr?.state || '',
+      postcode: addr?.postcode || '',
+      country: addr?.country || '',
+      fullAddress: result.display_name,
+      coordinates: `${lat.toFixed(6)}, ${lon.toFixed(6)}`
+    };
+  };
+
+  const mapGeoapifyFeatureToCandidate = (feature, variantIndex = 0) => {
+    const properties = feature?.properties || {};
+    const lat = properties?.lat;
+    const lon = properties?.lon;
+
+    if (lat === undefined || lon === undefined) return null;
+
+    return {
+      lat: String(lat),
+      lon: String(lon),
+      display_name: properties.formatted || '',
+      address: {
+        house_number: properties.housenumber || '',
+        road: properties.street || '',
+        suburb: properties.suburb || properties.neighbourhood || '',
+        city_district: properties.district || '',
+        district: properties.county || properties.district || '',
+        city: properties.city || properties.state_district || '',
+        state: properties.state || '',
+        postcode: properties.postcode || '',
+        country: properties.country || ''
+      },
+      importance: properties.rank?.importance || 0,
+      class: properties.result_type || '',
+      type: properties.result_type || '',
+      __variantIndex: variantIndex,
+      __provider: 'geoapify'
+    };
+  };
+
+  const fetchGeoapifyForwardCandidates = async (queryVariants) => {
+    if (!hasGeoapifyKey) return [];
+
+    const variants = Array.from(new Set(queryVariants)).slice(0, 4);
+    const allCandidates = [];
+
+    const loadGeoapifyByVariant = async (variant, variantIndex) => {
+      const requestUrl = `https://api.geoapify.com/v1/geocode/search?text=${encodeURIComponent(variant)}&filter=countrycode:vn&lang=vi&limit=6&apiKey=${GEOAPIFY_API_KEY}`;
+      const data = await fetchJsonWithTimeout(requestUrl, 3000);
+      const features = Array.isArray(data?.features) ? data.features : [];
+      return features
+        .map(feature => mapGeoapifyFeatureToCandidate(feature, variantIndex))
+        .filter(Boolean);
+    };
+
+    if (variants.length === 0) return [];
+
+    try {
+      const primaryCandidates = await loadGeoapifyByVariant(variants[0], 0);
+      allCandidates.push(...primaryCandidates);
+    } catch (error) {
+      console.warn('Geoapify primary variant failed:', error?.message || error);
+    }
+
+    if (allCandidates.length < 3 && variants.length > 1) {
+      const fallbackVariants = variants.slice(1);
+      const fallbackResults = await Promise.allSettled(
+        fallbackVariants.map((variant, offset) => loadGeoapifyByVariant(variant, offset + 1))
+      );
+
+      fallbackResults.forEach(result => {
+        if (result.status === 'fulfilled' && Array.isArray(result.value)) {
+          allCandidates.push(...result.value);
+        }
+      });
+    }
+
+    return allCandidates;
+  };
+
+  const fetchNominatimForwardCandidates = async (queryVariants) => {
+    const variants = Array.from(new Set(queryVariants)).slice(0, 3);
+    if (variants.length === 0) return [];
+
+    const settled = await Promise.allSettled(
+      variants.map((variant, index) => fetchJsonWithTimeout(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(variant)}&limit=6&addressdetails=1&countrycodes=vn&accept-language=vi`,
+        2800
+      ).then(data => ({ data, index })))
+    );
+
+    const allCandidates = [];
+    settled.forEach(result => {
+      if (result.status !== 'fulfilled') return;
+      const { data, index } = result.value;
+      if (Array.isArray(data) && data.length > 0) {
+        data.forEach(item => allCandidates.push({ ...item, __variantIndex: index, __provider: 'nominatim' }));
+      }
+    });
+
+    return allCandidates;
+  };
+
+  const fetchGeoapifyReverse = useCallback(async (lat, lng) => {
+    if (!hasGeoapifyKey) return null;
+
+    const requestUrl = `https://api.geoapify.com/v1/geocode/reverse?lat=${lat}&lon=${lng}&lang=vi&limit=1&apiKey=${GEOAPIFY_API_KEY}`;
+    const data = await fetchJsonWithTimeout(requestUrl, 2800);
+    const firstFeature = Array.isArray(data?.features) ? data.features[0] : null;
+    return firstFeature ? mapGeoapifyFeatureToCandidate(firstFeature, 0) : null;
+  }, [hasGeoapifyKey, GEOAPIFY_API_KEY]);
+
+  const fetchNominatimReverse = useCallback(async (lat, lng) => {
+    const data = await fetchJsonWithTimeout(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`,
+      2800
+    );
+    if (!data?.display_name) return null;
+
+    return {
+      lat: String(lat),
+      lon: String(lng),
+      display_name: data.display_name,
+      address: data.address || {},
+      __provider: 'nominatim'
+    };
+  }, []);
+
+  const applySearchCandidate = (result) => {
+    if (!result) return;
+
+    const lat = parseFloat(result.lat);
+    const lon = parseFloat(result.lon);
+    const newPosition = { lat, lng: lon };
+    const displayName = result.display_name || '';
+    const addressDetails = mapCandidateAddressDetails(result);
+
+    setPosition(newPosition);
+    setAddress(displayName);
+    setDetailedAddress(addressDetails);
+    setSelectedCandidateKey(result.__key || `${lat.toFixed(6)},${lon.toFixed(6)}`);
+
+    if (mapRef.current) {
+      mapRef.current.flyTo([newPosition.lat, newPosition.lng], 15);
+    }
+
+    if (onLocationChange) {
+      onLocationChange({
+        lat: newPosition.lat,
+        lng: newPosition.lng,
+        address: displayName,
+        addressDetails
+      });
+    }
+  };
+
+  const getAddressFromCoordinates = useCallback(async (lat, lng) => {
+    const cacheKey = `${Number(lat).toFixed(6)},${Number(lng).toFixed(6)}`;
+    const cachedCandidate = reverseGeocodeCacheRef.current.get(cacheKey);
+    if (cachedCandidate) {
+      setAddress(cachedCandidate.display_name);
+      setSelectedCandidateKey(undefined);
+      setSearchCandidates([]);
+      const cachedDetails = mapCandidateAddressDetails(cachedCandidate);
+      setDetailedAddress(cachedDetails);
+      if (onLocationChange) {
+        onLocationChange({ lat, lng, address: cachedCandidate.display_name, addressDetails: cachedDetails });
+      }
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const reverseCandidate = (await fetchGeoapifyReverse(lat, lng)) || (await fetchNominatimReverse(lat, lng));
+      if (!reverseCandidate) return;
+
+      reverseGeocodeCacheRef.current.set(cacheKey, reverseCandidate);
+
+      setAddress(reverseCandidate.display_name);
+      setSelectedCandidateKey(undefined);
+      setSearchCandidates([]);
+
+      const addressDetails = mapCandidateAddressDetails(reverseCandidate);
+      setDetailedAddress(addressDetails);
+
+      if (onLocationChange) {
+        onLocationChange({
+          lat,
+          lng,
+          address: reverseCandidate.display_name,
+          addressDetails
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching address:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [onLocationChange, fetchGeoapifyReverse, fetchNominatimReverse]);
 
   // Update position and address when initialPosition changes
   useEffect(() => {
@@ -118,7 +480,7 @@ const LocationPicker = ({ onLocationChange, initialPosition, locationType = 'pic
         getAddressFromCoordinates(initialPosition.lat, initialPosition.lng);
       }
     }
-  }, [initialPosition, currentLocationData]);
+  }, [initialPosition, currentLocationData, getAddressFromCoordinates]);
 
   // Get user's current location on component mount (just for reference blue marker)
   useEffect(() => {
@@ -150,98 +512,55 @@ const LocationPicker = ({ onLocationChange, initialPosition, locationType = 'pic
       );
     }
   }, [initialPosition]);
-  const getAddressFromCoordinates = async (lat, lng) => {
+  // Forward geocoding: Search address and get coordinates
+  const searchAddress = async () => {
+    if (!searchQuery.trim()) return;
+    
+    const normalizedSearchKey = normalizeWhitespace(searchQuery).toLowerCase();
+    const cachedTopCandidates = forwardSearchCacheRef.current.get(normalizedSearchKey);
+    if (cachedTopCandidates && cachedTopCandidates.length > 0) {
+      setSearchCandidates(cachedTopCandidates);
+      applySearchCandidate(cachedTopCandidates[0]);
+      return;
+    }
+
     setLoading(true);
     try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`
-      );
-      const data = await response.json();
-      if (data.display_name) {
-        setAddress(data.display_name);
-        
-        // Extract detailed address components
-        const addressDetails = {
-          houseNumber: data.address?.house_number || '',
-          road: data.address?.road || data.address?.street || '',
-          suburb: data.address?.suburb || data.address?.neighbourhood || '',
-          district: data.address?.city_district || data.address?.district || '',
-          city: data.address?.city || data.address?.town || data.address?.village || '',
-          state: data.address?.state || '',
-          postcode: data.address?.postcode || '',
-          country: data.address?.country || '',
-          fullAddress: data.display_name,
-          coordinates: `${lat.toFixed(6)}, ${lng.toFixed(6)}`
-        };
-        
-        setDetailedAddress(addressDetails);
-        
-        if (onLocationChange) {
-          onLocationChange({
-            lat,
-            lng,
-            address: data.display_name,
-            addressDetails
-          });
-        }
+      const queryVariants = buildVietnameseQueryVariants(searchQuery);
+      let allCandidates = [];
+      if (hasGeoapifyKey) {
+        allCandidates = await fetchGeoapifyForwardCandidates(queryVariants);
+      }
+
+      if (allCandidates.length === 0) {
+        allCandidates = await fetchNominatimForwardCandidates(queryVariants);
+      }
+
+      const rankedCandidates = rankNominatimResults(allCandidates, searchQuery);
+      if (rankedCandidates.length > 0) {
+        const topCandidates = rankedCandidates.slice(0, 3);
+        forwardSearchCacheRef.current.set(normalizedSearchKey, topCandidates);
+        setSearchCandidates(topCandidates);
+        applySearchCandidate(topCandidates[0]);
+      } else {
+        setSearchCandidates([]);
+        setSelectedCandidateKey(undefined);
+        message.warning('Không tìm thấy địa chỉ phù hợp. Hãy thêm quận/thành phố hoặc kéo ghim trên bản đồ để chọn chính xác.');
       }
     } catch (error) {
-      console.error('Error fetching address:', error);
+      console.error('Error searching address:', error);
+      setSearchCandidates([]);
+      setSelectedCandidateKey(undefined);
+      message.error('Có lỗi khi tìm địa chỉ. Vui lòng thử lại hoặc chọn vị trí trực tiếp trên bản đồ.');
     } finally {
       setLoading(false);
     }
   };
 
-  // Forward geocoding: Search address and get coordinates
-  const searchAddress = async () => {
-    if (!searchQuery.trim()) return;
-    
-    setLoading(true);
-    try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1&addressdetails=1`
-      );
-      const data = await response.json();
-      if (data && data.length > 0) {
-        const { lat, lon, display_name, address: addr } = data[0];
-        const newPosition = { lat: parseFloat(lat), lng: parseFloat(lon) };
-        setPosition(newPosition);
-        setAddress(display_name);
-        
-        // Extract detailed address components
-        const addressDetails = {
-          houseNumber: addr?.house_number || '',
-          road: addr?.road || addr?.street || '',
-          suburb: addr?.suburb || addr?.neighbourhood || '',
-          district: addr?.city_district || addr?.district || '',
-          city: addr?.city || addr?.town || addr?.village || '',
-          state: addr?.state || '',
-          postcode: addr?.postcode || '',
-          country: addr?.country || '',
-          fullAddress: display_name,
-          coordinates: `${lat}, ${lon}`
-        };
-        
-        setDetailedAddress(addressDetails);
-        
-        // Fly to the new position
-        if (mapRef.current) {
-          mapRef.current.flyTo([newPosition.lat, newPosition.lng], 15);
-        }
-        
-        if (onLocationChange) {
-          onLocationChange({
-            lat: newPosition.lat,
-            lng: newPosition.lng,
-            address: display_name,
-            addressDetails
-          });
-        }
-      }
-    } catch (error) {
-      console.error('Error searching address:', error);
-    } finally {
-      setLoading(false);
+  const handleCandidateChange = (candidateKey) => {
+    const selected = searchCandidates.find(candidate => candidate.__key === candidateKey);
+    if (selected) {
+      applySearchCandidate(selected);
     }
   };
 
@@ -282,6 +601,8 @@ const LocationPicker = ({ onLocationChange, initialPosition, locationType = 'pic
 
   const handlePositionChange = (newPosition) => {
     setPosition(newPosition);
+    setSearchCandidates([]);
+    setSelectedCandidateKey(undefined);
     // Fetch address for the new position
     getAddressFromCoordinates(newPosition.lat, newPosition.lng);
   };
@@ -311,6 +632,21 @@ const LocationPicker = ({ onLocationChange, initialPosition, locationType = 'pic
           />
         </Tooltip>
       </div>
+
+      {searchCandidates.length > 1 && (
+        <div style={{ marginTop: 8, marginBottom: 8 }}>
+          <Select
+            style={{ width: '100%' }}
+            value={selectedCandidateKey}
+            onChange={handleCandidateChange}
+            placeholder="Chọn địa chỉ gần đúng hơn"
+            options={searchCandidates.map((candidate, index) => ({
+              value: candidate.__key,
+              label: `#${index + 1} ${candidate.display_name}`
+            }))}
+          />
+        </div>
+      )}
 
       <div className="map-container">
         <MapContainer
