@@ -88,6 +88,11 @@ function LocationMarker({ position, setPosition, icon, detailedAddress, location
 
 const LocationPicker = ({ onLocationChange, initialPosition, locationType = 'pickup', otherLocation = null, currentLocationData = null }) => {
   const GEOAPIFY_API_KEY = process.env.REACT_APP_GEOAPIFY_API_KEY;
+  const GOONG_API_KEY = process.env.REACT_APP_GOONG_API_KEY;
+  const OPENCAGE_API_KEY = process.env.REACT_APP_OPENCAGE_API_KEY;
+  const LOCATIONIQ_API_KEY = process.env.REACT_APP_LOCATIONIQ_API_KEY;
+  const MAPBOX_API_KEY = process.env.REACT_APP_MAPBOX_API_KEY;
+
   const [position, setPosition] = useState(initialPosition || { lat: 16.023779, lng: 108.228200 }); // Default: Da Nang
   const [currentUserLocation, setCurrentUserLocation] = useState(null);
   const [address, setAddress] = useState('');
@@ -102,6 +107,10 @@ const LocationPicker = ({ onLocationChange, initialPosition, locationType = 'pic
   const reverseGeocodeCacheRef = useRef(new Map());
 
   const hasGeoapifyKey = Boolean(GEOAPIFY_API_KEY);
+  const hasGoongKey = Boolean(GOONG_API_KEY);
+  const hasOpenCageKey = Boolean(OPENCAGE_API_KEY);
+  const hasLocationIqKey = Boolean(LOCATIONIQ_API_KEY);
+  const hasMapboxKey = Boolean(MAPBOX_API_KEY);
 
   const fetchJsonWithTimeout = async (url, timeoutMs = 3200) => {
     const controller = new AbortController();
@@ -252,7 +261,12 @@ const LocationPicker = ({ onLocationChange, initialPosition, locationType = 'pic
   const mapCandidateAddressDetails = (result) => {
     const lat = parseFloat(result.lat);
     const lon = parseFloat(result.lon);
-    const addr = result.address || {};
+    let addr = result.address || {};
+
+    // Standardize between Geoapify/Nominatim format and Goong/OpenCage format
+    if (result.__provider === 'goong' && result.__originalAddressContext) {
+      addr = { ...addr, ...result.__originalAddressContext };
+    }
 
     return {
       houseNumber: addr?.house_number || '',
@@ -298,6 +312,79 @@ const LocationPicker = ({ onLocationChange, initialPosition, locationType = 'pic
     };
   };
 
+  const mapGoongFeatureToCandidate = (result, variantIndex = 0) => {
+    if (!result?.geometry?.location) return null;
+    const { lat, lng } = result.geometry.location;
+    return {
+      lat: String(lat),
+      lon: String(lng),
+      display_name: result.formatted_address || '',
+      address: {},
+      __variantIndex: variantIndex,
+      __provider: 'goong',
+      __originalAddressContext: result.address_components
+    };
+  };
+
+  const mapOpenCageFeatureToCandidate = (result, variantIndex = 0) => {
+    if (!result?.geometry) return null;
+    const { lat, lng } = result.geometry;
+    const comps = result.components || {};
+    return {
+      lat: String(lat),
+      lon: String(lng),
+      display_name: result.formatted || '',
+      address: {
+        house_number: comps.house_number || '',
+        road: comps.road || comps.street || '',
+        suburb: comps.suburb || comps.neighbourhood || '',
+        district: comps.county || comps.city_district || '',
+        city: comps.city || comps.town || comps.state || '',
+      },
+      __variantIndex: variantIndex,
+      __provider: 'opencage'
+    };
+  };
+
+  const mapLocationIqFeatureToCandidate = (result, variantIndex = 0) => {
+    if (!result?.lat || !result?.lon) return null;
+    const comps = result.address || {};
+    return {
+      lat: String(result.lat),
+      lon: String(result.lon),
+      display_name: result.display_name || '',
+      address: comps,
+      __variantIndex: variantIndex,
+      __provider: 'locationiq'
+    };
+  };
+
+  const mapMapboxFeatureToCandidate = (feature, variantIndex = 0) => {
+    if (!feature?.center) return null;
+    const [lon, lat] = feature.center;
+    let context = {};
+    if (feature.context) {
+      feature.context.forEach(c => {
+        if (c.id.startsWith('neighborhood')) context.suburb = c.text;
+        else if (c.id.startsWith('postcode')) context.postcode = c.text;
+        else if (c.id.startsWith('place')) context.city = c.text;
+        else if (c.id.startsWith('region')) context.state = c.text;
+      });
+    }
+    return {
+      lat: String(lat),
+      lon: String(lon),
+      display_name: feature.place_name || '',
+      address: {
+        house_number: feature.address || '',
+        road: feature.text || '',
+        ...context
+      },
+      __variantIndex: variantIndex,
+      __provider: 'mapbox'
+    };
+  };
+
   const fetchGeoapifyForwardCandidates = async (queryVariants) => {
     if (!hasGeoapifyKey) return [];
 
@@ -338,6 +425,63 @@ const LocationPicker = ({ onLocationChange, initialPosition, locationType = 'pic
     return allCandidates;
   };
 
+  const fetchGoongForwardCandidates = async (queryVariants) => {
+    if (!hasGoongKey || queryVariants.length === 0) return [];
+    try {
+      const variant = queryVariants[0]; // Usually exact match best
+      const data = await fetchJsonWithTimeout(
+        `https://rsapi.goong.io/geocode?address=${encodeURIComponent(variant)}&api_key=${GOONG_API_KEY}`,
+        2800
+      );
+      if (data?.results?.length > 0) {
+        return data.results.map(r => mapGoongFeatureToCandidate(r, 0)).filter(Boolean);
+      }
+    } catch (e) { console.warn('Goong failed:', e); }
+    return [];
+  };
+
+  const fetchOpenCageForwardCandidates = async (queryVariants) => {
+    if (!hasOpenCageKey || queryVariants.length === 0) return [];
+    try {
+      const data = await fetchJsonWithTimeout(
+        `https://api.opencagedata.com/geocode/v1/json?q=${encodeURIComponent(queryVariants[0])}&key=${OPENCAGE_API_KEY}&limit=3&countrycode=vn`,
+        2800
+      );
+      if (data?.results?.length > 0) {
+        return data.results.map(r => mapOpenCageFeatureToCandidate(r, 0)).filter(Boolean);
+      }
+    } catch (e) { console.warn('OpenCage failed:', e); }
+    return [];
+  };
+
+  const fetchLocationIqForwardCandidates = async (queryVariants) => {
+    if (!hasLocationIqKey || queryVariants.length === 0) return [];
+    try {
+      const data = await fetchJsonWithTimeout(
+        `https://us1.locationiq.com/v1/search?key=${LOCATIONIQ_API_KEY}&q=${encodeURIComponent(queryVariants[0])}&format=json&limit=3&countrycodes=vn`,
+        2800
+      );
+      if (Array.isArray(data) && data.length > 0) {
+        return data.map(r => mapLocationIqFeatureToCandidate(r, 0)).filter(Boolean);
+      }
+    } catch (e) { console.warn('LocationIQ failed:', e); }
+    return [];
+  };
+
+  const fetchMapboxForwardCandidates = async (queryVariants) => {
+    if (!hasMapboxKey || queryVariants.length === 0) return [];
+    try {
+      const data = await fetchJsonWithTimeout(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(queryVariants[0])}.json?access_token=${MAPBOX_API_KEY}&limit=3&country=vn`,
+        2800
+      );
+      if (data?.features?.length > 0) {
+        return data.features.map(r => mapMapboxFeatureToCandidate(r, 0)).filter(Boolean);
+      }
+    } catch (e) { console.warn('Mapbox failed:', e); }
+    return [];
+  };
+
   const fetchNominatimForwardCandidates = async (queryVariants) => {
     const variants = Array.from(new Set(queryVariants)).slice(0, 3);
     if (variants.length === 0) return [];
@@ -369,6 +513,40 @@ const LocationPicker = ({ onLocationChange, initialPosition, locationType = 'pic
     const firstFeature = Array.isArray(data?.features) ? data.features[0] : null;
     return firstFeature ? mapGeoapifyFeatureToCandidate(firstFeature, 0) : null;
   }, [hasGeoapifyKey, GEOAPIFY_API_KEY]);
+
+  const fetchGoongReverse = useCallback(async (lat, lng) => {
+    if (!hasGoongKey) return null;
+    try {
+      const requestUrl = `https://rsapi.goong.io/Geocode?latlng=${lat},${lng}&api_key=${GOONG_API_KEY}`;
+      const data = await fetchJsonWithTimeout(requestUrl, 2800);
+      const result = data?.results?.[0];
+      return result ? mapGoongFeatureToCandidate(result, 0) : null;
+    } catch (e) { return null; }
+  }, [hasGoongKey, GOONG_API_KEY]);
+
+  const fetchOpenCageReverse = useCallback(async (lat, lng) => {
+    if (!hasOpenCageKey) return null;
+    try {
+      const data = await fetchJsonWithTimeout(`https://api.opencagedata.com/geocode/v1/json?q=${lat}+${lng}&key=${OPENCAGE_API_KEY}&limit=1`, 2800);
+      return data?.results?.[0] ? mapOpenCageFeatureToCandidate(data.results[0], 0) : null;
+    } catch (e) { return null; }
+  }, [hasOpenCageKey, OPENCAGE_API_KEY]);
+
+  const fetchLocationIqReverse = useCallback(async (lat, lng) => {
+    if (!hasLocationIqKey) return null;
+    try {
+      const data = await fetchJsonWithTimeout(`https://us1.locationiq.com/v1/reverse.php?key=${LOCATIONIQ_API_KEY}&lat=${lat}&lon=${lng}&format=json`, 2800);
+      return data ? mapLocationIqFeatureToCandidate(data, 0) : null;
+    } catch (e) { return null; }
+  }, [hasLocationIqKey, LOCATIONIQ_API_KEY]);
+
+  const fetchMapboxReverse = useCallback(async (lat, lng) => {
+    if (!hasMapboxKey) return null;
+    try {
+      const data = await fetchJsonWithTimeout(`https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${MAPBOX_API_KEY}&limit=1`, 2800);
+      return data?.features?.[0] ? mapMapboxFeatureToCandidate(data.features[0], 0) : null;
+    } catch (e) { return null; }
+  }, [hasMapboxKey, MAPBOX_API_KEY]);
 
   const fetchNominatimReverse = useCallback(async (lat, lng) => {
     const data = await fetchJsonWithTimeout(
@@ -431,7 +609,16 @@ const LocationPicker = ({ onLocationChange, initialPosition, locationType = 'pic
 
     setLoading(true);
     try {
-      const reverseCandidate = (await fetchGeoapifyReverse(lat, lng)) || (await fetchNominatimReverse(lat, lng));
+      let reverseCandidate = null;
+
+      // Sequential generic fallback loop for reverse geocoding
+      reverseCandidate = await fetchGoongReverse(lat, lng);
+      if (!reverseCandidate) reverseCandidate = await fetchGeoapifyReverse(lat, lng);
+      if (!reverseCandidate) reverseCandidate = await fetchOpenCageReverse(lat, lng);
+      if (!reverseCandidate) reverseCandidate = await fetchMapboxReverse(lat, lng);
+      if (!reverseCandidate) reverseCandidate = await fetchLocationIqReverse(lat, lng);
+      if (!reverseCandidate) reverseCandidate = await fetchNominatimReverse(lat, lng);
+
       if (!reverseCandidate) return;
 
       reverseGeocodeCacheRef.current.set(cacheKey, reverseCandidate);
@@ -466,7 +653,7 @@ const LocationPicker = ({ onLocationChange, initialPosition, locationType = 'pic
       if (mapRef.current) {
         mapRef.current.flyTo([initialPosition.lat, initialPosition.lng], 15);
       }
-      
+
       // If we have stored location data, restore the address
       if (currentLocationData) {
         if (currentLocationData.address) {
@@ -495,12 +682,12 @@ const LocationPicker = ({ onLocationChange, initialPosition, locationType = 'pic
           setCurrentUserLocation(userLocation);
           // Only set as reference, don't auto-select as pickup/dropoff location
           // User must click map or "Get Current Location" button to select
-          
+
           // Center map on user's location for better UX
           if (mapRef.current) {
             mapRef.current.flyTo([userLocation.lat, userLocation.lng], 13);
           }
-          
+
           setGettingLocation(false);
         },
         (error) => {
@@ -515,7 +702,7 @@ const LocationPicker = ({ onLocationChange, initialPosition, locationType = 'pic
   // Forward geocoding: Search address and get coordinates
   const searchAddress = async () => {
     if (!searchQuery.trim()) return;
-    
+
     const normalizedSearchKey = normalizeWhitespace(searchQuery).toLowerCase();
     const cachedTopCandidates = forwardSearchCacheRef.current.get(normalizedSearchKey);
     if (cachedTopCandidates && cachedTopCandidates.length > 0) {
@@ -528,8 +715,24 @@ const LocationPicker = ({ onLocationChange, initialPosition, locationType = 'pic
     try {
       const queryVariants = buildVietnameseQueryVariants(searchQuery);
       let allCandidates = [];
-      if (hasGeoapifyKey) {
+
+      // Forward Cascading Geocoding Fallbacks
+      allCandidates = await fetchGoongForwardCandidates(queryVariants);
+
+      if (allCandidates.length === 0) {
         allCandidates = await fetchGeoapifyForwardCandidates(queryVariants);
+      }
+
+      if (allCandidates.length === 0) {
+        allCandidates = await fetchOpenCageForwardCandidates(queryVariants);
+      }
+
+      if (allCandidates.length === 0) {
+        allCandidates = await fetchMapboxForwardCandidates(queryVariants);
+      }
+
+      if (allCandidates.length === 0) {
+        allCandidates = await fetchLocationIqForwardCandidates(queryVariants);
       }
 
       if (allCandidates.length === 0) {
@@ -576,15 +779,15 @@ const LocationPicker = ({ onLocationChange, initialPosition, locationType = 'pic
           };
           setCurrentUserLocation(userLocation);
           setPosition(userLocation);
-          
+
           // Fetch address for current location
           getAddressFromCoordinates(userLocation.lat, userLocation.lng);
-          
+
           // Fly to the current location
           if (mapRef.current) {
             mapRef.current.flyTo([userLocation.lat, userLocation.lng], 15);
           }
-          
+
           setGettingLocation(false);
         },
         (error) => {
@@ -625,8 +828,8 @@ const LocationPicker = ({ onLocationChange, initialPosition, locationType = 'pic
           Tìm
         </Button>
         <Tooltip title="Lấy vị trí hiện tại">
-          <Button 
-            icon={<AimOutlined />} 
+          <Button
+            icon={<AimOutlined />}
             onClick={getCurrentLocation}
             loading={gettingLocation}
           />
@@ -660,20 +863,20 @@ const LocationPicker = ({ onLocationChange, initialPosition, locationType = 'pic
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
-          
+
           {/* Current active location marker */}
-          <LocationMarker 
-            position={position} 
+          <LocationMarker
+            position={position}
             setPosition={handlePositionChange}
             icon={markerIcon}
             detailedAddress={detailedAddress}
             locationType={locationType}
           />
-          
+
           {/* Other location marker (pickup or dropoff) */}
           {otherLocation && otherLocation.lat && otherLocation.lng && (
-            <Marker 
-              position={{ lat: otherLocation.lat, lng: otherLocation.lng }} 
+            <Marker
+              position={{ lat: otherLocation.lat, lng: otherLocation.lng }}
               icon={otherMarkerIcon}
             >
               <Popup maxWidth={300}>
@@ -696,13 +899,13 @@ const LocationPicker = ({ onLocationChange, initialPosition, locationType = 'pic
                     </div>
                   )}
                   {!otherLocation.addressDetails && otherLocation.address && (
-                    <p style={{marginTop: '8px', fontSize: '13px'}}>{otherLocation.address.substring(0, 100)}...</p>
+                    <p style={{ marginTop: '8px', fontSize: '13px' }}>{otherLocation.address.substring(0, 100)}...</p>
                   )}
                 </div>
               </Popup>
             </Marker>
           )}
-          
+
           {/* Current user location marker */}
           {currentUserLocation && (
             <>
@@ -722,7 +925,7 @@ const LocationPicker = ({ onLocationChange, initialPosition, locationType = 'pic
             </>
           )}
         </MapContainer>
-        
+
         {/* Map Legend */}
         <div className="map-legend">
           <div className="map-legend-item">
