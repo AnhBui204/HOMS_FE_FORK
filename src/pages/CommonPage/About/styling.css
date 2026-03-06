@@ -5,8 +5,9 @@
 
 /* HERO */
 .about-hero {
-    background-color: #2f5d3f;
-    height: 280px;
+    background: linear-gradient(rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.35)),
+        url('../../../../public/images/moving-banner.png') center/cover no-repeat;
+    height: 300px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -15,7 +16,7 @@
 .about-hero h1 {
     color: white;
     font-size: 42px;
-    font-weight: 700;
+    font-weight: 600;
 }
 
 /* INTRO */
@@ -38,33 +39,42 @@
 
 /* VALUES */
 .about-values {
-    max-width: 1100px;
+    max-width: 1300px;
     margin: 40px auto 80px;
     display: flex;
     gap: 30px;
     justify-content: center;
     flex-wrap: wrap;
-    padding: 0 20px;
+    padding: 0 16px;
 }
 
 .value-card {
     background: white;
-    padding: 30px;
-    border-radius: 16px;
-    width: 300px;
+    padding: 40px 30px;
+    border-radius: 20px;
+    border: 1px solid #e3e6e1;
+    width: calc(33.333% - 20px);
+    min-width: 300px;
     text-align: center;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    transition: 0.3s;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
 }
 
 .value-card:hover {
     transform: translateY(-5px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
 }
 
 .value-icon {
     font-size: 48px;
-    color: #2f5d3f;
-    margin-bottom: 15px;
+    color: #44624A;
+    margin-bottom: 24px;
+}
+
+.value-card h3 {
+    font-size: 24px;
+    color: #2D4F36;
+    margin-bottom: 16px;
 }
 
 /* MISSION */
@@ -89,26 +99,36 @@
 /* CTA */
 .about-cta {
     text-align: center;
-    padding: 80px 20px;
+    padding: 80px 16px;
+    max-width: 1300px;
+    margin: 0 auto;
 }
 
 .about-cta h2 {
-    margin-bottom: 20px;
+    font-size: 32px;
+    font-weight: 600;
+    color: #2D4F36;
+    margin-bottom: 30px;
 }
 
 .about-cta button {
-    background-color: #2f5d3f;
+    background-color: #44624A;
     color: white;
-    padding: 12px 30px;
+    padding: 0 48px;
+    height: 54px;
     border: none;
-    border-radius: 8px;
+    border-radius: 27px;
     cursor: pointer;
-    font-size: 16px;
-    transition: 0.3s;
+    font-size: 18px;
+    font-weight: 600;
+    box-shadow: 0 6px 16px rgba(68, 98, 74, 0.2);
+    transition: all 0.3s ease;
 }
 
 .about-cta button:hover {
-    background-color: #244a33;
+    background-color: #2D4F36;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(68, 98, 74, 0.3);
 }
 
 /* FOOTER */

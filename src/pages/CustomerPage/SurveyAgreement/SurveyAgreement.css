@@ -60,7 +60,16 @@
 }
 
 .steps-card .ant-steps-item-finish .ant-steps-item-icon {
-    border-color: #2D4F36;
+    border-color: #2D4F36 !important;
+    background-color: #2D4F36 !important;
+}
+
+.steps-card .ant-steps-item-finish .ant-steps-icon {
+    color: #fff !important;
+}
+
+.steps-card .ant-steps-item-finish .ant-steps-item-icon>.ant-steps-icon .anticon {
+    color: #fff !important;
 }
 
 .moving-contract-section {

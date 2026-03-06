@@ -7,32 +7,34 @@ import AppHeader from '../../../components/header/header';
 import AppFooter from '../../../components/footer/footer';
 import useUser from '../../../contexts/UserContext';
 
-import './style.css';
+import './SurveyAgreement.css';
 
 const { Content } = Layout;
 
-const MovingRequestContract = () => {
+const SurveyAgreement = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { isAuthenticated } = useUser();
 
     const [orderData, setOrderData] = useState(location.state?.orderData || null);
     const [surveyData, setSurveyData] = useState(location.state?.surveyData || null);
+    const [ticketId] = useState(location.state?.ticketId || null);
     const [depositAmount] = useState(location.state?.depositAmount || 100000);
     const [agreedToContract, setAgreedToContract] = useState(false);
 
     useEffect(() => {
         if (!isAuthenticated) {
-            if (orderData && surveyData) {
+            if (orderData && surveyData && ticketId) {
                 localStorage.setItem('pendingOrder', JSON.stringify({
                     orderData,
                     surveyData,
                     depositAmount,
+                    ticketId,
                     timestamp: new Date().getTime()
                 }));
             }
             message.error('Vui lòng đăng nhập để tiếp tục');
-            navigate('/login', { state: { returnUrl: '/customer/moving-request-contract' } });
+            navigate('/login', { state: { returnUrl: '/customer/survey-agreement' } });
             return;
         }
 
@@ -86,7 +88,8 @@ const MovingRequestContract = () => {
             state: {
                 orderData,
                 surveyData,
-                depositAmount
+                depositAmount,
+                ticketId
             }
         });
     };
@@ -109,7 +112,7 @@ const MovingRequestContract = () => {
 
             <Content>
                 <section className="moving-contract-hero">
-                    <h1>{orderData?.serviceName || 'Chuyển Nhà Trọn Gói'}</h1>
+                    <h1>Thỏa Thuận Dịch Vụ Khảo Sát</h1>
                 </section>
 
                 <section className="service-steps-container">
@@ -121,20 +124,20 @@ const MovingRequestContract = () => {
                                 { title: 'Chọn dịch vụ' },
                                 { title: 'Địa điểm & Thông tin đồ đạc' },
                                 { title: 'Xác nhận' },
-                                { title: 'Hợp đồng' },
-                                { title: 'Đặt cọc' }
+                                { title: 'Thỏa thuận' },
+                                { title: 'Thanh toán' }
                             ]}
                         />
                     </Card>
                 </section>
 
                 <section className="moving-contract-section">
-                    <h2>Hợp Đồng Yêu Cầu Chuyển Nhà</h2>
+                    <h2>Thỏa Thuận Dịch Vụ Khảo Sát</h2>
 
                     <Card className="moving-contract-card">
                         <div className="contract-header">
                             <div>
-                                <p><strong>Số hợp đồng:</strong> {contractNumber}</p>
+                                <p><strong>Mã thỏa thuận:</strong> {contractNumber}</p>
                                 <p><strong>Ngày lập:</strong> {dayjs().format('DD/MM/YYYY')}</p>
                             </div>
                             <div className="contract-status">Đang chờ thanh toán phí khảo sát</div>
@@ -162,10 +165,11 @@ const MovingRequestContract = () => {
                         <div className="contract-terms">
                             <h3>Điều khoản chính</h3>
                             <ul>
-                                <li>HOMS tiếp nhận yêu cầu và thực hiện khảo sát theo lịch đã chọn.</li>
-                                <li>Báo giá chính thức được gửi sau khi khảo sát hoàn tất.</li>
-                                <li>Khách hàng thanh toán đặt cọc khảo sát: {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(depositAmount)}.</li>
-                                <li>Thông tin chi tiết đơn chuyển được xác nhận khi hoàn tất đặt cọc.</li>
+                                <li>HOMS tiếp nhận yêu cầu và sẽ thực hiện khảo sát thực tế tại địa điểm do Khách hàng chỉ định theo đúng lịch trình đã thỏa thuận.</li>
+                                <li>Việc khảo sát có thể được tiến hành bằng hình thức trực tuyến (Video Call) hoặc trực tiếp (Offline) tùy thuộc vào độ phức tạp của từng công trình. HOMS giữ quyền quyết định nhằm đảm bảo tính chính xác nhất.</li>
+                                <li>Báo giá chính thức và phương án thi công chi tiết sẽ chỉ được cung cấp sau khi quá trình khảo sát được hoàn tất trọn vẹn. <strong>(Lưu ý quan trọng: Tại thời điểm ký kết thỏa thuận này, giá trị cuối cùng của Hợp đồng dịch vụ chưa được xác định)</strong>.</li>
+                                <li>Khách hàng cam kết thanh toán một khoản Phí đặt cọc khảo sát trị giá: {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(depositAmount)}. Khoản phí này có thể được hoàn hoặc khấu trừ vào tổng giá trị Hợp đồng dịch vụ tùy theo chính sách.</li>
+                                <li>Mọi thông tin chi tiết về đơn vận chuyển sẽ chỉ có giá trị pháp lý sau khi quá trình khảo sát kết thúc và hai bên đồng thuận chốt báo giá.</li>
                             </ul>
                         </div>
                     </Card>
@@ -176,7 +180,7 @@ const MovingRequestContract = () => {
                             onChange={(event) => setAgreedToContract(event.target.checked)}
                         >
                             <span style={{ fontSize: '16px', color: '#2D4F36' }}>
-                                Tôi đã đọc và đồng ý với nội dung hợp đồng yêu cầu chuyển nhà.
+                                Tôi đã đọc, hiểu rõ mọi quy định và đồng ý với nội dung thỏa thuận dịch vụ khảo sát.
                             </span>
                         </Checkbox>
                     </div>
@@ -201,4 +205,4 @@ const MovingRequestContract = () => {
     );
 };
 
-export default React.memo(MovingRequestContract);
+export default React.memo(SurveyAgreement);

@@ -146,7 +146,8 @@ const MovingInformationPage = () => {
                                 { title: 'Chọn dịch vụ' },
                                 { title: 'Địa điểm & Thông tin đồ đạc' },
                                 { title: 'Xác nhận' },
-                                { title: 'Đặt cọc' },
+                                { title: 'Thỏa thuận' },
+                                { title: 'Thanh toán' },
                             ]}
                         />
                     </Card>

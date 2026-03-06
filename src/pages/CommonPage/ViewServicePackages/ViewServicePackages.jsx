@@ -71,7 +71,8 @@ const SelectServicePage = () => {
                                 { title: 'Chọn dịch vụ' },
                                 { title: 'Địa điểm & Thông tin đồ đạc' },
                                 { title: 'Xác nhận' },
-                                { title: 'Đặt cọc' },
+                                { title: 'Thỏa thuận' },
+                                { title: 'Thanh toán' },
                             ]}
                         />
                     </Card>
@@ -82,8 +83,8 @@ const SelectServicePage = () => {
                     <Row gutter={[24, 24]}>
                         {services.map((item) => (
                             <Col span={24} key={item.id}>
-                                <Card 
-                                    hoverable 
+                                <Card
+                                    hoverable
                                     className="service-card"
                                     onClick={() => handleServiceClick(item.id)}
                                     style={{ cursor: 'pointer' }}

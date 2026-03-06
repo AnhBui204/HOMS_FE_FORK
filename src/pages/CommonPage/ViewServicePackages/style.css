@@ -5,8 +5,7 @@
 /* HERO */
 .service-hero {
     height: 300px;
-    background: linear-gradient(rgba(0, 0, 0, 0.45),
-            rgba(0, 0, 0, 0.45)),
+    background: linear-gradient(rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.35)),
         url('../../../../public/images/moving-bg.png') center / cover no-repeat;
     display: flex;
     align-items: center;
@@ -96,11 +95,16 @@
 }
 
 .steps-card .ant-steps-item-finish .ant-steps-item-icon {
-    border-color: #2d4f36;
+    border-color: #2d4f36 !important;
+    background-color: #2d4f36 !important;
 }
 
 .steps-card .ant-steps-item-finish .ant-steps-icon {
-    color: #2d4f36;
+    color: #fff !important;
+}
+
+.steps-card .ant-steps-item-finish .ant-steps-item-icon>.ant-steps-icon .anticon {
+    color: #fff !important;
 }
 
 /* Đồng nhất độ dài dash line */

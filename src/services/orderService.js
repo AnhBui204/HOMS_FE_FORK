@@ -109,7 +109,7 @@ export const getOrderById = async (ticketId) => {
 // Update ticket status (e.g. CREATED -> WAITING_SURVEY)
 export const updateTicketStatus = async (ticketId, newStatus) => {
     try {
-        const response = await api.put(`/request-tickets/${ticketId}/status`, { newStatus });
+        const response = await api.put(`/request-tickets/${ticketId}/status`, { status: newStatus });
         return response.data;
     } catch (error) {
         console.error('Error updating ticket status:', error);

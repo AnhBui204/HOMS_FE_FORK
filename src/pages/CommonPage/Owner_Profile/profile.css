@@ -1,16 +1,18 @@
 .profile-container {
-    padding: 20px;
-    background-color: #f5f5f5;
+    padding: 60px 16px 100px;
+    background-color: #f5f7f6;
+    min-height: 100vh;
 }
 
 .profile-card {
     width: 100%;
-    max-width: 900px;
+    max-width: 1300px;
     margin: 0 auto;
-    padding: 24px;
+    padding: 32px;
     background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border-radius: 20px;
+    border: 1px solid #e3e6e1;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
 }
 
 .profile-header {
@@ -25,7 +27,8 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    flex: 1; /* chiếm hết không gian còn lại sau ảnh */
+    flex: 1;
+    /* chiếm hết không gian còn lại sau ảnh */
 }
 
 .profile-info {
@@ -36,16 +39,19 @@
 
 
 .profile-pic {
-    width: 80px;
-    height: 80px;
+    width: 100px;
+    height: 100px;
     border-radius: 50%;
-    margin-right: 20px;
+    margin-right: 24px;
+    object-fit: cover;
+    border: 3px solid #2D4F36;
 }
 
 .profile-info h2 {
-    margin: 0;
-    font-size: 24px;
-    color: #333;
+    margin: 0 0 8px;
+    font-size: 32px;
+    font-weight: 600;
+    color: #2D4F36;
 }
 
 .profile-info p {
@@ -54,18 +60,26 @@
 }
 
 .edit-btn {
-    margin-left: 20px; /* khoảng cách với profile-info */
-    padding: 8px 16px;
-    background-color: #5c6b57;
+    margin-left: 20px;
+    padding: 0 32px;
+    height: 45px;
+    background-color: #44624A;
     color: #fff;
     border: none;
-    border-radius: 4px;
+    border-radius: 27px;
+    font-size: 16px;
+    font-weight: 600;
     cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 6px 16px rgba(68, 98, 74, 0.2);
 }
 
 .edit-btn:hover {
-    background-color: #4a5a47;
+    background-color: #2D4F36;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(68, 98, 74, 0.3);
 }
+
 .ant-descriptions-item-label {
     font-weight: bold;
     color: #333;
@@ -84,7 +98,8 @@
 }
 
 .phone-input {
-    max-width: 250px; /* hoặc chỉnh theo ý bạn, ví dụ 200px */
+    max-width: 250px;
+    /* hoặc chỉnh theo ý bạn, ví dụ 200px */
 }
 
 .update-time {
@@ -109,8 +124,10 @@
 
     /* 👇 Canh trái phần email */
     justify-content: flex-start;
-    max-width: 400px;     /* Giới hạn chiều rộng */
-    margin-left: 0;       /* Đẩy sát trái */
+    max-width: 400px;
+    /* Giới hạn chiều rộng */
+    margin-left: 0;
+    /* Đẩy sát trái */
 }
 
 
@@ -149,18 +166,24 @@
 }
 
 .cancel-btn {
-    background-color: #999;
+    background-color: white;
+    color: #333;
+    border: 2px solid #e8e8e8;
+    box-shadow: none;
 }
 
 .cancel-btn:hover {
-    background-color: #777;
+    background-color: white;
+    color: #333;
+    border-color: #999;
+    box-shadow: none;
 }
 
 .avatar-container {
-  position: relative;
+    position: relative;
 }
 
 .avatar-upload {
-  margin-top: 10px;
-  display: block;
+    margin-top: 10px;
+    display: block;
 }

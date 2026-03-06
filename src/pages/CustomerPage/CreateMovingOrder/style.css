@@ -5,7 +5,8 @@
 /* HERO */
 .moving-hero {
     height: 300px;
-    background: url('../../../../public/images/moving-banner.png') center/cover no-repeat;
+    background: linear-gradient(rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.35)),
+        url('../../../../public/images/moving-banner.png') center/cover no-repeat;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -82,7 +83,16 @@
 }
 
 .steps-card .ant-steps-item-finish .ant-steps-item-icon {
-    border-color: #2d4f36;
+    border-color: #2d4f36 !important;
+    background-color: #2d4f36 !important;
+}
+
+.steps-card .ant-steps-item-finish .ant-steps-icon {
+    color: #fff !important;
+}
+
+.steps-card .ant-steps-item-finish .ant-steps-item-icon>.ant-steps-icon .anticon {
+    color: #fff !important;
 }
 
 /* LOCATION SECTION */

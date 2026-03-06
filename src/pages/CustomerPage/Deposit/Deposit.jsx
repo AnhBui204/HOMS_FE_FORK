@@ -22,6 +22,7 @@ const Deposit = () => {
     // Get data from previous steps or from localStorage
     const [orderData, setOrderData] = useState(location.state?.orderData || null);
     const [surveyData, setSurveyData] = useState(location.state?.surveyData || null);
+    const [ticketId, setTicketId] = useState(location.state?.ticketId || null);
     const [depositAmount] = useState(location.state?.depositAmount || 100000);
 
     const [paymentMethod, setPaymentMethod] = useState(null);
@@ -60,6 +61,7 @@ const Deposit = () => {
                     // Load the pending order data
                     setOrderData(pendingOrder.orderData);
                     setSurveyData(pendingOrder.surveyData);
+                    if (pendingOrder.ticketId) setTicketId(pendingOrder.ticketId);
 
                     message.success('Đã tải lại thông tin đơn hàng của bạn');
 
@@ -94,33 +96,27 @@ const Deposit = () => {
         try {
             setIsSubmitting(true);
 
-            // Combine all data for backend
-            const completeOrderData = {
-                ...orderData,
-                survey: surveyData,
-                paymentMethod,
-                depositAmount
-            };
+            console.log('📤 Submitting deposit for ticket:', ticketId);
 
-            console.log('📤 Submitting complete order to backend:', completeOrderData);
-
-            // Create the RequestTicket in backend
-            const response = await createOrder(completeOrderData);
-
-            console.log('✅ Order created successfully:', response);
-
-            message.success(response.message || 'Yêu cầu dịch vụ đã được tạo thành công!');
+            if (!ticketId) {
+                message.error('Không tìm thấy mã đơn hàng hợp lệ.');
+                setIsSubmitting(false);
+                return;
+            }
 
             // Transition ticket to WAITING_SURVEY now that payment has been accepted
-            const ticketId = response.data?._id;
-            if (ticketId) {
-                try {
-                    await updateTicketStatus(ticketId, 'WAITING_SURVEY');
-                } catch (statusError) {
-                    // Non-blocking: don't prevent navigation if status update fails
-                    console.warn('Could not transition ticket to WAITING_SURVEY:', statusError);
-                }
+            try {
+                await updateTicketStatus(ticketId, 'WAITING_SURVEY');
+            } catch (statusError) {
+                // Non-blocking: don't prevent navigation if status update fails
+                console.warn('Could not transition ticket to WAITING_SURVEY:', statusError);
+                message.error('Lỗi khi cập nhật trạng thái đơn hàng.');
+                setIsSubmitting(false);
+                return;
             }
+
+            console.log('✅ Order status updated successfully');
+            message.success('Thanh toán phí khảo sát thành công! Yêu cầu của bạn đã được xác nhận.');
 
             // Clear any pending order data from localStorage
             localStorage.removeItem('pendingOrder');
@@ -129,8 +125,8 @@ const Deposit = () => {
             setTimeout(() => {
                 navigate('/', {
                     state: {
-                        newOrder: response.data,
-                        message: 'Yêu cầu của bạn đã được gửi. Chúng tôi sẽ liên hệ sớm!'
+                        newOrder: { _id: ticketId, ...orderData }, // Ensure basic order info is passed
+                        message: 'Yêu cầu của bạn đã được xác nhận. Chúng tôi sẽ liên hệ sớm!'
                     }
                 });
             }, 1500);
@@ -146,6 +142,7 @@ const Deposit = () => {
                     orderData,
                     surveyData,
                     depositAmount,
+                    ticketId,
                     timestamp: new Date().getTime()
                 };
                 localStorage.setItem('pendingOrder', JSON.stringify(tempOrderData));
@@ -175,7 +172,7 @@ const Deposit = () => {
 
     // Format data for display
     const displayData = {
-        orderId: "Chưa có (sẽ tạo sau thanh toán)",
+        orderId: ticketId ? ticketId.slice(-6).toUpperCase() : "Chưa có",
         serviceType: orderData.serviceName || 'Chuyển nhà trọn gói',
         surveyMethod: surveyData.type === 'ONLINE' ? 'Online (Video Call)' : 'Offline (Khảo sát trực tiếp)',
         status: "Chờ đặt cọc",
@@ -194,28 +191,28 @@ const Deposit = () => {
             <Content>
                 {/* HERO */}
                 <section className="deposit-hero">
-                    <h1>{displayData.serviceType}</h1>
+                    <h1>Thanh toán phí khảo sát</h1>
                 </section>
 
                 {/* STEPS */}
                 <section className="service-steps-container">
                     <Card className="steps-card">
                         <Steps
-                            current={3}
+                            current={4}
                             responsive
                             items={[
                                 { title: 'Chọn dịch vụ' },
                                 { title: 'Địa điểm & Thông tin đồ đạc' },
                                 { title: 'Xác nhận' },
-                                { title: 'Đặt cọc' },
+                                { title: 'Thỏa thuận' },
+                                { title: 'Thanh toán' }
                             ]}
                         />
                     </Card>
                 </section>
 
-                {/* DEPOSIT SECTION */}
                 <section className="deposit-section">
-                    <h1 className="deposit-title">Thông Tin Đặt Cọc</h1>
+                    <h1 className="deposit-title">Thanh Toán Phí Khảo Sát</h1>
 
                     <Row gutter={40}>
                         {/* LEFT SIDE - Order Info & Payment */}
@@ -255,16 +252,16 @@ const Deposit = () => {
                                     <ClockIcon size={20} />
                                     <div>
                                         <div><strong>Khảo sát:</strong> {displayData.surveyDateTime}</div>
-                                        <div><strong>Chuyển:</strong> {displayData.movingDateTime}</div>
+                                        <div><strong>Vận chuyển:</strong> {displayData.movingDateTime}</div>
                                     </div>
                                 </div>
                                 <div className="location-item">
                                     <MapPinIcon size={20} />
-                                    <span><strong>Từ:</strong> {displayData.fromAddress}</span>
+                                    <span><strong>Chuyển từ:</strong> {displayData.fromAddress}</span>
                                 </div>
                                 <div className="location-item">
                                     <MapPinIcon size={20} />
-                                    <span><strong>Đến:</strong> {displayData.toAddress}</span>
+                                    <span><strong>Chuyển đến:</strong> {displayData.toAddress}</span>
                                 </div>
                             </Card>
 
@@ -290,7 +287,7 @@ const Deposit = () => {
                                         checked={agreedToTerms}
                                         onChange={(e) => setAgreedToTerms(e.target.checked)}
                                     >
-                                        Bằng cách nhấp vào <strong>"Gửi yêu cầu"</strong> bên dưới, tôi đã đọc và đồng ý với các điều khoản chính sách của hợp đồng
+                                        Bằng cách nhấp vào <strong>"Thanh toán"</strong>, tôi đã đọc và đồng ý với các điều khoản của thỏa thuận dịch vụ khảo sát
                                     </Checkbox>
                                 </div>
 
@@ -302,7 +299,7 @@ const Deposit = () => {
                                     disabled={!paymentMethod || !agreedToTerms || isSubmitting}
                                     loading={isSubmitting}
                                 >
-                                    {isSubmitting ? 'Đang xử lý...' : 'Gửi yêu cầu'}
+                                    {isSubmitting ? 'Đang xử lý...' : 'Thanh toán'}
                                 </Button>
                             </div>
                         </Col>
@@ -323,7 +320,7 @@ const Deposit = () => {
                                         <span className="invoice-value">{displayData.orderId}</span>
                                     </div>
                                     <div className="invoice-row highlight">
-                                        <span className="invoice-label">Phí đặt cọc<br />(khảo sát)</span>
+                                        <span className="invoice-label">Phí khảo sát</span>
                                         <span className="invoice-value">{displayData.depositAmount}</span>
                                     </div>
 

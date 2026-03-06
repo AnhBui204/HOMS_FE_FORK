@@ -54,12 +54,9 @@
 
 /* Hero Section */
 .hero-section {
-  background-image: url('../../../../public/images/landingPageImg.png');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+  background: linear-gradient(rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.35)),
+    url('../../../../public/images/landingPageImg.png') center/cover no-repeat;
   height: 550px;
-  /* Chiều cao Hero banner */
   position: relative;
   display: flex;
   align-items: center;
@@ -290,7 +287,7 @@
 
 /* Services Section */
 .services-section {
-  background: linear-gradient(135deg, #F0F5F2 0%, #FFFFFF 100%);
+  background: #f7f8f6;
   padding: 80px 40px;
   margin-top: 80px;
 }
@@ -343,7 +340,7 @@
 
 /* Process Section */
 .process-section {
-  background: linear-gradient(135deg, #F0F5F2 0%, #FFFFFF 100%);
+  background: #f7f8f6;
   padding: 80px 40px;
 }
 
@@ -570,85 +567,90 @@
 /* Contact Section */
 /* --- CONTACT SECTION --- */
 .contact-section {
-    padding-bottom: 80px;
-    margin-top: 30px; 
+  padding-bottom: 80px;
+  margin-top: 30px;
 }
 
 /* KHUNG BAO NGOÀI: CHIA MÀU NỀN 7:3 TẠI ĐÂY */
 .contact-box-wrapper {
-    /* Tạo hiệu ứng nền chia đôi: 70% Trắng - 30% Xanh */
-    background: linear-gradient(to right, #ffffff 70%, #C0CFB2 70%);
-    
-    border-radius: 20px;
-    overflow: hidden; 
-    box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+  /* Tạo hiệu ứng nền chia đôi: 70% Trắng - 30% Xanh */
+  background: linear-gradient(to right, #ffffff 70%, #C0CFB2 70%);
+
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
 }
 
 /* Cột trái: Nền trong suốt để thấy màu trắng của wrapper */
 .contact-left {
-    background-color: transparent; 
-    padding: 40px 50px;
+  background-color: transparent;
+  padding: 40px 50px;
 }
 
 /* Cột phải: Nền trong suốt để thấy màu xanh/trắng của wrapper */
 .contact-right {
-    background-color: transparent;
-    min-height: 500px; 
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 30px; /* Thêm padding để map không dính sát lề */
+  background-color: transparent;
+  min-height: 500px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 30px;
+  /* Thêm padding để map không dính sát lề */
 }
 
 /* Bản đồ */
 .map-container {
-    width: 100%;
-    height: 100%;
-    min-height: 450px;
-    border-radius: 15px; 
-    overflow: hidden;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.15); /* Tăng bóng đổ cho map nổi bật */
-    background: white; /* Nền trắng đỡ map */
+  width: 100%;
+  height: 100%;
+  min-height: 450px;
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+  /* Tăng bóng đổ cho map nổi bật */
+  background: white;
+  /* Nền trắng đỡ map */
 }
 
 /* --- Style thông tin công ty --- */
 .company-contact-info {
-    margin-top: 30px;
-    padding-top: 20px;
-    border-top: 1px dashed #e0e0e0;
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px dashed #e0e0e0;
 }
 
 .info-item {
-    display: flex;
-    align-items: center;
+  display: flex;
+  align-items: center;
 }
 
 /* --- RESPONSIVE --- */
 @media (max-width: 992px) {
-    .contact-box-wrapper {
-        /* Trên tablet/mobile: Chuyển gradient thành dọc (Trên trắng, dưới xanh) hoặc 1 màu */
-        background: linear-gradient(to bottom, #ffffff 60%, #C0CFB2 60%);
-    }
-    
-    .contact-left {
-        padding: 30px 20px;
-    }
-    
-    .contact-right {
-        padding: 20px;
-        min-height: 400px;
-    }
+  .contact-box-wrapper {
+    /* Trên tablet/mobile: Chuyển gradient thành dọc (Trên trắng, dưới xanh) hoặc 1 màu */
+    background: linear-gradient(to bottom, #ffffff 60%, #C0CFB2 60%);
+  }
+
+  .contact-left {
+    padding: 30px 20px;
+  }
+
+  .contact-right {
+    padding: 20px;
+    min-height: 400px;
+  }
 }
 
 @media (max-width: 768px) {
-    .contact-box-wrapper {
-        /* Mobile: Bỏ gradient phức tạp, chia khối rõ ràng */
-        background: #ffffff;
-    }
-    .contact-right {
-        background: #C0CFB2; /* Mobile thì tô xanh hẳn phần map */
-        padding: 20px;
-    }
+  .contact-box-wrapper {
+    /* Mobile: Bỏ gradient phức tạp, chia khối rõ ràng */
+    background: #ffffff;
+  }
+
+  .contact-right {
+    background: #C0CFB2;
+    /* Mobile thì tô xanh hẳn phần map */
+    padding: 20px;
+  }
 }
 
 /* Footer */

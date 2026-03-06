@@ -8,6 +8,7 @@ import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 import AppHeader from "../../../components/header/header";
 import AppFooter from "../../../components/footer/footer";
 import useUser from "../../../contexts/UserContext";
+import { createOrder } from "../../../services/orderService";
 
 import "./style.css";
 
@@ -70,7 +71,7 @@ const ConfirmMovingOrder = () => {
         navigate('/');
     };
 
-    const handleConfirm = () => {
+    const handleConfirm = async () => {
         if (!orderData) return;
 
         // Validate all selections are made
@@ -158,16 +159,40 @@ const ConfirmMovingOrder = () => {
             return;
         }
 
-        console.log('📋 User authenticated, proceeding to contract page');
+        console.log('📋 User authenticated, creating order...');
 
-        // Navigate to moving request contract page with all data
-        navigate('/customer/moving-request-contract', {
-            state: {
-                orderData,
-                surveyData,
-                depositAmount: 100000 // 100,000 VND
+        try {
+            // First, create complete order with survey type/date but default 'CREATED' status
+            const completeOrderData = {
+                ...orderData,
+                survey: surveyData,
+            };
+
+            const response = await createOrder(completeOrderData);
+            const ticketId = response.data?._id;
+
+            if (!ticketId) {
+                message.error('Không thể tạo đơn hàng. Vui lòng thử lại.');
+                return;
             }
-        });
+
+            console.log('✅ Temporary order created successfully with ID:', ticketId);
+
+            message.success('Đã tạo thành công yêu cầu sơ bộ! Vui lòng xác nhận thỏa thuận để tiếp tục.');
+
+            // Navigate to survey agreement page with ticket data
+            navigate('/customer/survey-agreement', {
+                state: {
+                    orderData,
+                    surveyData,
+                    depositAmount: 100000, // 100,000 VND
+                    ticketId
+                }
+            });
+        } catch (error) {
+            console.error('❌ Error creating initial order:', error);
+            message.error(error.message || 'Có lỗi xảy ra khi tạo yêu cầu. Vui lòng thử lại.');
+        }
     };
 
     const onDateSelect = (date) => {
@@ -249,7 +274,8 @@ const ConfirmMovingOrder = () => {
                                 { title: 'Chọn dịch vụ' },
                                 { title: 'Địa điểm & Thông tin đồ đạc' },
                                 { title: 'Xác nhận' },
-                                { title: 'Đặt cọc' },
+                                { title: 'Thỏa thuận' },
+                                { title: 'Thanh toán' },
                             ]}
                         />
                     </Card>
@@ -430,7 +456,7 @@ const ConfirmMovingOrder = () => {
                             onClick={() => {
                                 setShowAuthModal(false);
                                 navigate('/login', {
-                                    state: { returnUrl: '/customer/moving-request-contract' }
+                                    state: { returnUrl: '/customer/survey-agreement' }
                                 });
                             }}
                             style={{
@@ -451,7 +477,7 @@ const ConfirmMovingOrder = () => {
                             onClick={() => {
                                 setShowAuthModal(false);
                                 navigate('/register', {
-                                    state: { returnUrl: '/customer/moving-request-contract' }
+                                    state: { returnUrl: '/customer/survey-agreement' }
                                 });
                             }}
                             style={{
