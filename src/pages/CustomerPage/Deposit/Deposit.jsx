@@ -6,7 +6,7 @@ import dayjs from 'dayjs';
 
 import AppHeader from "../../../components/header/header";
 import AppFooter from "../../../components/footer/footer";
-import { createOrder } from "../../../services/orderService";
+import { createOrder, updateTicketStatus } from "../../../services/orderService";
 import useUser from "../../../contexts/UserContext";
 
 import "./style.css";
@@ -110,6 +110,17 @@ const Deposit = () => {
             console.log('✅ Order created successfully:', response);
 
             message.success(response.message || 'Yêu cầu dịch vụ đã được tạo thành công!');
+
+            // Transition ticket to WAITING_SURVEY now that payment has been accepted
+            const ticketId = response.data?._id;
+            if (ticketId) {
+                try {
+                    await updateTicketStatus(ticketId, 'WAITING_SURVEY');
+                } catch (statusError) {
+                    // Non-blocking: don't prevent navigation if status update fails
+                    console.warn('Could not transition ticket to WAITING_SURVEY:', statusError);
+                }
+            }
 
             // Clear any pending order data from localStorage
             localStorage.removeItem('pendingOrder');

@@ -88,3 +88,166 @@
     background: #44624a;
     border-color: #44624a;
 }
+
+/* UI OPTIONS COMPARISON */
+.order-options-section {
+    width: 80%;
+    margin: 40px auto;
+}
+
+.ui-option-container {
+    background: white;
+    padding: 30px;
+    border-radius: 16px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+    margin-bottom: 20px;
+}
+
+.ui-option-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 5px;
+}
+
+.ui-option-header h3 {
+    margin: 0;
+    color: #2D4F36;
+    font-size: 20px;
+}
+
+.ui-option-desc {
+    color: #666;
+    margin-bottom: 25px;
+}
+
+.ui-option-divider {
+    text-align: center;
+    font-size: 24px;
+    font-weight: 800;
+    color: #ccc;
+    margin: 40px 0;
+    font-style: italic;
+}
+
+/* OPTION A: TABS & ITEM CARDS ENHANCED */
+.tabbed-room-layout-container {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.room-tabs-custom .ant-tabs-nav {
+    margin-bottom: 24px !important;
+}
+
+.room-tabs-custom .ant-tabs-tab {
+    padding: 8px 24px !important;
+    border-radius: 8px 8px 0 0 !important;
+    font-size: 16px;
+}
+
+.room-tabs-custom .ant-tabs-tab-active {
+    background: #44624A !important;
+    border-color: #44624A !important;
+}
+
+.room-tabs-custom .ant-tabs-tab-active .ant-tabs-tab-btn {
+    color: white !important;
+}
+
+.tab-room-content-enhanced {
+    padding-top: 10px;
+}
+
+/* Furniture Card w/ Icon */
+.furniture-item-card.with-icon {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: #fdfdfd;
+    padding: 16px;
+    border-radius: 12px;
+    border: 1px solid #eee;
+    transition: transform 0.2s ease, box-shadow 0.2s, border-color 0.2s;
+    height: 100%;
+}
+
+.furniture-item-card.with-icon:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(68, 98, 74, 0.1);
+    border-color: #8BA888;
+}
+
+.fi-icon-box {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    background: #f0f5f1;
+    color: #44624A;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.fi-info-box {
+    flex: 1;
+}
+
+.fi-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.fi-name {
+    font-weight: 600;
+    font-size: 15px;
+    color: #2c3e50;
+}
+
+.fi-qty {
+    background: #e8f0e9;
+    color: #2D4F36;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+/* Room Reference Image */
+.room-image-reference {
+    height: 400px;
+    /* Uniform height across tabs */
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.room-image-reference .ant-image {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.room-img-cover {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.room-image-caption {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    padding: 12px 16px;
+    font-size: 14px;
+    backdrop-filter: blur(4px);
+}

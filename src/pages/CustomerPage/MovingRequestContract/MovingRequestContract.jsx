@@ -137,7 +137,7 @@ const MovingRequestContract = () => {
                                 <p><strong>Số hợp đồng:</strong> {contractNumber}</p>
                                 <p><strong>Ngày lập:</strong> {dayjs().format('DD/MM/YYYY')}</p>
                             </div>
-                            <div className="contract-status">Đang chờ đặt cọc</div>
+                            <div className="contract-status">Đang chờ thanh toán phí khảo sát</div>
                         </div>
 
                         <Row gutter={[24, 16]}>
@@ -175,19 +175,22 @@ const MovingRequestContract = () => {
                             checked={agreedToContract}
                             onChange={(event) => setAgreedToContract(event.target.checked)}
                         >
-                            Tôi đã đọc và đồng ý với nội dung hợp đồng yêu cầu chuyển nhà.
+                            <span style={{ fontSize: '16px', color: '#2D4F36' }}>
+                                Tôi đã đọc và đồng ý với nội dung hợp đồng yêu cầu chuyển nhà.
+                            </span>
                         </Checkbox>
                     </div>
 
                     <div className="contract-actions">
-                        <Button size="large" onClick={handleBack}>Quay lại</Button>
+                        <Button size="large" className="cancel-button" onClick={handleBack}>Quay lại</Button>
                         <Button
                             type="primary"
                             size="large"
+                            className="confirm-button"
                             disabled={!agreedToContract}
                             onClick={handleContinue}
                         >
-                            Tiếp tục đặt cọc
+                            Tiếp tục
                         </Button>
                     </div>
                 </section>

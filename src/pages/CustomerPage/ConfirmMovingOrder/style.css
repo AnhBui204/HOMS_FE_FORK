@@ -112,35 +112,58 @@
 }
 
 .survey-card {
-    background: #f5f3ed;
-    border-radius: 20px;
+    background: #f8faf9;
+    border-radius: 16px;
     padding: 40px 30px;
     text-align: center;
     cursor: pointer;
     transition: all 0.3s ease;
-    min-height: 300px;
-    border: 3px solid transparent;
+    min-height: 250px;
+    border: 2px solid transparent;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 }
 
 .survey-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
 }
 
 .survey-card.active {
     background: #fff;
-    border-color: #2d4f36;
-    box-shadow: 0 0 30px rgba(45, 79, 54, 0.4);
-    transform: scale(1.02);
+    border-color: #44624A;
+    box-shadow: 0 4px 20px rgba(68, 98, 74, 0.15);
 }
 
 .survey-icon {
     margin-bottom: 20px;
-    color: #5f7d67;
+    color: #8BA888;
 }
 
 .survey-card.active .survey-icon {
-    color: #2d4f36;
+    color: #44624A;
+}
+
+.survey-info-alert {
+    border-radius: 12px;
+    padding: 24px;
+    background-color: #f0f7f4;
+    border: 1px solid #d4e6d9;
+}
+
+.survey-info-alert .ant-alert-message {
+    color: #2D4F36;
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.survey-info-alert .ant-alert-description {
+    color: #555;
+    font-size: 14px;
+    line-height: 1.6;
 }
 
 .survey-card h3 {
@@ -164,16 +187,17 @@
 
 .survey-details {
     background: #fff;
-    border-radius: 20px;
+    border-radius: 16px;
     padding: 40px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
 }
 
 @keyframes slideDown {
     from {
         opacity: 0;
-        transform: translateY(-20px);
+        transform: translateY(-10px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -190,7 +214,7 @@
 }
 
 .survey-details .ant-picker-cell-selected .ant-picker-cell-inner {
-    background: #2d4f36;
+    background: #44624A;
     color: white;
 }
 
@@ -201,46 +225,55 @@
 .time-slots {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 10px;
-    margin-top: 20px;
-    padding: 0 10px;
+    gap: 12px;
+    margin-top: 24px;
 }
 
 .time-slot {
-    border: 1px solid #d9d9d9;
+    border: 1px solid #e8e8e8;
     border-radius: 8px;
-    padding: 10px 16px;
+    padding: 12px 16px;
     background: white;
-    color: #333;
+    color: #555;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
     text-align: center;
-    font-size: 14px;
+    font-size: 15px;
+    font-weight: 500;
     user-select: none;
 }
 
 .time-slot:hover {
-    border-color: #2d4f36;
-    color: #2d4f36;
-    background: #f0f7f2;
+    border-color: #8BA888;
+    color: #44624A;
 }
 
 .time-slot.selected {
-    background: #2d4f36;
-    border-color: #2d4f36;
+    background: #44624A;
+    border-color: #44624A;
     color: white;
 }
 
 .time-slot.selected:hover {
-    background: #4a6350;
-    border-color: #4a6350;
+    background: #2D4F36;
+    border-color: #2D4F36;
+}
+
+.time-gap-info {
+    margin-top: 24px;
+    padding: 16px 20px;
+    background-color: #f8faf9;
+    border-left: 4px solid #44624A;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #444;
 }
 
 .confirmation-info {
     text-align: center;
     margin: 40px 0;
-    font-size: 15px;
-    color: #2d4f36;
+    font-size: 16px;
+    color: #2D4F36;
 }
 
 .confirmation-info .ant-checkbox-wrapper {
@@ -284,9 +317,9 @@
 
 .cancel-button {
     min-width: 200px;
-    height: 45px;
-    border-radius: 10px;
-    border: 2px solid #d9d9d9;
+    height: 54px;
+    border-radius: 27px;
+    border: 2px solid #e8e8e8;
     background: white;
     font-size: 16px;
     font-weight: 500;
@@ -300,18 +333,20 @@
 
 .confirm-button {
     min-width: 250px;
-    height: 45px;
-    border-radius: 10px;
-    background: #5f7d67;
+    height: 54px;
+    border-radius: 27px;
+    background: #44624A;
     border: none;
     font-size: 16px;
-    font-weight: 500;
+    font-weight: 600;
+    color: white;
+    box-shadow: 0 6px 16px rgba(68, 98, 74, 0.2);
     transition: all 0.3s ease;
 }
 
 .confirm-button:not(.disabled):hover {
-    background: #4a6350;
-    box-shadow: 0 0 20px rgba(95, 125, 103, 0.6);
+    background: #2D4F36;
+    box-shadow: 0 8px 20px rgba(68, 98, 74, 0.3);
     transform: translateY(-2px);
 }
 

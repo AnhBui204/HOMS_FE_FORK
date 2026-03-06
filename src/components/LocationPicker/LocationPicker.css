@@ -19,7 +19,7 @@
 }
 
 .map-container {
-    height: 350px;
+    height: 600px;
     width: 100%;
     border-radius: 12px;
     overflow: hidden;
@@ -129,7 +129,7 @@
     padding: 12px;
 }
 
-.location-popup > strong {
+.location-popup>strong {
     font-size: 15px;
     color: #2d4f36;
     display: block;

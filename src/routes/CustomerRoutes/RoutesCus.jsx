@@ -8,6 +8,7 @@ import CreateMovingOrder from "../../pages/CustomerPage/CreateMovingOrder/Create
 import ConfirmMovingOrder from "../../pages/CustomerPage/ConfirmMovingOrder/ConfirmMovingOrder";
 import MovingRequestContract from "../../pages/CustomerPage/MovingRequestContract/MovingRequestContract";
 import Deposit from "../../pages/CustomerPage/Deposit/Deposit";
+import Dashboard from "../../pages/CustomerPage/Dashboard/Dashboard";
 // import CustomerLayout from "../../pages/CustomerPage/components/layout/CustomerLayout";
 
 const RoutesCus = () => {
@@ -15,6 +16,7 @@ const RoutesCus = () => {
     <Routes>
       {/* <Route element={<CustomerLayout />}> */}
 
+      <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/order" element={<ViewMovingOrder />} />
       <Route path="/profile" element={<Profile />} />
       <Route path="/service-packages" element={<ViewServicePackages />} />

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Layout, Steps, Card, Row, Col, Button, Calendar, Checkbox, message, Modal } from "antd";
+import { Layout, Steps, Card, Row, Col, Button, Calendar, Checkbox, message, Modal, Alert } from "antd";
 import { Monitor, Users } from "lucide-react";
 import dayjs from 'dayjs';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
@@ -23,7 +23,8 @@ const ConfirmMovingOrder = () => {
     // Get order data from previous step
     const orderData = location.state?.orderData;
 
-    const [selectedMethod, setSelectedMethod] = useState(null);
+    // Enforce Online method by default
+    const [selectedMethod, setSelectedMethod] = useState('online');
     const [selectedDate, setSelectedDate] = useState(null);
     const [selectedTimeIndex, setSelectedTimeIndex] = useState(null);
     const [isConfirmed, setIsConfirmed] = useState(false);
@@ -53,10 +54,10 @@ const ConfirmMovingOrder = () => {
             return;
         }
 
-        // Check if there's enough time for survey (at least 25 hours from now to allow for 24-hour gap)
+        // Check if there's enough time for survey
         const hoursUntilMoving = movingDate.diff(now, 'hour', true);
-        if (hoursUntilMoving < 25) {
-            message.warning('Thời gian chuyển quá gần. Để đảm bảo có thời gian khảo sát và xử lý hồ sơ, vui lòng chọn thời gian chuyển sau ít nhất 2 ngày.');
+        if (hoursUntilMoving < 24) {
+            message.warning('Thời gian chuyển nhà khá gần. Vui lòng chọn lịch khảo sát sớm nhất có thể.');
         }
     }, [orderData, navigate]);
 
@@ -120,15 +121,15 @@ const ConfirmMovingOrder = () => {
         // Calculate time gap between survey and moving
         const hoursBetween = movingDate.diff(surveyDateTime, 'hour', true);
 
-        // Enforce minimum 24 hours (1 day) gap for paperwork
-        if (hoursBetween < 24) {
-            message.error('Thời gian khảo sát phải trước thời gian chuyển ít nhất 1 ngày (24 giờ) để xử lý hồ sơ');
+        // Enforce minimum 8 hours gap for paperwork
+        if (hoursBetween < 8) {
+            message.error('Thời gian khảo sát phải trước thời gian chuyển ít nhất 8 tiếng để nhân viên sắp xếp và xử lý hồ sơ');
             return;
         }
 
-        // Warning if gap is less than 48 hours (recommended)
-        if (hoursBetween < 48) {
-            message.warning('Khuyến nghị để khoảng cách ít nhất 2 ngày giữa khảo sát và chuyển nhà để chuẩn bị tốt hơn');
+        // Warning if gap is less than 24 hours
+        if (hoursBetween < 24) {
+            message.warning('Khuyến nghị để khoảng cách ít nhất 1 ngày giữa khảo sát và chuyển nhà để chuẩn bị tốt hơn');
         }
 
         // Prepare survey data
@@ -188,14 +189,7 @@ const ConfirmMovingOrder = () => {
         }
 
         // Disable if date is on or after moving date
-        if (current.isAfter(movingDate, 'day') || current.isSame(movingDate, 'day')) {
-            return true;
-        }
-
-        // Disable if date is less than 24 hours before moving date
-        // This ensures the 1-day minimum gap for paperwork processing
-        const movingDateMinus24Hours = movingDate.subtract(24, 'hour');
-        if (current.isAfter(movingDateMinus24Hours.startOf('day'))) {
+        if (current.isSameOrAfter(movingDate, 'day')) {
             return true;
         }
 
@@ -222,9 +216,9 @@ const ConfirmMovingOrder = () => {
             return true;
         }
 
-        // Disable if slot time is less than 24 hours before moving time
+        // Disable if slot time is less than 8 hours before moving time
         const hoursBetween = movingDate.diff(slotTime, 'hour', true);
-        if (hoursBetween < 24) {
+        if (hoursBetween < 8) {
             return true;
         }
 
@@ -274,97 +268,85 @@ const ConfirmMovingOrder = () => {
                                 onClick={() => setSelectedMethod('online')}
                             >
                                 <div className="survey-icon">
-                                    <Monitor size={80} />
+                                    <Monitor size={70} />
                                 </div>
                                 <h3>Online (Video Call)</h3>
-                                <p>Khảo sát từ xa qua cuộc gọi video, nhanh chóng và linh hoạt, phù hợp với đa dạng đơn giản.</p>
+                                <p>Khảo sát từ xa qua cuộc gọi video, thủ tục tinh gọn, phù hợp với hầu hết các đơn chuyển nhà hiện tại của HOMS.</p>
                             </div>
                         </Col>
 
-                        {/* OFFLINE METHOD */}
-                        <Col md={12} xs={24}>
-                            <div
-                                className={`survey-card ${selectedMethod === 'offline' ? 'active' : ''}`}
-                                onClick={() => setSelectedMethod('offline')}
-                            >
-                                <div className="survey-icon">
-                                    <Users size={80} />
-                                </div>
-                                <h3>Offline (Khảo Sát Trực Tiếp)</h3>
-                                <p>Nhân viên đến tận nơi khảo sát, đánh giá chính xác, phù hợp với nhà lớn hoặc nhiều đồ cồng kềnh.</p>
-                            </div>
+                        {/* EXPLANATION ALERT */}
+                        <Col md={12} xs={24} style={{ display: 'flex', alignItems: 'center' }}>
+                            <Alert
+                                message="Ưu Tiên Khảo Sát Trực Tuyến"
+                                description="HOMS hiện đang áp dụng chính sách khảo sát trực tuyến (Online) 100% nhằm rút ngắn tối đa thời gian chờ đợi báo giá và làm hợp đồng cho khách hàng. Nếu khối lượng đồ đạc thực tế quá lớn hoặc tính chất phức tạp, chuyên viên của chúng tôi sẽ chủ động đề xuất lịch khảo sát trực tiếp (Offline) sau khi tiếp nhận đơn."
+                                type="info"
+                                showIcon
+                                className="survey-info-alert"
+                            />
                         </Col>
                     </Row>
 
                     {/* CALENDAR AND TIME SLOTS - SHOWN BELOW CARDS */}
-                    {selectedMethod && (
-                        <div className="survey-details-container">
-                            <div className="survey-details">
-                                <Calendar
-                                    fullscreen={false}
-                                    onSelect={onDateSelect}
-                                    {...(selectedDate && { value: selectedDate })}
-                                    disabledDate={disabledDate}
-                                />
+                    {/* CALENDAR AND TIME SLOTS - SHOWN BELOW CARDS */}
+                    <div className="survey-details-container">
+                        <div className="survey-details">
+                            <Calendar
+                                fullscreen={false}
+                                onSelect={onDateSelect}
+                                {...(selectedDate && { value: selectedDate })}
+                                disabledDate={disabledDate}
+                            />
 
-                                <div className="time-slots">
-                                    {timeSlots.map((time, index) => {
-                                        const isDisabled = isTimeSlotDisabled(time);
-                                        return (
-                                            <div
-                                                key={index}
-                                                className={`time-slot ${selectedTimeIndex === index ? 'selected' : ''} ${isDisabled ? 'disabled' : ''}`}
-                                                onClick={() => !isDisabled && setSelectedTimeIndex(index)}
-                                                style={{
-                                                    cursor: isDisabled ? 'not-allowed' : 'pointer',
-                                                    opacity: isDisabled ? 0.5 : 1
-                                                }}
-                                            >
-                                                {time}
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-
-                                {/* Show time gap information when both date and time are selected */}
-                                {selectedDate && selectedTimeIndex !== null && orderData?.movingDate && (
-                                    <div style={{
-                                        marginTop: '20px',
-                                        padding: '12px 16px',
-                                        backgroundColor: '#f0f7f0',
-                                        borderLeft: '4px solid #44624A',
-                                        borderRadius: '4px',
-                                        fontSize: '13px',
-                                        color: '#333'
-                                    }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                            <span style={{ fontWeight: '500' }}>Thời gian giữa khảo sát và chuyển nhà:</span>
-                                            <span style={{
-                                                fontWeight: 'bold',
-                                                color: '#44624A',
-                                                fontSize: '14px'
-                                            }}>
-                                                {(() => {
-                                                    const surveyDateTime = dayjs(selectedDate)
-                                                        .hour(parseInt(timeSlots[selectedTimeIndex].split(':')[0]))
-                                                        .minute(parseInt(timeSlots[selectedTimeIndex].split(':')[1]));
-                                                    const movingDate = dayjs(orderData.movingDate);
-                                                    const hoursBetween = movingDate.diff(surveyDateTime, 'hour', true);
-                                                    const days = Math.floor(hoursBetween / 24);
-                                                    const hours = Math.floor(hoursBetween % 24);
-
-                                                    if (days > 0) {
-                                                        return `${days} ngày ${hours} giờ`;
-                                                    }
-                                                    return `${hours} giờ`;
-                                                })()}
-                                            </span>
+                            <div className="time-slots">
+                                {timeSlots.map((time, index) => {
+                                    const isDisabled = isTimeSlotDisabled(time);
+                                    return (
+                                        <div
+                                            key={index}
+                                            className={`time-slot ${selectedTimeIndex === index ? 'selected' : ''} ${isDisabled ? 'disabled' : ''}`}
+                                            onClick={() => !isDisabled && setSelectedTimeIndex(index)}
+                                            style={{
+                                                cursor: isDisabled ? 'not-allowed' : 'pointer',
+                                                opacity: isDisabled ? 0.5 : 1
+                                            }}
+                                        >
+                                            {time}
                                         </div>
-                                    </div>
-                                )}
+                                    );
+                                })}
                             </div>
+
+                            {/* Show time gap information when both date and time are selected */}
+                            {selectedDate && selectedTimeIndex !== null && orderData?.movingDate && (
+                                <div className="time-gap-info">
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <span style={{ fontWeight: '500' }}>Thời gian giữa khảo sát và chuyển nhà:</span>
+                                        <span style={{
+                                            fontWeight: 'bold',
+                                            color: '#2d4f36',
+                                            fontSize: '14px'
+                                        }}>
+                                            {(() => {
+                                                const surveyDateTime = dayjs(selectedDate)
+                                                    .hour(parseInt(timeSlots[selectedTimeIndex].split(':')[0]))
+                                                    .minute(parseInt(timeSlots[selectedTimeIndex].split(':')[1]));
+                                                const movingDate = dayjs(orderData.movingDate);
+                                                const hoursBetween = movingDate.diff(surveyDateTime, 'hour', true);
+                                                const days = Math.floor(hoursBetween / 24);
+                                                const hours = Math.floor(hoursBetween % 24);
+
+                                                if (days > 0) {
+                                                    return `${days} ngày ${hours} giờ`;
+                                                }
+                                                return `${hours} giờ`;
+                                            })()}
+                                        </span>
+                                    </div>
+                                </div>
+                            )}
                         </div>
-                    )}
+                    </div>
 
                     <div className="confirmation-info">
                         <Checkbox

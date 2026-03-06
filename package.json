@@ -9,7 +9,7 @@
     "@tensorflow-models/coco-ssd": "^2.2.3",
     "@tensorflow/tfjs": "^4.22.0",
     "antd": "^5.29.3",
-    "axios": "^1.13.3",
+    "axios": "^1.13.6",
     "dayjs": "^1.11.19",
     "jwt-decode": "^4.0.0",
     "leaflet": "^1.9.4",

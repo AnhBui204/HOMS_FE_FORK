@@ -19,7 +19,7 @@ const AppHeader = () => {
 
   // Danh sách menu mới theo yêu cầu
   const navItems = [
-    { key: "dashboard", label: "Bảng Điều Khiển", path: "/" },
+    { key: "dashboard", label: "Bảng Điều Khiển", path: "/customer/dashboard" },
     { key: "services", label: "Các Dịch Vụ", path: "/customer/service-packages" },
     { key: "orders", label: "Đơn Chuyển", path: "/customer/order" },
     { key: "transport", label: "Phương Tiện Di Chuyển", path: "/customer/transport" },
