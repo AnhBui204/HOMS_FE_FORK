@@ -136,13 +136,23 @@ export const createPaymentLink = async (ticketId, amount) => {
         normalizeApiError(error);
     }
 };
+export const createMovingDeposit = async(ticketId)=>{
+    try{
+        const response = await api.post(`/request-tickets/${ticketId}/deposit`)
+        return response.data;
+    }catch (error) {
+        console.error('Error creating payment link:', error);
+        normalizeApiError(error);
+    }
+}
 
 const orderService = {
     createOrder,
     getMyOrders,
     getOrderById,
     cancelOrder,
-     createPaymentLink
+     createPaymentLink,
+     createMovingDeposit
 };
 
 export default orderService;
