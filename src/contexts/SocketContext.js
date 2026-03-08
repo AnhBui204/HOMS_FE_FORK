@@ -16,6 +16,9 @@ const SOCKET_OPTIONS = {
   reconnectionAttempts: 5,
   reconnectionDelay: 1000,
   timeout: 20000,
+  extraHeaders: {
+    "ngrok-skip-browser-warning": "69420",
+  },
 };
 
 export const SocketProvider = ({ children }) => {

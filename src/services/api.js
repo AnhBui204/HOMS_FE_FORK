@@ -5,6 +5,9 @@ import { getValidAccessToken } from './authService';
 const api = axios.create({
   baseURL: process.env.REACT_APP_API_URL,
   withCredentials: true,
+  headers: {
+    "ngrok-skip-browser-warning": "69420",
+  },
 });
 const PUBLIC_ENDPOINTS = [
   '/auth/login',

@@ -1,6 +1,9 @@
 import api from './api';
 export const login = (data) =>
-  api.post("/auth/login", data, { withCredentials: true });
+  api.post("/auth/login", data, {
+    withCredentials: true,
+    headers: { "ngrok-skip-browser-warning": "69420" }
+  });
 export const register = (data) => api.post('/auth/register', data);
 export const sendRegistrationOTP = (data) => api.post('/auth/send-registration-otp', data);
 export const verifyRegistrationOTP = (data) => api.post('/auth/verify-registration-otp', data);
@@ -73,7 +76,12 @@ export const getValidAccessToken = async () => {
 export const refreshAccessToken = async () => {
   console.log("📡 [Auth] Token hết hạn, đang Refresh...");
   try {
-    const res = await api.post("/auth/refresh", {}, { withCredentials: true });
+    const res = await api.post("/auth/refresh", {}, {
+      withCredentials: true,
+      headers: {
+        "ngrok-skip-browser-warning": "69420"
+      }
+    });
     const { accessToken, expiresInMs } = res.data.data || res.data;
     saveAccessToken(accessToken, expiresInMs);
     return accessToken;
@@ -84,6 +92,9 @@ export const refreshAccessToken = async () => {
 
 
 export const loginGoogle = (googleToken) => {
-  return api.post('/auth/google-login', { token: googleToken }, { withCredentials: true });
+  return api.post('/auth/google-login', { token: googleToken }, {
+    withCredentials: true,
+    headers: { "ngrok-skip-browser-warning": "69420" }
+  });
 
 };
