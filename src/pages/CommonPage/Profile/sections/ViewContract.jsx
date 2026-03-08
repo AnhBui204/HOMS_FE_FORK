@@ -10,8 +10,9 @@ export default function ViewContract() {
     const downloadPDF = async () => {
         const id = selectedContract._id;
 
-        const res = await fetch(`http://localhost:5000/api/contracts/export/${id}`, {
+        const res = await fetch(`${process.env.REACT_APP_API_URL}/contracts/export/${id}`, {
             method: "GET",
+            headers: { "ngrok-skip-browser-warning": "69420" }
         });
 
         const blob = await res.blob(); // nhận file PDF dạng blob
@@ -29,7 +30,9 @@ export default function ViewContract() {
     };
 
     useEffect(() => {
-        fetch(`http://localhost:5000/api/contracts`)
+        fetch(`${process.env.REACT_APP_API_URL}/contracts`, {
+            headers: { "ngrok-skip-browser-warning": "69420" }
+        })
             .then(res => res.json())
             .then(data => {
                 setContracts(data);
@@ -113,7 +116,7 @@ export default function ViewContract() {
                                 <div style={{ marginTop: 8 }}>
                                     {selectedContract.ownerSignature ? (
                                         <img
-                                            src={`http://localhost:5000${selectedContract.ownerSignature}`}
+                                            src={`${process.env.REACT_APP_API_URL.replace('/api', '')}${selectedContract.ownerSignature}`}
                                             alt="signature-owner"
                                             style={{
                                                 width: 200,

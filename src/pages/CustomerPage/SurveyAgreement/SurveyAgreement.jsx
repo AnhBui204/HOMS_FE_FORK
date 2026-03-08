@@ -19,8 +19,8 @@ const SurveyAgreement = () => {
     const [orderData, setOrderData] = useState(location.state?.orderData || null);
     const [surveyData, setSurveyData] = useState(location.state?.surveyData || null);
     const [ticketId] = useState(location.state?.ticketId || null);
-    const [depositAmount] = useState(location.state?.depositAmount || 100000);
     const [agreedToContract, setAgreedToContract] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
         if (!isAuthenticated) {
@@ -28,7 +28,6 @@ const SurveyAgreement = () => {
                 localStorage.setItem('pendingOrder', JSON.stringify({
                     orderData,
                     surveyData,
-                    depositAmount,
                     ticketId,
                     timestamp: new Date().getTime()
                 }));
@@ -57,7 +56,7 @@ const SurveyAgreement = () => {
                 navigate('/customer/create-moving-order');
             }
         }
-    }, [depositAmount, isAuthenticated, navigate, orderData, surveyData]);
+    }, [isAuthenticated, navigate, orderData, surveyData]);
 
     const contractNumber = useMemo(() => {
         const now = dayjs();
@@ -78,20 +77,26 @@ const SurveyAgreement = () => {
         navigate('/customer/confirm-order', { state: { orderData } });
     };
 
-    const handleContinue = () => {
+    const handleContinue = async () => {
         if (!agreedToContract) {
             message.error('Vui lòng xác nhận đồng ý nội dung hợp đồng trước khi tiếp tục.');
             return;
         }
 
-        navigate('/customer/deposit', {
-            state: {
-                orderData,
-                surveyData,
-                depositAmount,
-                ticketId
-            }
-        });
+        if (!ticketId) {
+            message.error('Không tìm thấy thông tin đơn hàng. Vui lòng bắt đầu lại.');
+            navigate('/customer/create-moving-order');
+            return;
+        }
+
+        setIsSubmitting(true);
+        try {
+            localStorage.removeItem('pendingOrder');
+            message.success('Yêu cầu khảo sát đã được ghi nhận! Chúng tôi sẽ liên hệ sớm nhất.');
+            navigate('/customer/order');
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     if (!orderData || !surveyData) {
@@ -140,7 +145,7 @@ const SurveyAgreement = () => {
                                 <p><strong>Mã thỏa thuận:</strong> {contractNumber}</p>
                                 <p><strong>Ngày lập:</strong> {dayjs().format('DD/MM/YYYY')}</p>
                             </div>
-                            <div className="contract-status">Đang chờ thanh toán phí khảo sát</div>
+                            <div className="contract-status">Chờ xác nhận</div>
                         </div>
 
                         <Row gutter={[24, 16]}>
@@ -168,7 +173,6 @@ const SurveyAgreement = () => {
                                 <li>HOMS tiếp nhận yêu cầu và sẽ thực hiện khảo sát thực tế tại địa điểm do Khách hàng chỉ định theo đúng lịch trình đã thỏa thuận.</li>
                                 <li>Việc khảo sát có thể được tiến hành bằng hình thức trực tuyến (Video Call) hoặc trực tiếp (Offline) tùy thuộc vào độ phức tạp của từng công trình. HOMS giữ quyền quyết định nhằm đảm bảo tính chính xác nhất.</li>
                                 <li>Báo giá chính thức và phương án thi công chi tiết sẽ chỉ được cung cấp sau khi quá trình khảo sát được hoàn tất trọn vẹn. <strong>(Lưu ý quan trọng: Tại thời điểm ký kết thỏa thuận này, giá trị cuối cùng của Hợp đồng dịch vụ chưa được xác định)</strong>.</li>
-                                <li>Khách hàng cam kết thanh toán một khoản Phí đặt cọc khảo sát trị giá: {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(depositAmount)}. Khoản phí này có thể được hoàn hoặc khấu trừ vào tổng giá trị Hợp đồng dịch vụ tùy theo chính sách.</li>
                                 <li>Mọi thông tin chi tiết về đơn vận chuyển sẽ chỉ có giá trị pháp lý sau khi quá trình khảo sát kết thúc và hai bên đồng thuận chốt báo giá.</li>
                             </ul>
                         </div>
@@ -191,7 +195,8 @@ const SurveyAgreement = () => {
                             type="primary"
                             size="large"
                             className="confirm-button"
-                            disabled={!agreedToContract}
+                            disabled={!agreedToContract || isSubmitting}
+                            loading={isSubmitting}
                             onClick={handleContinue}
                         >
                             Tiếp tục

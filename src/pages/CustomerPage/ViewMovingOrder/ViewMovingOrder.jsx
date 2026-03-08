@@ -276,17 +276,18 @@ const ViewMovingOrder = () => {
                                 type="primary"
                                 style={{ background: '#52c41a', borderColor: '#52c41a', minWidth: '120px' }}
                                 icon={<CheckCircleOutlined />}
-                                onClick={async () => {
-                                    try {
-                                        // Gọi API chấp nhận báo giá
-                                        await api.put(`/request-tickets/${record._id}/accept-quote`);
-                                        message.success("Đã chấp nhận báo giá, vui lòng ký hợp đồng.");
-                                        // Chuyển tới trang Ký Hợp Đồng Mới
-                                        window.location.href = `/customer/sign-contract/${record._id}`;
-                                    } catch (err) {
-                                        message.error("Lỗi khi chấp nhận báo giá: " + (err.response?.data?.message || err.message));
-                                    }
-                                }}
+                                // onClick={async () => {
+                                //     try {
+                                //         // Gọi API chấp nhận báo giá
+                                //         await api.put(`/request-tickets/${record._id}/accept-quote`);
+                                //         message.success("Đã chấp nhận báo giá, vui lòng ký hợp đồng.");
+                                //         // Chuyển tới trang Ký Hợp Đồng Mới
+                                //         window.location.href = `/customer/sign-contract/${record._id}`;
+                                //     } catch (err) {
+                                //         message.error("Lỗi khi chấp nhận báo giá: " + (err.response?.data?.message || err.message));
+                                //     }
+                                // }}
+                                onClick={() => handleViewSurvey(record)}
                             >
                                 Chấp nhận
                             </Button>
@@ -340,6 +341,16 @@ const ViewMovingOrder = () => {
                     )}
 
 
+                    {/* Situation 2: ACCEPTED but payment not done yet — allow retry via contract review */}
+                    {record.status === 'ACCEPTED' && record.invoice?.paymentStatus === 'UNPAID' && (
+                        <Button
+                            type="primary"
+                            style={{ background: '#d9363e', borderColor: '#d9363e', minWidth: '140px' }}
+                            onClick={() => window.location.href = `/customer/sign-contract/${record._id}`}
+                        >
+                            Thanh toán cọc
+                        </Button>
+                    )}
 
                 </div>
             ),
@@ -375,14 +386,39 @@ const ViewMovingOrder = () => {
                     open={isSurveyModalVisible}
                     onCancel={() => setIsSurveyModalVisible(false)}
                     footer={[
-                        selectedTicketPricing?.totalPrice > 1000000 && (
+                        // Situation 1: QUOTED — accept + sign contract + pay
+                        selectedTicket?.status === 'QUOTED' && (
                             <Button
-                                key="deposit"
+                                key="accept"
                                 type="primary"
-                                style={{ background: "#d9363e" }}
-                                onClick={() => handleDepositPayment(selectedTicket)}
+                                icon={<CheckCircleOutlined />}
+                                style={{ background: '#52c41a', borderColor: '#52c41a' }}
+                                onClick={async () => {
+                                    try {
+                                        await api.put(`/request-tickets/${selectedTicket._id}/accept-quote`);
+                                        message.success('Đã chấp nhận báo giá, vui lòng ký hợp đồng và thanh toán cọc.');
+                                        setIsSurveyModalVisible(false);
+                                        window.location.href = `/customer/sign-contract/${selectedTicket._id}`;
+                                    } catch (err) {
+                                        message.error('Lỗi khi chấp nhận báo giá: ' + (err.response?.data?.message || err.message));
+                                    }
+                                }}
                             >
-                                Thanh toán cọc 50%
+                                Chấp nhận &amp; Thanh toán
+                            </Button>
+                        ),
+                        // Situation 2: ACCEPTED but invoice UNPAID — navigate to contract page to review then pay
+                        selectedTicket?.status === 'ACCEPTED' && selectedTicket?.invoice?.paymentStatus === 'UNPAID' && (
+                            <Button
+                                key="pay"
+                                type="primary"
+                                style={{ background: '#d9363e', borderColor: '#d9363e' }}
+                                onClick={() => {
+                                    setIsSurveyModalVisible(false);
+                                    window.location.href = `/customer/sign-contract/${selectedTicket._id}`;
+                                }}
+                            >
+                                Xem HĐ &amp; Thanh toán cọc
                             </Button>
                         ),
                         <Button key="close" onClick={() => setIsSurveyModalVisible(false)}>
