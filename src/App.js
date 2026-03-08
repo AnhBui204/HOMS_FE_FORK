@@ -1,24 +1,25 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { GoogleOAuthProvider } from "@react-oauth/google";
-import LandingPage from './pages/CommonPage/LandingPage/LandingPage';
-import About from './pages/CommonPage/About/About';
-import LoginPage from './pages/CustomerPage/Auth/LoginPage';
-import RegisterPage from './pages/CustomerPage/Auth/RegisterPage'
-import { UserProvider } from './contexts/UserContext';
-import ForgotPasswordPage from './pages/CustomerPage/Auth/ForgotPasswordPage'
-import ChangePasswordPage from './pages/CustomerPage/Auth/ChangePasswordPage';
-import VerifyOTPPage from './pages/CustomerPage/Auth/VerifyOTPPage';
-import ResetPasswordPage from './pages/CustomerPage/Auth/ResetPasswordPage';
+import LandingPage from "./pages/CommonPage/LandingPage/LandingPage";
+import About from "./pages/CommonPage/About/About";
+import LoginPage from "./pages/CustomerPage/Auth/LoginPage";
+import RegisterPage from "./pages/CustomerPage/Auth/RegisterPage";
+import { UserProvider } from "./contexts/UserContext";
+import ForgotPasswordPage from "./pages/CustomerPage/Auth/ForgotPasswordPage";
+import ChangePasswordPage from "./pages/CustomerPage/Auth/ChangePasswordPage";
+import VerifyOTPPage from "./pages/CustomerPage/Auth/VerifyOTPPage";
+import ResetPasswordPage from "./pages/CustomerPage/Auth/ResetPasswordPage";
 import PaymentSuccess from "./pages/payment/PaymentSuccess";
 import PaymentCancel from "./pages/payment/PaymentCancel";
-import RoutesCus from './routes/CustomerRoutes/RoutesCus';
-import RoutesDispatcher from './routes/DispatcherRoutes/DispatcherRoutes'; import RoutesAdmin from './routes/AdminRoutes/RoutesAdmin';
+import RoutesCus from "./routes/CustomerRoutes/RoutesCus";
+import RoutesAdmin from "./routes/AdminRoutes/RoutesAdmin";
+import RoutesDispatcher from './routes/DispatcherRoutes/DispatcherRoutes';
+import RoutesStaff from "./routes/StaffRoutes/RoutesStaff";
 
 function App() {
   const googleClientId = process.env.REACT_APP_GOOGLE_CLIENT_ID;
   return (
     <GoogleOAuthProvider clientId={googleClientId}>
-
       <BrowserRouter>
         <UserProvider>
           <Routes>
@@ -31,15 +32,15 @@ function App() {
             <Route path="/change-password" element={<ChangePasswordPage />} />
             <Route path="/verify-otp" element={<VerifyOTPPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
-<Route path="/payment/success" element={<PaymentSuccess />} />
-<Route path="/payment/cancel" element={<PaymentCancel />} />
+            <Route path="/payment/success" element={<PaymentSuccess />} />
+            <Route path="/payment/cancel" element={<PaymentCancel />} />
             <Route path="/customer/*" element={<RoutesCus />} />
             <Route path="/admin/*" element={<RoutesAdmin />} />
             <Route path="/dispatcher/*" element={<RoutesDispatcher />} />
+            <Route path="/staff/*" element={<RoutesStaff />} />
           </Routes>
         </UserProvider>
       </BrowserRouter>
-
     </GoogleOAuthProvider>
   );
 }

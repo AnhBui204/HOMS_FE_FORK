@@ -1,0 +1,331 @@
+/* ── MAIN LAYOUT ──────────────────────────────────────── */
+.staff-delivery {
+    display: flex;
+    height: calc(100vh - 140px);
+    gap: 0;
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+/* ══ LEFT PANEL ═══════════════════════════════════════ */
+.delivery-left {
+    flex: 4;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid #e8e8e8;
+    background: #fafafa;
+    overflow: hidden;
+}
+
+/* ── Search + filter bar ───────────────────────────────── */
+.delivery-search {
+    padding: 12px 14px;
+    background: #fff;
+    border-bottom: 1px solid #f0f0f0;
+    flex-shrink: 0;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.tracking-search {
+    flex: 1;
+}
+
+.tracking-search .ant-input-affix-wrapper {
+    border-radius: 20px;
+    border-color: #d9d9d9;
+}
+
+.status-filter-select {
+    width: 140px;
+    flex-shrink: 0;
+}
+
+.status-filter-select .ant-select-selector {
+    border-radius: 20px !important;
+}
+
+/* ── Cards list ─────────────────────────────────────── */
+.order-cards-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.order-cards-list::-webkit-scrollbar { width: 4px; }
+.order-cards-list::-webkit-scrollbar-thumb { background: #ccc; border-radius: 2px; }
+
+/* ── Delivery card ───────────────────────────────────── */
+.delivery-card {
+    background: #fff;
+    border: 1.5px solid #e8e8e8;
+    border-radius: 12px;
+    padding: 14px 16px;
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.delivery-card:hover {
+    border-color: #44624A;
+    box-shadow: 0 2px 8px rgba(68, 98, 74, 0.1);
+}
+
+.delivery-card.expanded {
+    border-color: #44624A;
+    box-shadow: 0 4px 12px rgba(68, 98, 74, 0.15);
+}
+
+/* ── Card header row ──────────────────────────────────── */
+.card-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.tracking-number {
+    font-family: 'Courier New', monospace;
+    font-weight: 700;
+    font-size: 13.5px;
+    color: #222;
+}
+
+.card-status-badge {
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+}
+
+/* ── Card body ────────────────────────────────────────── */
+.card-body {
+    margin-top: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+/* Estimate time row */
+.card-estimate {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.est-time {
+    font-size: 15px;
+    font-weight: 700;
+    color: #222;
+    margin-right: 8px;
+}
+
+.est-date {
+    font-size: 12px;
+    color: #888;
+}
+
+/* ── Progress bar ─────────────────────────────────────── */
+.delivery-progress-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.dp-track {
+    position: relative;
+    height: 6px;
+    background: #e8e8e8;
+    border-radius: 3px;
+    overflow: visible;
+    margin: 8px 0;
+}
+
+@keyframes dp-shimmer {
+    0%   { background-position: 200% center; }
+    100% { background-position: -200% center; }
+}
+
+.dp-fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    background: linear-gradient(90deg, #44624A 0%, #7aab83 40%, #b8dfc0 50%, #7aab83 60%, #44624A 100%);
+    background-size: 200% 100%;
+    border-radius: 3px;
+    transition: width 0.5s ease;
+    animation: dp-shimmer 2.5s linear infinite;
+}
+
+.dp-truck {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%) scaleX(-1);
+    font-size: 22px;
+    line-height: 1;
+    transition: left 0.5s ease;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.25));
+}
+
+.dp-label {
+    font-size: 11px;
+    color: #888;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.dp-label.right {
+    align-self: flex-end;
+    margin-top: -4px;
+}
+
+.dp-label.left {
+    align-self: flex-start;
+}
+
+/* ── Addresses side-by-side ───────────────────────────── */
+.card-addresses {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+    background: #f7f8f7;
+    border-radius: 10px;
+    padding: 12px 16px;
+}
+
+.addr-col {
+    flex: 1;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 4px 0;
+}
+
+.addr-col.dropoff-col {
+    justify-content: flex-end;
+    text-align: right;
+}
+
+.addr-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 4px;
+}
+
+.pickup-dot  { background: #44624A; }
+.dropoff-dot { background: #fa8c16; }
+
+.addr-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #444;
+}
+
+.addr-text {
+    font-size: 12px;
+    color: #777;
+}
+
+/* ── Driver section ───────────────────────────────────── */
+.driver-section {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: #f7f8f7;
+    border-radius: 10px;
+}
+
+.driver-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.driver-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.driver-name {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #222;
+}
+
+.driver-role {
+    font-size: 11.5px;
+    color: #888;
+}
+
+.driver-actions {
+    display: flex;
+    gap: 8px;
+}
+
+/* ══ RIGHT PANEL — MAP ════════════════════════════════ */
+.delivery-right {
+    flex: 6;
+    min-width: 0;
+    position: relative;
+}
+
+.delivery-map {
+    width: 100%;
+    height: 100%;
+    min-height: 400px;
+}
+
+/* ── Leaflet z-index fix inside Ant Design ────────────── */
+.delivery-map .leaflet-pane,
+.delivery-map .leaflet-top,
+.delivery-map .leaflet-bottom {
+    z-index: 1 !important;
+}
+
+.delivery-map .leaflet-control-container .leaflet-top,
+.delivery-map .leaflet-control-container .leaflet-bottom {
+    z-index: 999 !important;
+}
+
+/* ── Custom markers ───────────────────────────────────── */
+.truck-marker {
+    font-size: 28px;
+    line-height: 1;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
+}
+
+.map-pin {
+    width: 28px;
+    height: 28px;
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 12px;
+    color: #fff;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+
+.pickup-pin {
+    background: #44624A;
+}
+
+.dropoff-pin {
+    background: #fa8c16;
+}
+
+.map-pin span {
+    transform: rotate(45deg);
+}

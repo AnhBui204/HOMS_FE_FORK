@@ -1,0 +1,216 @@
+/* ── PAGE WRAPPER ─────────────────────────────────────── */
+.staff-order-list {
+    background: #fff;
+    border-radius: 12px;
+    padding: 24px;
+    min-height: calc(100vh - 180px);
+}
+
+/* ── TOOLBAR ──────────────────────────────────────────── */
+.order-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.search-group .ant-select .ant-select-selector {
+    border-radius: 8px 0 0 8px !important;
+    border-right: none !important;
+}
+
+.search-group .ant-input-affix-wrapper {
+    border-radius: 0 8px 8px 0 !important;
+}
+
+/* ── TABLE ────────────────────────────────────────────── */
+.orders-table .ant-table-thead > tr > th {
+    background: #f7f8fa;
+    font-size: 12px;
+    font-weight: 700;
+    color: #444;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid #e8e8e8;
+}
+
+.orders-table .ant-table-tbody > tr:hover > td {
+    background: #f9fbf9 !important;
+}
+
+.order-id-cell {
+    font-family: 'Courier New', Courier, monospace;
+    font-weight: 600;
+    color: #333;
+    font-size: 13px;
+}
+
+/* ── STATUS BADGE ─────────────────────────────────────── */
+.order-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 12px;
+    border-radius: 20px;
+    font-size: 12.5px;
+    font-weight: 600;
+    border: 1px solid transparent;
+    white-space: nowrap;
+}
+
+/* ── PAGINATION ───────────────────────────────────────── */
+.orders-table .ant-pagination {
+    margin-top: 16px;
+}
+
+.orders-table .ant-pagination-item-active {
+    border-color: #44624A;
+    background: #44624A;
+}
+
+.orders-table .ant-pagination-item-active a {
+    color: #fff;
+}
+
+.orders-table .ant-pagination-item:hover {
+    border-color: #44624A;
+}
+
+.orders-table .ant-pagination-item:hover a {
+    color: #44624A;
+}
+
+/* ── DRAWER ───────────────────────────────────────────── */
+.order-desc .ant-descriptions-item-label {
+    font-weight: 600;
+    color: #555;
+    background: #f7f8fa;
+    width: 140px;
+}
+
+/* ── ADD ITEM FORM ────────────────────────────────────── */
+.add-item-form {
+    background: #f9fbf9;
+    border: 1.5px dashed #b7cebc;
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+}
+
+.add-item-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.image-upload-box {
+    width: 64px;
+    height: 64px;
+    border: 1.5px dashed #44624A;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    overflow: hidden;
+    background: #fff;
+    color: #44624A;
+    font-size: 18px;
+    flex-shrink: 0;
+    transition: border-color 0.2s;
+}
+
+.image-upload-box:hover {
+    border-color: #2d4a34;
+}
+
+.item-preview-img {
+    width: 64px;
+    height: 64px;
+    object-fit: cover;
+}
+
+/* ── ITEM LIST ────────────────────────────────────────── */
+.empty-items {
+    text-align: center;
+    color: #aaa;
+    padding: 24px 0;
+    font-size: 14px;
+    border: 1px dashed #e0e0e0;
+    border-radius: 8px;
+}
+
+.item-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 340px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.item-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #f9f9f9;
+    border: 1px solid #f0f0f0;
+    border-radius: 8px;
+    padding: 8px 12px;
+}
+
+.item-index {
+    width: 22px;
+    height: 22px;
+    background: #44624A;
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.item-no-img {
+    width: 48px;
+    height: 48px;
+    border: 1px dashed #ccc;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ccc;
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+.item-name {
+    flex: 1;
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+}
+
+/* ── DRAWER FOOTER ACTIONS ────────────────────────────── */
+.drawer-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}

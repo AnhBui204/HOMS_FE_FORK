@@ -1,0 +1,213 @@
+/* ═══════════════════════════════════════
+   Staff Dashboard Styles
+═══════════════════════════════════════ */
+
+.staff-dashboard {
+    text-align: left;
+}
+
+/* ── Stat Cards ──────────────────────── */
+.staff-stat-card {
+    border-radius: 12px !important;
+    border: 1px solid #f0f0f0 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    transition: box-shadow 0.2s;
+}
+
+.staff-stat-card:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.stat-card-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.stat-label {
+    font-size: 13px;
+    color: #888;
+    font-weight: 500;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.stat-value {
+    font-size: 32px;
+    font-weight: 700;
+    color: #1a1a2e;
+    line-height: 1.1;
+    margin-bottom: 6px;
+}
+
+.stat-trend {
+    font-size: 12px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.trend-up {
+    color: #52c41a;
+}
+
+.trend-down {
+    color: #ff4d4f;
+}
+
+.stat-icon-wrap {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+/* ── Schedule ────────────────────────── */
+.schedule-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding-top: 4px;
+}
+
+.schedule-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid #f5f5f5;
+}
+
+.schedule-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.schedule-time {
+    font-weight: 700;
+    font-size: 14px;
+    color: #1a1a2e;
+    min-width: 42px;
+    flex-shrink: 0;
+}
+
+.schedule-label {
+    font-size: 14px;
+    color: #444;
+    line-height: 1.4;
+}
+
+/* ── Order Tabs ──────────────────────── */
+.order-tabs {
+    display: flex;
+    gap: 24px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.order-tab-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    color: #888;
+    padding: 0 0 10px 0;
+    position: relative;
+    transition: color 0.2s;
+}
+
+.order-tab-btn.active {
+    color: #44624A;
+}
+
+.order-tab-btn.active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: #44624A;
+    border-radius: 2px;
+}
+
+.order-tab-btn:hover {
+    color: #44624A;
+}
+
+/* ── Order Cards ─────────────────────── */
+.order-card {
+    border: 1px solid #e8e8e8;
+    border-radius: 12px;
+    padding: 16px 18px;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    transition: box-shadow 0.2s;
+}
+
+.order-card:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.order-card-id {
+    font-size: 11px;
+    color: #aaa;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+}
+
+.order-card-item {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1a1a2e;
+}
+
+.order-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-top: 4px;
+}
+
+.order-card-price {
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+}
+
+.order-card-date {
+    font-size: 10px;
+    color: #bbb;
+    margin-top: 3px;
+    letter-spacing: 0.3px;
+}
+
+.order-status-btn {
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 7px 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: opacity 0.2s;
+    white-space: nowrap;
+}
+
+.order-status-btn:hover {
+    opacity: 0.85;
+}
+
+.btn-chevron {
+    font-size: 11px;
+}
