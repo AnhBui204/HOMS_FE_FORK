@@ -42,7 +42,7 @@ const SurveyInput = () => {
 
   const getRouteDistance = async (origin, destination) => {
     try {
-      const MAPBOX_ACCESS_TOKEN = process.env.REACT_APP_MAPBOX_TOKEN; 
+      const MAPBOX_ACCESS_TOKEN = process.env.REACT_APP_MAPBOX_TOKEN;
       // Replace with env variable if needed.
 
       const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${origin.lng},${origin.lat};${destination.lng},${destination.lat}?geometries=geojson&access_token=${MAPBOX_ACCESS_TOKEN}`;
