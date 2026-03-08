@@ -16,7 +16,7 @@ const AppHeader = () => {
   const { user, logout, loading } = useUser();
   const navigate = useNavigate();
   const location = useLocation();
- const isDispatcherMode = location.pathname.startsWith("/dispatcher");
+  const isDispatcherMode = location.pathname.startsWith("/dispatcher");
   // Danh sách menu mới theo yêu cầu
   const navItems = [
     { key: "dashboard", label: "Bảng Điều Khiển", path: "/customer/dashboard" },
@@ -32,6 +32,8 @@ const AppHeader = () => {
     const activeItem = navItems.find(item => item.path === currentPath);
     if (activeItem) {
       setActiveMenu(activeItem.key);
+    } else {
+      setActiveMenu("");
     }
   }, [location.pathname]);
 
@@ -41,9 +43,9 @@ const AppHeader = () => {
   };
 
   if (loading) return null;
- const handleLogout = () => {
+  const handleLogout = () => {
     logout();
-    navigate("/login"); 
+    navigate("/login");
   };
 
   return (
@@ -61,7 +63,11 @@ const AppHeader = () => {
             <Col>
               <div
                 className="logo"
-                onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                onClick={() => {
+                  navigate("/");
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+                style={{ cursor: "pointer" }}
               >
                 <img
                   src="/images/logo.png"
@@ -73,8 +79,8 @@ const AppHeader = () => {
 
             {/* Giữa & Phải: Tìm kiếm + Nút Liên Hệ */}
             <Col xs={0} md={16} lg={12}>
-                        <div className="top-actions" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '15px' }}>
-               {!isDispatcherMode && (
+              <div className="top-actions" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '15px' }}>
+                {!isDispatcherMode && (
                   <>
                     <Input
                       prefix={<SearchOutlined style={{ color: "#ccc" }} />}
@@ -87,7 +93,7 @@ const AppHeader = () => {
                     </Button>
                   </>
                 )}
-                
+
                 {!user ? (
                   <>
                     <Link to="/login">
@@ -118,7 +124,7 @@ const AppHeader = () => {
                           key: "logout",
                           label: "Đăng xuất",
                           danger: true,
-                           onClick: handleLogout,
+                          onClick: handleLogout,
                         },
                       ],
                     }}
@@ -147,7 +153,7 @@ const AppHeader = () => {
             </Col>
 
             {/* Mobile Menu Button (Hiện khi màn hình nhỏ) */}
-             {!isDispatcherMode && (
+            {!isDispatcherMode && (
               <Col xs={4} md={0} style={{ textAlign: "right" }}>
                 <Button
                   type="text"
@@ -162,7 +168,7 @@ const AppHeader = () => {
       </div>
 
       {/* --- PHẦN 2: BOTTOM BAR (NỀN XANH #44624A) --- */}
-       {!isDispatcherMode && (
+      {!isDispatcherMode && (
         <div className="header-bottom">
           <div className="container">
             <ul className="bottom-nav">
@@ -180,7 +186,7 @@ const AppHeader = () => {
         </div>
       )}
       {/* Mobile Drawer giữ nguyên logic cũ */}
-       {!isDispatcherMode && (
+      {!isDispatcherMode && (
         <Drawer
           title="Menu"
           placement="right"

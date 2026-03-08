@@ -41,7 +41,7 @@ const ViewMovingOrder = () => {
     const handleViewSurvey = async (ticket) => {
         try {
             // Lấy khảo sát
-               setSelectedTicket(ticket);  
+            setSelectedTicket(ticket);
             const res = await api.get(`/surveys/ticket/${ticket._id}`);
             const surveyData = res.data?.data || res.data;
             setSelectedSurvey(surveyData);
@@ -62,51 +62,51 @@ const ViewMovingOrder = () => {
             message.error("Không thể tải thông tin khảo sát: " + (error.response?.data?.message || error.message));
         }
     };
-const handleDepositPayment = (ticket) => {
-   
-    confirm({
-        title: "Xác nhận thanh toán cọc",
-        content: (
-            <>
-                <p>Bạn sắp thanh toán <b>50% giá trị đơn hàng</b>.</p>
-                <p>
-                    Số tiền cọc:{" "}
-                    <b style={{ color: "#d9363e" }}>
-                        {(ticket.pricing.totalPrice / 2).toLocaleString()} ₫
-                    </b>
-                </p>
-                <p>Bạn có chắc chắn muốn tiếp tục?</p>
-            </>
-        ),
-        okText: "Thanh toán",
-        cancelText: "Hủy",
-        okType: "primary",
+    const handleDepositPayment = (ticket) => {
 
-        onOk: async () => {
-            try {
+        confirm({
+            title: "Xác nhận thanh toán cọc",
+            content: (
+                <>
+                    <p>Bạn sắp thanh toán <b>50% giá trị đơn hàng</b>.</p>
+                    <p>
+                        Số tiền cọc:{" "}
+                        <b style={{ color: "#d9363e" }}>
+                            {(ticket.pricing.totalPrice / 2).toLocaleString()} ₫
+                        </b>
+                    </p>
+                    <p>Bạn có chắc chắn muốn tiếp tục?</p>
+                </>
+            ),
+            okText: "Thanh toán",
+            cancelText: "Hủy",
+            okType: "primary",
 
-                const depositAmount = Math.floor(ticket.pricing.totalPrice * 0.5);
+            onOk: async () => {
+                try {
 
-                const res = await orderService.createMovingDeposit(
-                    ticket._id,
-                    depositAmount
-                );
+                    const depositAmount = Math.floor(ticket.pricing.totalPrice * 0.5);
 
-                if (res?.data?.checkoutUrl) {
-                    window.location.href = res.data.checkoutUrl;
-                } else {
-                    message.error("Không tạo được link thanh toán");
+                    const res = await orderService.createMovingDeposit(
+                        ticket._id,
+                        depositAmount
+                    );
+
+                    if (res?.data?.checkoutUrl) {
+                        window.location.href = res.data.checkoutUrl;
+                    } else {
+                        message.error("Không tạo được link thanh toán");
+                    }
+
+                } catch (err) {
+                    message.error(
+                        "Không thể tạo thanh toán: " +
+                        (err.response?.data?.message || err.message)
+                    );
                 }
-
-            } catch (err) {
-                message.error(
-                    "Không thể tạo thanh toán: " +
-                    (err.response?.data?.message || err.message)
-                );
             }
-        }
-    });
-};
+        });
+    };
 
     // Fetch user shifting schedule from db
     useEffect(() => {
@@ -199,62 +199,62 @@ const handleDepositPayment = (ticket) => {
             render: (delivery) => delivery?.address || "Chưa cập nhật"
         },
         {
-    title: "Trạng thái đơn",
-    render: (_, record) => {
+            title: "Trạng thái đơn",
+            render: (_, record) => {
 
-        // Nếu đã có invoice → dùng trạng thái invoice
-        if (record.invoice) {
+                // Nếu đã có invoice → dùng trạng thái invoice
+                if (record.invoice) {
 
-            const invoiceStatusMap = {
-    DRAFT: { color: "purple", label: "Nháp hóa đơn" },
-    CONFIRMED: { color: "blue", label: "Đã xác nhận" },
-    ASSIGNED: { color: "cyan", label: "Đã phân công xe" },
-    IN_PROGRESS: { color: "processing", label: "Đang vận chuyển" },
-    COMPLETED: { color: "success", label: "Hoàn thành" },
-    CANCELLED: { color: "error", label: "Đã hủy" }
-};
-            const invoiceStatus = invoiceStatusMap[record.invoice.status];
+                    const invoiceStatusMap = {
+                        DRAFT: { color: "purple", label: "Nháp hóa đơn" },
+                        CONFIRMED: { color: "blue", label: "Đã xác nhận" },
+                        ASSIGNED: { color: "cyan", label: "Đã phân công xe" },
+                        IN_PROGRESS: { color: "processing", label: "Đang vận chuyển" },
+                        COMPLETED: { color: "success", label: "Hoàn thành" },
+                        CANCELLED: { color: "error", label: "Đã hủy" }
+                    };
+                    const invoiceStatus = invoiceStatusMap[record.invoice.status];
 
-            return (
-                <Tag color={invoiceStatus?.color || "purple"}>
-                    {invoiceStatus?.label || record.invoice.status}
-                </Tag>
-            );
-        }
+                    return (
+                        <Tag color={invoiceStatus?.color || "purple"}>
+                            {invoiceStatus?.label || record.invoice.status}
+                        </Tag>
+                    );
+                }
 
-        // Nếu chưa có invoice → dùng trạng thái ticket
-        return (
-            <Tag color={statusColorMap[record.status] || "default"}>
-                {statusLabelMap[record.status] || record.status}
-            </Tag>
-        );
-    }
-},
-       {
-    title: "Thanh toán",
-    render: (_, record) => {
+                // Nếu chưa có invoice → dùng trạng thái ticket
+                return (
+                    <Tag color={statusColorMap[record.status] || "default"}>
+                        {statusLabelMap[record.status] || record.status}
+                    </Tag>
+                );
+            }
+        },
+        {
+            title: "Thanh toán",
+            render: (_, record) => {
 
-        const paymentStatus = record?.invoice?.paymentStatus;
+                const paymentStatus = record?.invoice?.paymentStatus;
 
-        if (!paymentStatus) {
-            return <Tag color="default">Chưa phát sinh</Tag>;
-        }
+                if (!paymentStatus) {
+                    return <Tag color="default">Chưa phát sinh</Tag>;
+                }
 
-        const paymentMap = {
-            UNPAID: { color: "orange", label: "Chưa thanh toán" },
-            PARTIAL: { color: "green", label: "Đã đặt cọc" },
-            PAID: { color: "success", label: "Đã thanh toán" }
-        };
+                const paymentMap = {
+                    UNPAID: { color: "orange", label: "Chưa thanh toán" },
+                    PARTIAL: { color: "green", label: "Đã đặt cọc" },
+                    PAID: { color: "success", label: "Đã thanh toán" }
+                };
 
-        const payment = paymentMap[paymentStatus];
+                const payment = paymentMap[paymentStatus];
 
-        return (
-            <Tag color={payment?.color || "default"}>
-                {payment?.label || paymentStatus}
-            </Tag>
-        );
-    }
-},
+                return (
+                    <Tag color={payment?.color || "default"}>
+                        {payment?.label || paymentStatus}
+                    </Tag>
+                );
+            }
+        },
         {
             title: "Báo giá (VNĐ)",
             render: (_, record) => {
@@ -339,8 +339,8 @@ const handleDepositPayment = (ticket) => {
                         </Button>
                     )}
 
-            
-                  
+
+
                 </div>
             ),
         },
@@ -374,21 +374,21 @@ const handleDepositPayment = (ticket) => {
                     title="Chi tiết khảo sát & Báo giá"
                     open={isSurveyModalVisible}
                     onCancel={() => setIsSurveyModalVisible(false)}
-                   footer={[
-    selectedTicketPricing?.totalPrice > 1000000 && (
-       <Button
-    key="deposit"
-    type="primary"
-    style={{ background: "#d9363e" }}
-    onClick={() => handleDepositPayment(selectedTicket)}
->
-    Thanh toán cọc 50%
-</Button>
-    ),
-    <Button key="close" onClick={() => setIsSurveyModalVisible(false)}>
-        Đóng
-    </Button>
-]}
+                    footer={[
+                        selectedTicketPricing?.totalPrice > 1000000 && (
+                            <Button
+                                key="deposit"
+                                type="primary"
+                                style={{ background: "#d9363e" }}
+                                onClick={() => handleDepositPayment(selectedTicket)}
+                            >
+                                Thanh toán cọc 50%
+                            </Button>
+                        ),
+                        <Button key="close" onClick={() => setIsSurveyModalVisible(false)}>
+                            Đóng
+                        </Button>
+                    ]}
                     width={700}
                 >
                     {selectedSurvey && selectedTicketPricing ? (
