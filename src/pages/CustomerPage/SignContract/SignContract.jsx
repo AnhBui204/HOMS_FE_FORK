@@ -12,15 +12,17 @@ const SignContract = () => {
     const { ticketId } = useParams();
     const navigate = useNavigate();
     const [contract, setContract] = useState(null);
+    const [invoice, setInvoice] = useState(null);
     const [loading, setLoading] = useState(true);
     const [agreed, setAgreed] = useState(false);
     const [signing, setSigning] = useState(false);
+    const [paying, setPaying] = useState(false);
 
     useEffect(() => {
-        const fetchContract = async () => {
+        const fetchData = async () => {
             try {
                 const response = await api.get(`/customer/contracts/ticket/${ticketId}`);
-                if (response.data && response.data.success) {
+                if (response.data?.success) {
                     setContract(response.data.data);
                 } else {
                     message.error('Không thể lấy thông tin hợp đồng.');
@@ -28,14 +30,20 @@ const SignContract = () => {
             } catch (error) {
                 console.error(error);
                 message.error('Lỗi khi lấy thông tin hợp đồng: ' + (error.response?.data?.message || ''));
-            } finally {
-                setLoading(false);
             }
+
+            // Also fetch invoice to check payment status
+            try {
+                const invRes = await api.get(`/invoices/ticket/${ticketId}`);
+                if (invRes.data?.success) setInvoice(invRes.data.data);
+            } catch (_) {
+                // Invoice may not exist yet — that's fine
+            }
+
+            setLoading(false);
         };
 
-        if (ticketId) {
-            fetchContract();
-        }
+        if (ticketId) fetchData();
     }, [ticketId]);
 
     const handleSignContract = async () => {
@@ -53,8 +61,24 @@ const SignContract = () => {
             };
 
             await api.post(`/customer/contracts/${contract._id}/sign`, payload);
-            message.success('Ký hợp đồng thành công! Dịch vụ sẽ sớm được thực hiện.');
-            navigate('/customer/order');
+            message.success('Ký hợp đồng thành công! Đang chuyển hướng đến cổng thanh toán...');
+
+            // Xử lý thanh toán cọc PayOS cho Invoice vừa được tạo
+            try {
+                const depositRes = await api.post(`/request-tickets/${ticketId}/deposit`);
+                if (depositRes.data?.success && depositRes.data?.data?.checkoutUrl) {
+                    window.location.href = depositRes.data.data.checkoutUrl;
+                    return; // Stop execution to redirect securely
+                } else {
+                    message.warning('Không thể tạo link thanh toán, vui lòng thanh toán sau trong chi tiết đơn hàng.');
+                    navigate('/customer/order');
+                }
+            } catch (err) {
+                console.error("Lỗi tạo thanh toán cọc PayOS:", err);
+                message.warning('Có lỗi xảy ra khi tạo thanh toán, vui lòng thanh toán cọc sau.');
+                navigate('/customer/order');
+            }
+
         } catch (error) {
             console.error(error);
             message.error('Ký hợp đồng thất bại: ' + (error.response?.data?.message || ''));
@@ -138,8 +162,37 @@ const SignContract = () => {
                                 </div>
                             </>
                         ) : (
-                            <div style={{ textAlign: 'center', padding: '20px', background: '#e6f7ff', borderRadius: '8px' }}>
-                                <Text strong style={{ color: '#1890ff', fontSize: '16px' }}>Hợp đồng này đã được ký.</Text>
+                            <div style={{ textAlign: 'center' }}>
+                                <div style={{ padding: '20px', background: '#e6f7ff', borderRadius: '8px', marginBottom: 16 }}>
+                                    <Text strong style={{ color: '#1890ff', fontSize: '16px' }}>Hợp đồng này đã được ký.</Text>
+                                </div>
+                                {/* If invoice still unpaid, show retry payment button */}
+                                {(!invoice || invoice.paymentStatus === 'UNPAID') && (
+                                    <Button
+                                        type="primary"
+                                        size="large"
+                                        loading={paying}
+                                        style={{ background: '#d9363e', borderColor: '#d9363e', width: '240px' }}
+                                        onClick={async () => {
+                                            setPaying(true);
+                                            try {
+                                                const depositRes = await api.post(`/request-tickets/${ticketId}/deposit`);
+                                                if (depositRes.data?.success && depositRes.data?.data?.checkoutUrl) {
+                                                    window.location.href = depositRes.data.data.checkoutUrl;
+                                                } else {
+                                                    message.warning('Không thể tạo link thanh toán, vui lòng thử lại sau.');
+                                                }
+                                            } catch (err) {
+                                                console.error(err);
+                                                message.error('Lỗi thanh toán: ' + (err.response?.data?.message || err.message));
+                                            } finally {
+                                                setPaying(false);
+                                            }
+                                        }}
+                                    >
+                                        Thanh toán cọc 50%
+                                    </Button>
+                                )}
                             </div>
                         )}
                         <div style={{ textAlign: 'center', marginTop: 16 }}>
