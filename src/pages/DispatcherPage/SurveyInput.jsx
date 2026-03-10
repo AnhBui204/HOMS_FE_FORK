@@ -364,6 +364,7 @@ const SurveyInput = () => {
           declaredValue: surveyData.declaredValue,
           suggestedVehicle: surveyData.suggestedVehicle,
           suggestedStaffCount: surveyData.suggestedStaffCount,
+          estimatedHours: surveyData.estimatedHours || 3,
           notes: surveyData.notes,
           items: restoredPrimary.length > 0 ? restoredPrimary : [{}]
         });
@@ -406,13 +407,30 @@ const SurveyInput = () => {
   // 3. Xử lý Lưu (Gọi API Complete)
   const handleSaveSurvey = async (values) => {
     try {
+      // Map catalog item display names → backend itemType enum
+      const ITEM_TYPE_MAP = {
+        'Tivi': 'TV',
+        'Tủ lạnh': 'FRIDGE',
+        'Giường': 'BED',
+        'Sofa': 'SOFA',
+        'Tủ quần áo': 'WARDROBE',
+        'Điều hòa': 'AC',
+        'Máy giặt': 'WASHING_MACHINE',
+      };
+      const getItemType = (name = '') => {
+        for (const [key, type] of Object.entries(ITEM_TYPE_MAP)) {
+          if (name.startsWith(key)) return type;
+        }
+        return 'OTHER';
+      };
+
       // Build secondary items from added selections
       const secondaryItemsPayload = secondaryItems.map(({ key, tierIdx }) => {
         const catalog = SECONDARY_CATALOG.find(c => c.key === key);
         const tier = QTY_TIERS[tierIdx];
         return {
-          // Use a stable machine-readable prefix so restore can reliably identify secondary items
           name: `[SEC:${key}] ${catalog?.label || key} (${tier.label})`,
+          itemType: 'OTHER',
           actualVolume: Math.round(tier.value * tier.volumeEach * 100) / 100,
           actualWeight: Math.round(tier.value * tier.weightEach * 10) / 10,
           condition: 'GOOD',
@@ -425,6 +443,7 @@ const SurveyInput = () => {
         const item = CRITICAL_ITEMS.find(c => c.key === key);
         return {
           name: `⚠️ [ĐỒ QUAN TRỌNG] ${item?.label || key}`,
+          itemType: 'OTHER',
           actualVolume: 0.1,
           actualWeight: 20,
           condition: 'FRAGILE',
@@ -438,6 +457,9 @@ const SurveyInput = () => {
         suggestedVehicle: values.suggestedVehicle,
         suggestedStaffCount: values.suggestedStaffCount,
         distanceKm: values.distanceKm,
+
+        // Ước tính số giờ (dùng cho tính phí nhân công)
+        estimatedHours: values.estimatedHours || 3,
 
         // Các trường tùy chọn
         carryMeter: values.carryMeter || 0,
@@ -453,6 +475,7 @@ const SurveyInput = () => {
         items: [
           ...(values.items?.map(item => ({
             name: item.name,
+            itemType: getItemType(item.name),   // ← map to BE enum
             actualVolume: item.actualVolume || 0,
             actualWeight: item.actualWeight || 0,
             condition: item.condition || 'GOOD',
@@ -678,6 +701,15 @@ const SurveyInput = () => {
                   rules={[{ required: true, message: 'Nhập số nhân viên' }]}
                 >
                   <InputNumber min={1} style={{ width: '100%' }} />
+                </Form.Item>
+                <Form.Item
+                  name="estimatedHours"
+                  label="Ước tính số giờ thực hiện"
+                  tooltip="Dùng để tính phí nhân công: nhân viên × giờ/giờ × số giờ"
+                  rules={[{ required: true, message: 'Nhập số giờ ước tính' }]}
+                  initialValue={3}
+                >
+                  <InputNumber min={1} max={24} step={0.5} style={{ width: '100%' }} addonAfter="giờ" />
                 </Form.Item>
               </Card>
 
