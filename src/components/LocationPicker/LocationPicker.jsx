@@ -164,29 +164,36 @@ const LocationPicker = ({ onLocationChange, initialPosition, locationType = 'pic
     const streetPart = parts[0] || expanded;
     const areaPart = parts.slice(1).join(', ');
 
-    const variants = new Set([
-      base,
-      expanded,
-      noDiacritics,
-      `${expanded}, Việt Nam`,
-      `${noDiacritics}, Viet Nam`
-    ]);
+    const asksDaNang = expanded.toLowerCase().includes('đà nẵng') || expanded.toLowerCase().includes('da nang');
+
+    const variants = new Set();
+
+    if (asksDaNang) {
+      variants.add(base);
+      variants.add(expanded);
+      variants.add(noDiacritics);
+      variants.add(`${expanded}, Việt Nam`);
+      variants.add(`${noDiacritics}, Viet Nam`);
+    } else {
+      // Force Da Nang context
+      variants.add(`${base}, Đà Nẵng`);
+      variants.add(`${expanded}, Đà Nẵng, Việt Nam`);
+      variants.add(`${noDiacritics}, Da Nang, Viet Nam`);
+    }
 
     const alleyMatch = streetPart.match(/^(kiệt|kiet|hẻm|hem|ngõ|ngo|ngách|ngach)\s*(\d+[a-zA-Z0-9\-/]*)\s+(.+)$/i);
     if (alleyMatch) {
       const alleyNumber = alleyMatch[2];
       const mainStreet = alleyMatch[3];
 
-      variants.add(`${alleyNumber} ${mainStreet}${areaPart ? `, ${areaPart}` : ''}`);
-      variants.add(`${mainStreet} ${alleyNumber}${areaPart ? `, ${areaPart}` : ''}`);
-      variants.add(`${mainStreet}${areaPart ? `, ${areaPart}` : ''}`);
-      variants.add(`${normalizeDiacritics(mainStreet)} ${alleyNumber}${areaPart ? `, ${normalizeDiacritics(areaPart)}` : ''}`);
-      variants.add(`hem ${alleyNumber} ${normalizeDiacritics(mainStreet)}${areaPart ? `, ${normalizeDiacritics(areaPart)}` : ''}`);
-    }
-
-    if (!/viet\s*nam|việt\s*nam/i.test(expanded)) {
-      variants.add(`${expanded}, Đà Nẵng, Việt Nam`);
-      variants.add(`${noDiacritics}, Da Nang, Viet Nam`);
+      if (asksDaNang) {
+        variants.add(`${alleyNumber} ${mainStreet}${areaPart ? `, ${areaPart}` : ''}`);
+        variants.add(`${mainStreet} ${alleyNumber}${areaPart ? `, ${areaPart}` : ''}`);
+        variants.add(`${mainStreet}${areaPart ? `, ${areaPart}` : ''}`);
+      } else {
+        variants.add(`${alleyNumber} ${mainStreet}${areaPart ? `, ${areaPart}` : ''}, Đà Nẵng`);
+        variants.add(`${mainStreet} ${alleyNumber}${areaPart ? `, ${areaPart}` : ''}, Đà Nẵng`);
+      }
     }
 
     return Array.from(variants).map(normalizeWhitespace).filter(Boolean);
@@ -392,7 +399,7 @@ const LocationPicker = ({ onLocationChange, initialPosition, locationType = 'pic
     const allCandidates = [];
 
     const loadGeoapifyByVariant = async (variant, variantIndex) => {
-      const requestUrl = `https://api.geoapify.com/v1/geocode/search?text=${encodeURIComponent(variant)}&filter=countrycode:vn&lang=vi&limit=6&apiKey=${GEOAPIFY_API_KEY}`;
+      const requestUrl = `https://api.geoapify.com/v1/geocode/search?text=${encodeURIComponent(variant)}&filter=rect:107.8000,15.9000,108.4000,16.3000&lang=vi&limit=6&apiKey=${GEOAPIFY_API_KEY}`;
       const data = await fetchJsonWithTimeout(requestUrl, 3000);
       const features = Array.isArray(data?.features) ? data.features : [];
       return features
@@ -444,7 +451,7 @@ const LocationPicker = ({ onLocationChange, initialPosition, locationType = 'pic
     if (!hasOpenCageKey || queryVariants.length === 0) return [];
     try {
       const data = await fetchJsonWithTimeout(
-        `https://api.opencagedata.com/geocode/v1/json?q=${encodeURIComponent(queryVariants[0])}&key=${OPENCAGE_API_KEY}&limit=3&countrycode=vn`,
+        `https://api.opencagedata.com/geocode/v1/json?q=${encodeURIComponent(queryVariants[0])}&key=${OPENCAGE_API_KEY}&limit=3&countrycode=vn&bounds=107.8000,15.9000,108.4000,16.3000`,
         2800
       );
       if (data?.results?.length > 0) {
@@ -458,7 +465,7 @@ const LocationPicker = ({ onLocationChange, initialPosition, locationType = 'pic
     if (!hasLocationIqKey || queryVariants.length === 0) return [];
     try {
       const data = await fetchJsonWithTimeout(
-        `https://us1.locationiq.com/v1/search?key=${LOCATIONIQ_API_KEY}&q=${encodeURIComponent(queryVariants[0])}&format=json&limit=3&countrycodes=vn`,
+        `https://us1.locationiq.com/v1/search?key=${LOCATIONIQ_API_KEY}&q=${encodeURIComponent(queryVariants[0])}&format=json&limit=3&countrycodes=vn&viewbox=107.8000,16.3000,108.4000,15.9000&bounded=1`,
         2800
       );
       if (Array.isArray(data) && data.length > 0) {
@@ -472,7 +479,7 @@ const LocationPicker = ({ onLocationChange, initialPosition, locationType = 'pic
     if (!hasMapboxKey || queryVariants.length === 0) return [];
     try {
       const data = await fetchJsonWithTimeout(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(queryVariants[0])}.json?access_token=${MAPBOX_API_KEY}&limit=3&country=vn`,
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(queryVariants[0])}.json?access_token=${MAPBOX_API_KEY}&limit=3&country=vn&bbox=107.8000,15.9000,108.4000,16.3000`,
         2800
       );
       if (data?.features?.length > 0) {
@@ -488,7 +495,7 @@ const LocationPicker = ({ onLocationChange, initialPosition, locationType = 'pic
 
     const settled = await Promise.allSettled(
       variants.map((variant, index) => fetchJsonWithTimeout(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(variant)}&limit=6&addressdetails=1&countrycodes=vn&accept-language=vi`,
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(variant)}&limit=6&addressdetails=1&countrycodes=vn&accept-language=vi&viewbox=107.8000,16.3000,108.4000,15.9000&bounded=1`,
         2800
       ).then(data => ({ data, index })))
     );
@@ -658,12 +665,16 @@ const LocationPicker = ({ onLocationChange, initialPosition, locationType = 'pic
       if (currentLocationData) {
         if (currentLocationData.address) {
           setAddress(currentLocationData.address);
+          setSearchQuery(currentLocationData.address); // Sync the search input
+        } else {
+          setSearchQuery('');
         }
         if (currentLocationData.addressDetails) {
           setDetailedAddress(currentLocationData.addressDetails);
         }
       } else {
         // Otherwise fetch the address
+        setSearchQuery(''); // Clear search input if no data
         getAddressFromCoordinates(initialPosition.lat, initialPosition.lng);
       }
     }
@@ -698,7 +709,7 @@ const LocationPicker = ({ onLocationChange, initialPosition, locationType = 'pic
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
       );
     }
-  }, [initialPosition]);
+  }, []); // Run ONLY once on mount, regardless of initialPosition changing
   // Forward geocoding: Search address and get coordinates
   const searchAddress = async () => {
     if (!searchQuery.trim()) return;

@@ -353,36 +353,48 @@ const SurveyInput = () => {
         setSecondaryItems(restoredSecondary);
         // ─────────────────────────────────────────────────────────────────────
 
-        form.setFieldsValue({
-          floors: surveyData.floors,
-          carryMeter: surveyData.carryMeter,
-          distanceKm: surveyData.distanceKm,
-          hasElevator: surveyData.hasElevator,
-          needsAssembling: surveyData.needsAssembling,
-          needsPacking: surveyData.needsPacking,
-          insuranceRequired: surveyData.insuranceRequired,
-          declaredValue: surveyData.declaredValue,
-          suggestedVehicle: surveyData.suggestedVehicle,
-          suggestedStaffCount: surveyData.suggestedStaffCount,
-          notes: surveyData.notes,
-          items: restoredPrimary.length > 0 ? restoredPrimary : [{}]
-        });
+        let finalDistance = surveyData.distanceKm;
+        if (!finalDistance && ticket.pickup?.coordinates && ticket.delivery?.coordinates) {
+          finalDistance = await getRouteDistance(ticket.pickup.coordinates, ticket.delivery.coordinates);
+          finalDistance = Math.round(finalDistance * 10) / 10;
+          if (finalDistance > 0) message.success(`Đã tự động tính toán khoảng cách: ${finalDistance} km`);
+        }
+
+        setTimeout(() => {
+          form.setFieldsValue({
+            floors: surveyData.floors,
+            carryMeter: surveyData.carryMeter,
+            distanceKm: finalDistance,
+            hasElevator: surveyData.hasElevator,
+            needsAssembling: surveyData.needsAssembling,
+            needsPacking: surveyData.needsPacking,
+            insuranceRequired: surveyData.insuranceRequired,
+            declaredValue: surveyData.declaredValue,
+            suggestedVehicle: surveyData.suggestedVehicle,
+            suggestedStaffCount: surveyData.suggestedStaffCount,
+            notes: surveyData.notes,
+            items: restoredPrimary.length > 0 ? restoredPrimary : [{}]
+          });
+        }, 50);
       } else {
         // Tính distanceKm tự động từ toạ độ
         let estimatedKm = 0;
         if (ticket.pickup?.coordinates && ticket.delivery?.coordinates) {
           estimatedKm = await getRouteDistance(ticket.pickup.coordinates, ticket.delivery.coordinates);
           estimatedKm = Math.round(estimatedKm * 10) / 10; // Làm tròn 1 chữ số thập phân
+          if (estimatedKm > 0) message.success(`Đã tự động tính toán khoảng cách: ${estimatedKm} km`);
         }
 
-        // Giá trị mặc định cho form mới
-        form.setFieldsValue({
-          floors: 0,
-          carryMeter: 0,
-          distanceKm: estimatedKm,
-          items: [{}],
-          suggestedStaffCount: 2
-        });
+        setTimeout(() => {
+          // Giá trị mặc định cho form mới
+          form.setFieldsValue({
+            floors: 0,
+            carryMeter: 0,
+            distanceKm: estimatedKm,
+            items: [{}],
+            suggestedStaffCount: 2
+          });
+        }, 50);
       }
     } catch (error) {
       // Chưa có survey nào được tạo (lỗi 404 từ API getSurveyByTicket là bình thường với ticket mới)
@@ -390,14 +402,17 @@ const SurveyInput = () => {
       if (ticket.pickup?.coordinates && ticket.delivery?.coordinates) {
         estimatedKm = await getRouteDistance(ticket.pickup.coordinates, ticket.delivery.coordinates);
         estimatedKm = Math.round(estimatedKm * 10) / 10;
+        if (estimatedKm > 0) message.success(`Đã tự động tính toán khoảng cách: ${estimatedKm} km`);
       }
 
-      form.setFieldsValue({
-        floors: 0,
-        carryMeter: 0,
-        distanceKm: estimatedKm,
-        items: [{}]
-      });
+      setTimeout(() => {
+        form.setFieldsValue({
+          floors: 0,
+          carryMeter: 0,
+          distanceKm: estimatedKm,
+          items: [{}]
+        });
+      }, 50);
     }
 
     setIsModalOpen(true);
@@ -580,6 +595,7 @@ const SurveyInput = () => {
         width={1100}
         footer={null}
         centered
+        forceRender
         title={<Title level={3} style={{ textAlign: 'center', color: '#44624A', margin: 0 }}>PHIẾU KHẢO SÁT: {selectedTicket?.code}</Title>}
       >
         <Form form={form} layout="vertical" onFinish={handleSaveSurvey} style={{ marginTop: 20 }} disabled={isReadOnly}>
