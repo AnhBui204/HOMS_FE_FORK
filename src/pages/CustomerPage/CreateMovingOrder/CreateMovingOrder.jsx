@@ -200,7 +200,7 @@ const MovingInformationPage = () => {
 
                                     <Alert
                                         message="Lưu ý đặt lịch"
-                                        description="Để đảm bảo chất lượng phục vụ tốt nhất, thời gian chuyển nhà cần được đặt cách thời điểm hiện tại ít nhất 2 ngày. Trong khoảng thời gian này, chúng tôi sẽ tiến hành khảo sát và chuẩn bị phương tiện."
+                                        description="Để đảm bảo chất lượng phục vụ tốt nhất, thời gian chuyển nhà cần được đặt cách thời điểm hiện tại ít nhất 2 ngày. Lịch khảo sát bắt buộc phải diễn ra trước ngày chuyển nhà tối thiểu 1 ngày (24 giờ) để chúng tôi chuẩn bị phương tiện và nhân sự."
                                         type="info"
                                         showIcon
                                         style={{ marginBottom: '15px', borderRadius: '8px' }}

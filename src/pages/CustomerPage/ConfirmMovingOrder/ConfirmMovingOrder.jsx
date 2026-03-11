@@ -58,7 +58,7 @@ const ConfirmMovingOrder = () => {
         // Check if there's enough time for survey
         const hoursUntilMoving = movingDate.diff(now, 'hour', true);
         if (hoursUntilMoving < 24) {
-            message.warning('Thời gian chuyển nhà khá gần. Vui lòng chọn lịch khảo sát sớm nhất có thể.');
+            message.warning('Thời gian chuyển nhà quá sát. Lịch khảo sát phải cách thời điểm chuyển tối thiểu 1 ngày.');
         }
     }, [orderData, navigate]);
 
@@ -122,15 +122,10 @@ const ConfirmMovingOrder = () => {
         // Calculate time gap between survey and moving
         const hoursBetween = movingDate.diff(surveyDateTime, 'hour', true);
 
-        // Enforce minimum 8 hours gap for paperwork
-        if (hoursBetween < 8) {
-            message.error('Thời gian khảo sát phải trước thời gian chuyển ít nhất 8 tiếng để nhân viên sắp xếp và xử lý hồ sơ');
-            return;
-        }
-
-        // Warning if gap is less than 24 hours
+        // Enforce minimum 24 hours gap for paperwork
         if (hoursBetween < 24) {
-            message.warning('Khuyến nghị để khoảng cách ít nhất 1 ngày giữa khảo sát và chuyển nhà để chuẩn bị tốt hơn');
+            message.error('Thời gian khảo sát bắt buộc phải trước thời gian chuyển nhà ít nhất 1 ngày (24 giờ) để nhân viên sắp xếp và chuẩn bị phương tiện');
+            return;
         }
 
         // Prepare survey data
@@ -241,9 +236,9 @@ const ConfirmMovingOrder = () => {
             return true;
         }
 
-        // Disable if slot time is less than 8 hours before moving time
+        // Disable if slot time is less than 24 hours before moving time
         const hoursBetween = movingDate.diff(slotTime, 'hour', true);
-        if (hoursBetween < 8) {
+        if (hoursBetween < 24) {
             return true;
         }
 
@@ -302,13 +297,20 @@ const ConfirmMovingOrder = () => {
                         </Col>
 
                         {/* EXPLANATION ALERT */}
-                        <Col md={12} xs={24} style={{ display: 'flex', alignItems: 'center' }}>
+                        <Col md={12} xs={24} style={{ display: 'flex', flexDirection: 'column', gap: '15px', justifyContent: 'center' }}>
                             <Alert
                                 message="Ưu Tiên Khảo Sát Trực Tuyến"
-                                description="HOMS hiện đang áp dụng chính sách khảo sát trực tuyến (Online) 100% nhằm rút ngắn tối đa thời gian chờ đợi báo giá và làm hợp đồng cho khách hàng. Nếu khối lượng đồ đạc thực tế quá lớn hoặc tính chất phức tạp, chuyên viên của chúng tôi sẽ chủ động đề xuất lịch khảo sát trực tiếp (Offline) sau khi tiếp nhận đơn."
+                                description="HOMS hiện đang áp dụng chính sách khảo sát trực tuyến (Online) 100% nhằm rút ngắn tối đa thời gian chờ đợi báo giá. Nếu thực tế phức tạp, chuyên viên sẽ tự chủ động đề xuất lịch Offline."
                                 type="info"
                                 showIcon
                                 className="survey-info-alert"
+                            />
+                            <Alert
+                                message="Quý khách lưu ý"
+                                description="Lịch khảo sát bắt buộc phải được thực hiện trước thời gian chuyển nhà ít nhất 1 ngày (24 giờ) để chúng tôi có thể chốt phương án vận chuyển và sắp xếp nhân sự, xe tải phù hợp nhất."
+                                type="warning"
+                                showIcon
+                                className="survey-warning-alert"
                             />
                         </Col>
                     </Row>
