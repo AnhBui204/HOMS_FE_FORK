@@ -213,8 +213,18 @@ const SurveyInput = () => {
   }, []);
 
   const getRouteDistance = async (origin, destination) => {
-    const olat = origin.lat, olng = origin.lng;
-    const dlat = destination.lat, dlng = destination.lng;
+    const getLat = (c) => (c && typeof c.lat !== 'undefined' ? c.lat : (Array.isArray(c) ? c[1] : null));
+    const getLng = (c) => (c && typeof c.lng !== 'undefined' ? c.lng : (Array.isArray(c) ? c[0] : null));
+
+    const olat = getLat(origin);
+    const olng = getLng(origin);
+    const dlat = getLat(destination);
+    const dlng = getLng(destination);
+
+    if (!olat || !olng || !dlat || !dlng) {
+      console.warn('[Route] Invalid coordinates provided:', { origin, destination });
+      return 0;
+    }
 
     // ── 1. Goong (Vietnam-focused driving directions) ────────────────────────
     const GOONG_KEY = process.env.REACT_APP_GOONG_API_KEY;
@@ -353,10 +363,17 @@ const SurveyInput = () => {
         setSecondaryItems(restoredSecondary);
         // ─────────────────────────────────────────────────────────────────────
 
+        let estimatedKm = surveyData.distanceKm || 0;
+        if (!estimatedKm && ticket.pickup?.coordinates && ticket.delivery?.coordinates) {
+          estimatedKm = await getRouteDistance(ticket.pickup.coordinates, ticket.delivery.coordinates);
+          estimatedKm = Math.round(estimatedKm * 10) / 10;
+          if (estimatedKm > 0) message.success(`Đã tự động tính toán khoảng cách: ${estimatedKm} km`);
+        }
+
         form.setFieldsValue({
           floors: surveyData.floors,
           carryMeter: surveyData.carryMeter,
-          distanceKm: surveyData.distanceKm,
+          distanceKm: estimatedKm,
           hasElevator: surveyData.hasElevator,
           needsAssembling: surveyData.needsAssembling,
           needsPacking: surveyData.needsPacking,

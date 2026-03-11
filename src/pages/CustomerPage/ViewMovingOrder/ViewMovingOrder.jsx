@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { Layout, Table, Tag, Empty, Button, Tabs, Row, Col, Typography, Image, Modal, message } from "antd";
-import { useLocation } from "react-router-dom";
 import {
-    Layout, Table, Tag, Empty, Button, Divider,
-    Row, Col, Typography, Modal, message, Tooltip
+    Layout, Table, Tag, Empty, Button, Tabs, Row, Col, Typography, Image, Modal, message, Divider, Tooltip
 } from "antd";
+import { useLocation } from "react-router-dom";
 import {
     PhoneOutlined,
     CheckCircleOutlined,
@@ -47,6 +45,7 @@ const InfoRow = ({ icon, label, value }) => (
 );
 
 const ViewMovingOrder = () => {
+    const location = useLocation();
     const { user, isAuthenticated } = useUser();
     const [tickets, setTickets] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -54,8 +53,8 @@ const ViewMovingOrder = () => {
     const [selectedSurvey, setSelectedSurvey] = useState(null);
     const [selectedTicket, setSelectedTicket] = useState(null);
     const [selectedTicketPricing, setSelectedTicketPricing] = useState(null);
-const [isSurveyTimeModalVisible, setIsSurveyTimeModalVisible] = useState(false);
-const [selectedTicketForTime, setSelectedTicketForTime] = useState(null);
+    const [isSurveyTimeModalVisible, setIsSurveyTimeModalVisible] = useState(false);
+    const [selectedTicketForTime, setSelectedTicketForTime] = useState(null);
     const handleViewSurvey = async (ticket) => {
         try {
             setSelectedTicket(ticket);
@@ -170,20 +169,20 @@ const [selectedTicketForTime, setSelectedTicketForTime] = useState(null);
             })
         },
         {
-    title: "Yêu cầu khảo sát",
-    dataIndex: "scheduledTime",
-    render: (time) => {
-        if (!time) return <span style={{color:"#aaa"}}>Chưa xác định</span>
+            title: "Yêu cầu khảo sát",
+            dataIndex: "scheduledTime",
+            render: (time) => {
+                if (!time) return <span style={{ color: "#aaa" }}>Chưa xác định</span>
 
-        return new Date(time).toLocaleString("vi-VN", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit"
-        })
-    }
-},
+                return new Date(time).toLocaleString("vi-VN", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit"
+                })
+            }
+        },
         {
             title: "Chuyển từ",
             dataIndex: "pickup",
@@ -263,12 +262,12 @@ const [selectedTicketForTime, setSelectedTicketForTime] = useState(null);
                                                 await api.put(`/request-tickets/${record._id}/cancel`, { reason: 'Khách hàng từ chối báo giá' });
                                                 message.success("Đã từ chối báo giá và hủy đơn.");
                                                 setTickets(prev =>
-    prev.map(t =>
-        t._id === record._id
-            ? { ...t, status: "CANCELLED" }
-            : t
-    )
-);
+                                                    prev.map(t =>
+                                                        t._id === record._id
+                                                            ? { ...t, status: "CANCELLED" }
+                                                            : t
+                                                    )
+                                                );
                                             } catch (err) {
                                                 message.error("Lỗi khi hủy đơn: " + (err.response?.data?.message || err.message));
                                             }
@@ -278,7 +277,7 @@ const [selectedTicketForTime, setSelectedTicketForTime] = useState(null);
                             >
                                 Từ chối
                             </Button>
-                          
+
                         </>
                     )}
                     {record.status !== 'QUOTED' && (
@@ -620,214 +619,215 @@ const [selectedTicketForTime, setSelectedTicketForTime] = useState(null);
                         <Empty description="Chưa có thông tin khảo sát" />
                     )}
                 </Modal>
-<Modal
-    title="Chọn thời gian khảo sát"
-    open={isSurveyTimeModalVisible}
-    onCancel={() => setIsSurveyTimeModalVisible(false)}
-    footer={null}
->
-{selectedTicketForTime?.rescheduleReason && (
-    <div
-        style={{
-            background: "#fff7e6",
-            border: "1px solid #ffd591",
-            padding: "10px",
-            borderRadius: "6px",
-            marginBottom: "15px"
-        }}
-    >
-        <b>Lý do đề xuất lịch mới:</b> {selectedTicketForTime.rescheduleReason}
-    </div>
-)}
-{selectedTicketForTime?.dispatcherId && (
-    <div
-        style={{
-            background: "#f6ffed",
-            border: "1px solid #b7eb8f",
-            padding: "10px",
-            borderRadius: "6px",
-            marginBottom: "15px"
-        }}
-    >
-        <b>Nhân viên khảo sát:</b>{" "}
-        {selectedTicketForTime.dispatcherId.fullName} 
-        {selectedTicketForTime.dispatcherId.phone && 
-            ` - ${selectedTicketForTime.dispatcherId.phone}`}
-    </div>
-)}
-    {selectedTicketForTime?.proposedSurveyTimes?.map((time, index) => (
-        <div
-            key={index}
-            style={{
-                border: "1px solid #ddd",
-                padding: "12px",
-                borderRadius: "6px",
-                marginBottom: "10px",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center"
-            }}
-        >
-            <span>
-                {new Date(time).toLocaleString("vi-VN", {
-                    day: "2-digit",
-                    month: "2-digit",
-                    year: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit"
-                })}
-            </span>
-
-            <Button
-                type="primary"
-                icon={<CheckCircleOutlined />}
-                onClick={async () => {
-                    try {
-
-                        await orderService.acceptSurveyTime(
-                            selectedTicketForTime._id,
-                            time
-                        )
-
-                        message.success("Đã chấp nhận lịch khảo sát")
-
-                        setIsSurveyTimeModalVisible(false)
-
-                       setTickets(prev =>
-            prev.map(t =>
-                t._id === selectedTicketForTime._id
-                    ? { ...t, status: "WAITING_SURVEY", scheduledTime: time }
-                    : t
-            )
-        )
-
-                    } catch (err) {
-                        message.error(err.response?.data?.message || err.message)
-                    }
-                }}
-            >
-                Chấp nhận
-            </Button>
-
-        </div>
-    ))}
-
-    {/* Reject toàn bộ */}
-    {selectedTicketForTime?.proposedSurveyTimes?.length > 0 && (
-        <div style={{ marginTop: 20, textAlign: "right" }}>
-          <Button
-    danger
-    icon={<CloseCircleOutlined />}
-    onClick={() => {
-
-        confirm({
-            title: "Bạn có chắc muốn hủy yêu cầu chuyển nhà?",
-            content: "Yêu cầu này sẽ bị hủy và không thể khôi phục.",
-            okText: "Xác nhận hủy",
-            okType: "danger",
-            cancelText: "Quay lại",
-
-            onOk: async () => {
-                try {
-
-                    await orderService.cancelOrder(
-                        selectedTicketForTime._id,
-                        "Khách hàng từ chối lịch khảo sát"
-                    );
-
-                    message.success("Đã hủy yêu cầu chuyển nhà");
-
-                    setIsSurveyTimeModalVisible(false);
-
-                  setTickets(prev =>
-    prev.map(t =>
-        t._id === selectedTicketForTime._id
-            ? { ...t, status: "CANCELLED" }
-            : t
-    )
-);
-
-                } catch (err) {
-                    message.error(err.response?.data?.message || err.message);
-                }
-            }
-        });
-
-    }}
->
-    Hủy yêu cầu
-</Button>
-        </div>
-    )}
-
-    {selectedTicketForTime?.proposedSurveyTimes?.length === 0 && (
-        <Empty description="Chưa có lịch khảo sát" />
-    )}
-
-                {/* ITEMS GRID — Real data from selected survey */}
-                {selectedSurvey && (
-                    <section className="order-options-section">
-                        <div style={{ marginBottom: 20, paddingLeft: 5 }}>
-                            <h2 style={{ color: '#44624A', fontSize: 26, marginBottom: 4, display: 'flex', alignItems: 'center', gap: 10 }}>
-                                <InboxOutlined style={{ color: '#44624A' }} />
-                                Danh sách đồ đạc khảo sát
-                            </h2>
-                            <p style={{ color: '#666', margin: 0 }}>
-                                Đơn <strong>#{selectedTicket?.code?.slice(-10).toUpperCase()}</strong> — {selectedSurvey.items?.length || 0} món đồ
-                            </p>
+                <Modal
+                    title="Chọn thời gian khảo sát"
+                    open={isSurveyTimeModalVisible}
+                    onCancel={() => setIsSurveyTimeModalVisible(false)}
+                    footer={null}
+                >
+                    {selectedTicketForTime?.rescheduleReason && (
+                        <div
+                            style={{
+                                background: "#fff7e6",
+                                border: "1px solid #ffd591",
+                                padding: "10px",
+                                borderRadius: "6px",
+                                marginBottom: "15px"
+                            }}
+                        >
+                            <b>Lý do đề xuất lịch mới:</b> {selectedTicketForTime.rescheduleReason}
                         </div>
+                    )}
+                    {selectedTicketForTime?.dispatcherId && (
+                        <div
+                            style={{
+                                background: "#f6ffed",
+                                border: "1px solid #b7eb8f",
+                                padding: "10px",
+                                borderRadius: "6px",
+                                marginBottom: "15px"
+                            }}
+                        >
+                            <b>Nhân viên khảo sát:</b>{" "}
+                            {selectedTicketForTime.dispatcherId.fullName}
+                            {selectedTicketForTime.dispatcherId.phone &&
+                                ` - ${selectedTicketForTime.dispatcherId.phone}`}
+                        </div>
+                    )}
+                    {selectedTicketForTime?.proposedSurveyTimes?.map((time, index) => (
+                        <div
+                            key={index}
+                            style={{
+                                border: "1px solid #ddd",
+                                padding: "12px",
+                                borderRadius: "6px",
+                                marginBottom: "10px",
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "center"
+                            }}
+                        >
+                            <span>
+                                {new Date(time).toLocaleString("vi-VN", {
+                                    day: "2-digit",
+                                    month: "2-digit",
+                                    year: "numeric",
+                                    hour: "2-digit",
+                                    minute: "2-digit"
+                                })}
+                            </span>
 
-                        <Row gutter={[16, 16]}>
-                            {(selectedSurvey.items || []).map((item, idx) => {
-                                const isCritical = item.name?.startsWith('⚠️') || item.name?.startsWith('[CRIT');
-                                const isSec = item.name?.startsWith('[SEC:');
-                                const displayName = isSec
-                                    ? item.name.replace(/^\[SEC:[^\]]+\]\s*/, '')
-                                    : item.name?.replace('⚠️ ', '') || item.name;
-                                const conditionLabel = { GOOD: 'Tốt', FRAGILE: 'Dễ vỡ', DAMAGED: 'Hư hỏng' }[item.condition] || item.condition;
-                                const conditionColor = { GOOD: '#52c41a', FRAGILE: '#ff4d4f', DAMAGED: '#fa8c16' }[item.condition] || '#aaa';
-                                const cardBorder = isCritical ? '#ff4d4f' : isSec ? '#faad14' : '#d9d9d9';
-                                const cardBg = isCritical ? '#fff1f0' : isSec ? '#fffbe6' : '#fafafa';
+                            <Button
+                                type="primary"
+                                icon={<CheckCircleOutlined />}
+                                onClick={async () => {
+                                    try {
 
-                                return (
-                                    <Col xs={24} sm={12} md={8} lg={6} key={idx}>
-                                        <div style={{
-                                            border: `1.5px solid ${cardBorder}`, background: cardBg,
-                                            borderRadius: 10, padding: '12px 14px',
-                                            height: '100%', display: 'flex', flexDirection: 'column', gap: 5
-                                        }}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                                <span style={{ fontWeight: 600, fontSize: 13, color: isCritical ? '#cf1322' : '#222', flex: 1, marginRight: 4 }}>
-                                                    {isCritical && <WarningOutlined style={{ marginRight: 4, color: '#ff4d4f' }} />}
-                                                    {displayName}
-                                                </span>
-                                                {item.condition && (
-                                                    <span style={{ fontSize: 11, color: conditionColor, fontWeight: 600, whiteSpace: 'nowrap' }}>
-                                                        ● {conditionLabel}
+                                        await orderService.acceptSurveyTime(
+                                            selectedTicketForTime._id,
+                                            time
+                                        )
+
+                                        message.success("Đã chấp nhận lịch khảo sát")
+
+                                        setIsSurveyTimeModalVisible(false)
+
+                                        setTickets(prev =>
+                                            prev.map(t =>
+                                                t._id === selectedTicketForTime._id
+                                                    ? { ...t, status: "WAITING_SURVEY", scheduledTime: time }
+                                                    : t
+                                            )
+                                        )
+
+                                    } catch (err) {
+                                        message.error(err.response?.data?.message || err.message)
+                                    }
+                                }}
+                            >
+                                Chấp nhận
+                            </Button>
+
+                        </div>
+                    ))}
+
+                    {/* Reject toàn bộ */}
+                    {selectedTicketForTime?.proposedSurveyTimes?.length > 0 && (
+                        <div style={{ marginTop: 20, textAlign: "right" }}>
+                            <Button
+                                danger
+                                icon={<CloseCircleOutlined />}
+                                onClick={() => {
+
+                                    confirm({
+                                        title: "Bạn có chắc muốn hủy yêu cầu chuyển nhà?",
+                                        content: "Yêu cầu này sẽ bị hủy và không thể khôi phục.",
+                                        okText: "Xác nhận hủy",
+                                        okType: "danger",
+                                        cancelText: "Quay lại",
+
+                                        onOk: async () => {
+                                            try {
+
+                                                await orderService.cancelOrder(
+                                                    selectedTicketForTime._id,
+                                                    "Khách hàng từ chối lịch khảo sát"
+                                                );
+
+                                                message.success("Đã hủy yêu cầu chuyển nhà");
+
+                                                setIsSurveyTimeModalVisible(false);
+
+                                                setTickets(prev =>
+                                                    prev.map(t =>
+                                                        t._id === selectedTicketForTime._id
+                                                            ? { ...t, status: "CANCELLED" }
+                                                            : t
+                                                    )
+                                                );
+
+                                            } catch (err) {
+                                                message.error(err.response?.data?.message || err.message);
+                                            }
+                                        }
+                                    });
+
+                                }}
+                            >
+                                Hủy yêu cầu
+                            </Button>
+                        </div>
+                    )}
+
+                    {selectedTicketForTime?.proposedSurveyTimes?.length === 0 && (
+                        <Empty description="Chưa có lịch khảo sát" />
+                    )}
+
+                    {/* ITEMS GRID — Real data from selected survey */}
+                    {selectedSurvey && (
+                        <section className="order-options-section">
+                            <div style={{ marginBottom: 20, paddingLeft: 5 }}>
+                                <h2 style={{ color: '#44624A', fontSize: 26, marginBottom: 4, display: 'flex', alignItems: 'center', gap: 10 }}>
+                                    <InboxOutlined style={{ color: '#44624A' }} />
+                                    Danh sách đồ đạc khảo sát
+                                </h2>
+                                <p style={{ color: '#666', margin: 0 }}>
+                                    Đơn <strong>#{selectedTicket?.code?.slice(-10).toUpperCase()}</strong> — {selectedSurvey.items?.length || 0} món đồ
+                                </p>
+                            </div>
+
+                            <Row gutter={[16, 16]}>
+                                {(selectedSurvey.items || []).map((item, idx) => {
+                                    const isCritical = item.name?.startsWith('⚠️') || item.name?.startsWith('[CRIT');
+                                    const isSec = item.name?.startsWith('[SEC:');
+                                    const displayName = isSec
+                                        ? item.name.replace(/^\[SEC:[^\]]+\]\s*/, '')
+                                        : item.name?.replace('⚠️ ', '') || item.name;
+                                    const conditionLabel = { GOOD: 'Tốt', FRAGILE: 'Dễ vỡ', DAMAGED: 'Hư hỏng' }[item.condition] || item.condition;
+                                    const conditionColor = { GOOD: '#52c41a', FRAGILE: '#ff4d4f', DAMAGED: '#fa8c16' }[item.condition] || '#aaa';
+                                    const cardBorder = isCritical ? '#ff4d4f' : isSec ? '#faad14' : '#d9d9d9';
+                                    const cardBg = isCritical ? '#fff1f0' : isSec ? '#fffbe6' : '#fafafa';
+
+                                    return (
+                                        <Col xs={24} sm={12} md={8} lg={6} key={idx}>
+                                            <div style={{
+                                                border: `1.5px solid ${cardBorder}`, background: cardBg,
+                                                borderRadius: 10, padding: '12px 14px',
+                                                height: '100%', display: 'flex', flexDirection: 'column', gap: 5
+                                            }}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                                    <span style={{ fontWeight: 600, fontSize: 13, color: isCritical ? '#cf1322' : '#222', flex: 1, marginRight: 4 }}>
+                                                        {isCritical && <WarningOutlined style={{ marginRight: 4, color: '#ff4d4f' }} />}
+                                                        {displayName}
                                                     </span>
+                                                    {item.condition && (
+                                                        <span style={{ fontSize: 11, color: conditionColor, fontWeight: 600, whiteSpace: 'nowrap' }}>
+                                                            ● {conditionLabel}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <div style={{ display: 'flex', gap: 10, color: '#777', fontSize: 12 }}>
+                                                    {item.actualWeight > 0 && <span><InfoCircleOutlined style={{ marginRight: 3 }} />{item.actualWeight} kg</span>}
+                                                    {item.actualVolume > 0 && <span>{item.actualVolume} m³</span>}
+                                                </div>
+                                                {item.notes && (
+                                                    <div style={{ fontSize: 11, color: '#999', fontStyle: 'italic' }}>
+                                                        {item.notes}
+                                                    </div>
                                                 )}
                                             </div>
-                                            <div style={{ display: 'flex', gap: 10, color: '#777', fontSize: 12 }}>
-                                                {item.actualWeight > 0 && <span><InfoCircleOutlined style={{ marginRight: 3 }} />{item.actualWeight} kg</span>}
-                                                {item.actualVolume > 0 && <span>{item.actualVolume} m³</span>}
-                                            </div>
-                                            {item.notes && (
-                                                <div style={{ fontSize: 11, color: '#999', fontStyle: 'italic' }}>
-                                                    {item.notes}
-                                                </div>
-                                            )}
-                                        </div>
+                                        </Col>
+                                    );
+                                })}
+                                {(!selectedSurvey.items || selectedSurvey.items.length === 0) && (
+                                    <Col span={24}>
+                                        <Empty description="Chưa có danh sách đồ đạc từ khảo sát" />
                                     </Col>
-                                );
-                            })}
-                            {(!selectedSurvey.items || selectedSurvey.items.length === 0) && (
-                                <Col span={24}>
-                                    <Empty description="Chưa có danh sách đồ đạc từ khảo sát" />
-                                </Col>
-                            )}
-                        </Row>
-                    </section>
-                )}
+                                )}
+                            </Row>
+                        </section>
+                    )}
+                </Modal>
             </Content>
 
             <AppFooter />
