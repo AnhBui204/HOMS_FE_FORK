@@ -2,23 +2,30 @@ import React, { useState, useEffect } from "react";
 import { Layout, Table, Tag, Empty, Button, Tabs, Row, Col, Typography, Image, Modal, message } from "antd";
 import { useLocation } from "react-router-dom";
 import {
-    EnvironmentOutlined,
+    Layout, Table, Tag, Empty, Button, Divider,
+    Row, Col, Typography, Modal, message, Tooltip
+} from "antd";
+import {
     PhoneOutlined,
     CheckCircleOutlined,
     CloseCircleOutlined,
-    EyeOutlined
+    EyeOutlined,
+    CarOutlined,
+    TeamOutlined,
+    ClockCircleOutlined,
+    SafetyOutlined,
+    FileTextOutlined,
+    AppstoreOutlined,
+    DollarOutlined,
+    GiftOutlined,
+    PercentageOutlined,
+    ArrowRightOutlined,
+    InfoCircleOutlined,
+    ToolOutlined,
+    InboxOutlined,
+    WarningOutlined,
+    EnvironmentOutlined
 } from "@ant-design/icons";
-import {
-    Sofa,
-    Tv,
-    BedDouble,
-    Shirt,
-    Refrigerator,
-    UtensilsCrossed,
-    MonitorSpeaker,
-    Lamp
-} from "lucide-react";
-import { FaBoxOpen } from "react-icons/fa";
 
 import AppHeader from "../../../components/header/header";
 import AppFooter from "../../../components/footer/footer";
@@ -29,6 +36,15 @@ import "./style.css";
 
 const { Content } = Layout;
 const { confirm } = Modal;
+
+/** Small helper: icon + label + value row */
+const InfoRow = ({ icon, label, value }) => (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
+        <span style={{ color: '#52c41a', fontSize: 13, flexShrink: 0 }}>{icon}</span>
+        <span style={{ color: '#555', flexShrink: 0 }}>{label}:</span>
+        <span style={{ fontWeight: 500, color: '#222' }}>{value}</span>
+    </div>
+);
 
 const ViewMovingOrder = () => {
     const { user, isAuthenticated } = useUser();
@@ -42,20 +58,16 @@ const [isSurveyTimeModalVisible, setIsSurveyTimeModalVisible] = useState(false);
 const [selectedTicketForTime, setSelectedTicketForTime] = useState(null);
     const handleViewSurvey = async (ticket) => {
         try {
-            // Lấy khảo sát
             setSelectedTicket(ticket);
             const res = await api.get(`/surveys/ticket/${ticket._id}`);
             const surveyData = res.data?.data || res.data;
             setSelectedSurvey(surveyData);
 
-            // Cố gắng lấy báo giá chi tiết (breakdown fees)
             try {
                 const resPricing = await api.get(`/pricing/${ticket._id}`);
                 const pricingDetail = resPricing.data?.data;
-                // Gộp thông tin pricing cơ bản và breakdown
                 setSelectedTicketPricing({ ...ticket.pricing, breakdown: pricingDetail?.breakdown });
-            } catch (err) {
-                // Nếu báo lỗi 404 (chưa có) thì vẫn dùng ticket.pricing gốc
+            } catch {
                 setSelectedTicketPricing(ticket.pricing);
             }
 
@@ -64,78 +76,50 @@ const [selectedTicketForTime, setSelectedTicketForTime] = useState(null);
             message.error("Không thể tải thông tin khảo sát: " + (error.response?.data?.message || error.message));
         }
     };
-    const handleDepositPayment = (ticket) => {
 
+    const handleDepositPayment = (ticket) => {
         confirm({
             title: "Xác nhận thanh toán cọc",
             content: (
                 <>
                     <p>Bạn sắp thanh toán <b>50% giá trị đơn hàng</b>.</p>
-                    <p>
-                        Số tiền cọc:{" "}
-                        <b style={{ color: "#d9363e" }}>
-                            {(ticket.pricing.totalPrice / 2).toLocaleString()} ₫
-                        </b>
-                    </p>
+                    <p>Số tiền cọc: <b style={{ color: "#d9363e" }}>{(ticket.pricing.totalPrice / 2).toLocaleString()} ₫</b></p>
                     <p>Bạn có chắc chắn muốn tiếp tục?</p>
                 </>
             ),
             okText: "Thanh toán",
             cancelText: "Hủy",
             okType: "primary",
-
             onOk: async () => {
                 try {
-
                     const depositAmount = Math.floor(ticket.pricing.totalPrice * 0.5);
-
-                    const res = await orderService.createMovingDeposit(
-                        ticket._id,
-                        depositAmount
-                    );
-
+                    const res = await orderService.createMovingDeposit(ticket._id, depositAmount);
                     if (res?.data?.checkoutUrl) {
                         window.location.href = res.data.checkoutUrl;
                     } else {
                         message.error("Không tạo được link thanh toán");
                     }
-
                 } catch (err) {
-                    message.error(
-                        "Không thể tạo thanh toán: " +
-                        (err.response?.data?.message || err.message)
-                    );
+                    message.error("Không thể tạo thanh toán: " + (err.response?.data?.message || err.message));
                 }
             }
         });
     };
 
-    const location = useLocation();
-
-    // Fetch user shifting schedule from db
     useEffect(() => {
         const fetchTickets = async () => {
-            if (!isAuthenticated || !user) {
-                setLoading(false);
-                return;
-            }
-
+            if (!isAuthenticated || !user) { setLoading(false); return; }
             try {
                 const response = await api.get(`/request-tickets`, {
                     params: { customerId: user._id || user.id }
                 });
-
-                if (response.data && response.data.success) {
+                if (response.data?.success) {
                     let userTickets = response.data.data || [];
                     const currentUserId = user._id || user.id;
-
-                    // Filter just like Dashboard
                     userTickets = userTickets.filter(t =>
                         (t.customerId && t.customerId._id === currentUserId) ||
                         t.customerId === currentUserId
                     );
-
-                    // Sort newest first
                     userTickets.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
                     // Lọc theo searchCode từ header
@@ -157,36 +141,20 @@ const [selectedTicketForTime, setSelectedTicketForTime] = useState(null);
                 setLoading(false);
             }
         };
-
         fetchTickets();
     }, [isAuthenticated, user, location.search]);
 
-    // Format map for tags/status colors
     const statusColorMap = {
-        "CREATED": "blue",
-        "WAITING_SURVEY": "orange",
-        "SURVEYED": "cyan",
-        "QUOTED": "green",
-        "ACCEPTED": "geekblue",
-        "CONVERTED": "purple",
-        "IN_PROGRESS": "processing",
-        "COMPLETED": "success",
-        "CANCELLED": "error"
+        CREATED: "blue", WAITING_SURVEY: "orange", SURVEYED: "cyan",
+        QUOTED: "green", ACCEPTED: "geekblue", CONVERTED: "purple",
+        IN_PROGRESS: "processing", COMPLETED: "success", CANCELLED: "error"
     };
-
     const statusLabelMap = {
-        "CREATED": "Chờ xác nhận lịch",
-        "WAITING_SURVEY": "Đã phân công",
-        "SURVEYED": "Đã khảo sát",
-        "QUOTED": "Đã báo giá",
-        "ACCEPTED": "Đã chốt đơn",
-        "CONVERTED": "Đã tạo HĐ",
-        "IN_PROGRESS": "Đang vận chuyển",
-        "COMPLETED": "Hoàn thành",
-        "CANCELLED": "Đã hủy"
+        CREATED: "Chờ xác nhận lịch", WAITING_SURVEY: "Đã phân công", SURVEYED: "Đã khảo sát",
+        QUOTED: "Đã báo giá", ACCEPTED: "Đã chốt đơn", CONVERTED: "Đã tạo HĐ",
+        IN_PROGRESS: "Đang vận chuyển", COMPLETED: "Hoàn thành", CANCELLED: "Đã hủy"
     };
 
-    // Columns for schedule table mapping backend payload
     const columns = [
         {
             title: "Mã Đơn",
@@ -197,11 +165,8 @@ const [selectedTicketForTime, setSelectedTicketForTime] = useState(null);
             title: "Ngày Tạo",
             dataIndex: "createdAt",
             render: (date) => new Date(date).toLocaleString("vi-VN", {
-                day: "2-digit",
-                month: "2-digit",
-                year: "numeric",
-                hour: "2-digit",
-                minute: "2-digit"
+                day: "2-digit", month: "2-digit", year: "numeric",
+                hour: "2-digit", minute: "2-digit"
             })
         },
         {
@@ -230,12 +195,9 @@ const [selectedTicketForTime, setSelectedTicketForTime] = useState(null);
             render: (delivery) => delivery?.address || "Chưa cập nhật"
         },
         {
-            title: "Trạng thái đơn",
+            title: "Trạng thái",
             render: (_, record) => {
-
-                // Nếu đã có invoice → dùng trạng thái invoice
                 if (record.invoice) {
-
                     const invoiceStatusMap = {
                         DRAFT: { color: "purple", label: "Nháp hóa đơn" },
                         CONFIRMED: { color: "blue", label: "Đã xác nhận" },
@@ -244,111 +206,61 @@ const [selectedTicketForTime, setSelectedTicketForTime] = useState(null);
                         COMPLETED: { color: "success", label: "Hoàn thành" },
                         CANCELLED: { color: "error", label: "Đã hủy" }
                     };
-                    const invoiceStatus = invoiceStatusMap[record.invoice.status];
-
-                    return (
-                        <Tag color={invoiceStatus?.color || "purple"}>
-                            {invoiceStatus?.label || record.invoice.status}
-                        </Tag>
-                    );
+                    const s = invoiceStatusMap[record.invoice.status];
+                    return <Tag color={s?.color || "purple"}>{s?.label || record.invoice.status}</Tag>;
                 }
-
-                // Nếu chưa có invoice → dùng trạng thái ticket
-                return (
-                    <Tag color={statusColorMap[record.status] || "default"}>
-                        {statusLabelMap[record.status] || record.status}
-                    </Tag>
-                );
+                return <Tag color={statusColorMap[record.status] || "default"}>{statusLabelMap[record.status] || record.status}</Tag>;
             }
         },
         {
             title: "Thanh toán",
             render: (_, record) => {
-
                 const paymentStatus = record?.invoice?.paymentStatus;
-
-                if (!paymentStatus) {
-                    return <Tag color="default">Chưa phát sinh</Tag>;
-                }
-
+                if (!paymentStatus) return <Tag color="default">Chưa phát sinh</Tag>;
                 const paymentMap = {
                     UNPAID: { color: "orange", label: "Chưa thanh toán" },
                     PARTIAL: { color: "green", label: "Đã đặt cọc" },
                     PAID: { color: "success", label: "Đã thanh toán" }
                 };
-
-                const payment = paymentMap[paymentStatus];
-
-                return (
-                    <Tag color={payment?.color || "default"}>
-                        {payment?.label || paymentStatus}
-                    </Tag>
-                );
+                const p = paymentMap[paymentStatus];
+                return <Tag color={p?.color || "default"}>{p?.label || paymentStatus}</Tag>;
             }
         },
         {
-            title: "Báo giá (VNĐ)",
-            render: (_, record) => {
-                if (record.pricing?.totalPrice) {
-                    return <strong style={{ color: "#52c41a" }}>{record.pricing.totalPrice.toLocaleString()} ₫</strong>;
-                }
-                return <span style={{ color: "#aaa" }}>Chưa có</span>;
-            }
+            title: "Báo giá",
+            render: (_, record) => record.pricing?.totalPrice
+                ? <strong style={{ color: "#52c41a" }}>{record.pricing.totalPrice.toLocaleString()} ₫</strong>
+                : <span style={{ color: "#aaa" }}>Chưa có</span>
         },
         {
             title: "Thao tác",
             render: (_, record) => (
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-  {record.proposedSurveyTimes?.length > 0 && record.status === "CREATED" && (
-    <Button
-        type="primary"
-        onClick={() => {
-            setSelectedTicketForTime(record);
-            setIsSurveyTimeModalVisible(true);
-        }}
-    >
-        Xem lịch khảo sát
-    </Button>
-)}
-                    {/* Hành động khi đơn hàng ở trạng thái QUOTED (Chờ khách chốt) */}
                     {record.status === 'QUOTED' && (
                         <>
                             <Button
                                 type="primary"
-                                style={{ background: '#52c41a', borderColor: '#52c41a', minWidth: '120px' }}
+                                size="small"
+                                style={{ background: '#52c41a', borderColor: '#52c41a' }}
                                 icon={<CheckCircleOutlined />}
-                                // onClick={async () => {
-                                //     try {
-                                //         // Gọi API chấp nhận báo giá
-                                //         await api.put(`/request-tickets/${record._id}/accept-quote`);
-                                //         message.success("Đã chấp nhận báo giá, vui lòng ký hợp đồng.");
-                                //         // Chuyển tới trang Ký Hợp Đồng Mới
-                                //         window.location.href = `/customer/sign-contract/${record._id}`;
-                                //     } catch (err) {
-                                //         message.error("Lỗi khi chấp nhận báo giá: " + (err.response?.data?.message || err.message));
-                                //     }
-                                // }}
                                 onClick={() => handleViewSurvey(record)}
                             >
                                 Chấp nhận
                             </Button>
-
                             <Button
                                 danger
+                                size="small"
                                 icon={<CloseCircleOutlined />}
-                                style={{ minWidth: '120px' }}
                                 onClick={() => {
                                     confirm({
-                                        title: 'Bạn có chắc chắn muốn từ chối báo giá này?',
+                                        title: 'Từ chối báo giá này?',
                                         content: 'Yêu cầu chuyển nhà sẽ bị hủy bỏ.',
                                         okText: 'Từ chối & Hủy',
                                         okType: 'danger',
                                         cancelText: 'Quay lại',
                                         onOk: async () => {
                                             try {
-                                                await api.put(`/request-tickets/${record._id}/cancel`, {
-                                                    reason: 'Khách hàng từ chối báo giá'
-                                                });
+                                                await api.put(`/request-tickets/${record._id}/cancel`, { reason: 'Khách hàng từ chối báo giá' });
                                                 message.success("Đã từ chối báo giá và hủy đơn.");
                                                 setTickets(prev =>
     prev.map(t =>
@@ -369,37 +281,24 @@ const [selectedTicketForTime, setSelectedTicketForTime] = useState(null);
                           
                         </>
                     )}
-
-                    {/* Hành động mặc định hoặc sau khi chốt */}
                     {record.status !== 'QUOTED' && (
-                        <Button type="link" icon={<PhoneOutlined />}>
-                            Liên hệ
-                        </Button>
+                        <Button type="link" size="small" icon={<PhoneOutlined />}>Liên hệ</Button>
                     )}
-
-                    {/* Xem thông tin khảo sát (có báo giá r thì xem được) */}
                     {record.pricing?.totalPrice > 0 && (
-                        <Button
-                            type="dashed"
-                            icon={<EyeOutlined />}
-                            onClick={() => handleViewSurvey(record)}
-                        >
+                        <Button type="dashed" size="small" icon={<EyeOutlined />} onClick={() => handleViewSurvey(record)}>
                             Xem báo giá
                         </Button>
                     )}
-
-
-                    {/* Situation 2: ACCEPTED but payment not done yet — allow retry via contract review */}
                     {record.status === 'ACCEPTED' && record.invoice?.paymentStatus === 'UNPAID' && (
                         <Button
                             type="primary"
-                            style={{ background: '#d9363e', borderColor: '#d9363e', minWidth: '140px' }}
+                            size="small"
+                            style={{ background: '#d9363e', borderColor: '#d9363e' }}
                             onClick={() => window.location.href = `/customer/sign-contract/${record._id}`}
                         >
                             Thanh toán cọc
                         </Button>
                     )}
-
                 </div>
             ),
         },
@@ -416,25 +315,37 @@ const [selectedTicketForTime, setSelectedTicketForTime] = useState(null);
                     <h1>Thông Tin Chi Tiết</h1>
                 </section>
 
-                {/* SCHEDULE */}
+                {/* SCHEDULE TABLE */}
                 <section className="order-section">
                     <h2>Lịch Chuyển Nhà Của Tôi</h2>
-
                     <Table
                         columns={columns}
                         dataSource={tickets}
                         loading={loading}
                         pagination={{ pageSize: 5 }}
                         rowKey="_id"
+                        scroll={{ x: 900 }}
                     />
                 </section>
 
+                {/* ── SURVEY & PRICING MODAL ── */}
                 <Modal
-                    title="Chi tiết khảo sát & Báo giá"
+                    title={
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <EyeOutlined style={{ color: '#44624A', fontSize: 18 }} />
+                            <span>
+                                Chi tiết khảo sát &amp; Báo giá —{' '}
+                                <strong style={{ color: '#44624A' }}>
+                                    #{selectedTicket?.code?.slice(-10).toUpperCase()}
+                                </strong>
+                            </span>
+                        </div>
+                    }
                     open={isSurveyModalVisible}
                     onCancel={() => setIsSurveyModalVisible(false)}
+                    width={880}
+                    styles={{ body: { padding: '16px 20px', maxHeight: '80vh', overflowY: 'auto' } }}
                     footer={[
-                        // Situation 1: QUOTED — accept + sign contract + pay
                         selectedTicket?.status === 'QUOTED' && (
                             <Button
                                 key="accept"
@@ -448,14 +359,13 @@ const [selectedTicketForTime, setSelectedTicketForTime] = useState(null);
                                         setIsSurveyModalVisible(false);
                                         window.location.href = `/customer/sign-contract/${selectedTicket._id}`;
                                     } catch (err) {
-                                        message.error('Lỗi khi chấp nhận báo giá: ' + (err.response?.data?.message || err.message));
+                                        message.error('Lỗi: ' + (err.response?.data?.message || err.message));
                                     }
                                 }}
                             >
-                                Chấp nhận &amp; Thanh toán
+                                Chấp nhận &amp; Ký hợp đồng
                             </Button>
                         ),
-                        // Situation 2: ACCEPTED but invoice UNPAID — navigate to contract page to review then pay
                         selectedTicket?.status === 'ACCEPTED' && selectedTicket?.invoice?.paymentStatus === 'UNPAID' && (
                             <Button
                                 key="pay"
@@ -469,100 +379,241 @@ const [selectedTicketForTime, setSelectedTicketForTime] = useState(null);
                                 Xem HĐ &amp; Thanh toán cọc
                             </Button>
                         ),
-                        <Button key="close" onClick={() => setIsSurveyModalVisible(false)}>
-                            Đóng
-                        </Button>
+                        <Button key="close" onClick={() => setIsSurveyModalVisible(false)}>Đóng</Button>
                     ]}
-                    width={700}
                 >
                     {selectedSurvey && selectedTicketPricing ? (
-                        <div>
-                            <Typography.Title level={5}>1. Thông tin khảo sát</Typography.Title>
-                            <Row gutter={[16, 16]}>
-                                <Col span={12}>
-                                    <ul>
-                                        <li><strong>Quãng đường:</strong> {selectedSurvey.distanceKm} km</li>
-                                        <li><strong>Khênh vác:</strong> {selectedSurvey.carryMeter > 0 ? `${selectedSurvey.carryMeter} mét` : 'Không'}</li>
-                                        <li><strong>Tầng lầu:</strong> {selectedSurvey.floors}</li>
-                                        <li><strong>Thang máy:</strong> {selectedSurvey.hasElevator ? 'Có' : 'Không'}</li>
-                                    </ul>
-                                </Col>
-                                <Col span={12}>
-                                    <ul>
-                                        <li><strong>Tháo lắp:</strong> {selectedSurvey.needsAssembling ? 'Có' : 'Không'}</li>
-                                        <li><strong>Đóng gói:</strong> {selectedSurvey.needsPacking ? 'Có' : 'Không'}</li>
-                                        <li><strong>Bảo hiểm:</strong> {selectedSurvey.insuranceRequired ? 'Có' : 'Không'}</li>
-                                        <li><strong>Số lượng đồ (ước tính):</strong> {selectedSurvey.totalActualItems || selectedSurvey.items?.length || 0} món</li>
-                                    </ul>
-                                </Col>
-                            </Row>
+                        <div style={{ fontSize: 14 }}>
 
-                            <Typography.Title level={5} style={{ marginTop: 20 }}>2. Đề xuất tài nguyên</Typography.Title>
-                            <p><strong>Loại xe:</strong> {selectedSurvey.suggestedVehicle}</p>
-                            <p><strong>Nhân sự:</strong> {selectedSurvey.suggestedStaffCount} người</p>
+                            {/* ── SECTION 1: SURVEY INFO ── */}
+                            <div style={{
+                                background: '#f6ffed', border: '1px solid #b7eb8f',
+                                borderRadius: 10, padding: '14px 18px', marginBottom: 14
+                            }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+                                    <div style={{
+                                        background: '#52c41a', borderRadius: 6,
+                                        padding: '4px 10px', display: 'inline-flex', alignItems: 'center', gap: 6
+                                    }}>
+                                        <FileTextOutlined style={{ color: '#fff', fontSize: 13 }} />
+                                        <span style={{ color: '#fff', fontWeight: 600, fontSize: 13 }}>Thông tin khảo sát</span>
+                                    </div>
+                                </div>
 
-                            <Typography.Title level={5} style={{ marginTop: 20 }}>3. Cấu thành giá chi tiết</Typography.Title>
-                            <div style={{ background: '#f5f5f5', padding: '15px', borderRadius: '8px' }}>
-                                {selectedTicketPricing?.breakdown ? (
+                                <Row gutter={[24, 10]}>
+                                    <Col span={12}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                                            <InfoRow icon={<EnvironmentOutlined />} label="Quãng đường" value={`${selectedSurvey.distanceKm} km`} />
+                                            <InfoRow icon={<AppstoreOutlined />} label="Tầng lầu" value={selectedSurvey.floors > 0 ? `${selectedSurvey.floors} tầng` : 'Trệt'} />
+                                            <InfoRow icon={<ArrowRightOutlined />} label="Thang máy"
+                                                value={<Tag color={selectedSurvey.hasElevator ? 'success' : 'default'} style={{ margin: 0 }}>{selectedSurvey.hasElevator ? 'Có' : 'Không'}</Tag>}
+                                            />
+                                            <InfoRow icon={<ArrowRightOutlined />} label="Khênh vác bộ"
+                                                value={selectedSurvey.carryMeter > 0 ? `${selectedSurvey.carryMeter} m` : 'Không'}
+                                            />
+                                        </div>
+                                    </Col>
+                                    <Col span={12}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                                            <InfoRow icon={<InboxOutlined />} label="Đóng gói"
+                                                value={<Tag color={selectedSurvey.needsPacking ? 'blue' : 'default'} style={{ margin: 0 }}>{selectedSurvey.needsPacking ? 'Có' : 'Không'}</Tag>}
+                                            />
+                                            <InfoRow icon={<ToolOutlined />} label="Tháo lắp"
+                                                value={<Tag color={selectedSurvey.needsAssembling ? 'blue' : 'default'} style={{ margin: 0 }}>{selectedSurvey.needsAssembling ? 'Có' : 'Không'}</Tag>}
+                                            />
+                                            <InfoRow icon={<SafetyOutlined />} label="Bảo hiểm"
+                                                value={selectedSurvey.insuranceRequired
+                                                    ? <><Tag color="gold" style={{ margin: 0 }}>Có</Tag><span style={{ color: '#888', fontSize: 12, marginLeft: 4 }}>{(selectedSurvey.declaredValue || 0).toLocaleString()} ₫</span></>
+                                                    : <Tag color="default" style={{ margin: 0 }}>Không</Tag>}
+                                            />
+                                            <InfoRow icon={<ClockCircleOutlined />} label="Ước tính" value={`${selectedSurvey.estimatedHours || '—'} giờ`} />
+                                        </div>
+                                    </Col>
+                                    {selectedSurvey.notes && (
+                                        <Col span={24}>
+                                            <div style={{
+                                                background: '#fff', borderRadius: 6,
+                                                padding: '6px 10px', border: '1px dashed #b7eb8f',
+                                                color: '#555', fontSize: 12, marginTop: 4
+                                            }}>
+                                                <FileTextOutlined style={{ marginRight: 6, color: '#52c41a' }} />
+                                                <em>{selectedSurvey.notes}</em>
+                                            </div>
+                                        </Col>
+                                    )}
+                                </Row>
+                            </div>
+
+                            {/* ── SECTION 2: RESOURCES & ITEMS ── */}
+                            <div style={{
+                                background: '#e6f4ff', border: '1px solid #91caff',
+                                borderRadius: 10, padding: '14px 18px', marginBottom: 14
+                            }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+                                    <div style={{
+                                        background: '#1677ff', borderRadius: 6,
+                                        padding: '4px 10px', display: 'inline-flex', alignItems: 'center', gap: 6
+                                    }}>
+                                        <CarOutlined style={{ color: '#fff', fontSize: 13 }} />
+                                        <span style={{ color: '#fff', fontWeight: 600, fontSize: 13 }}>Tài nguyên đề xuất</span>
+                                    </div>
+                                </div>
+
+                                <Row gutter={[16, 0]}>
+                                    {[
+                                        { icon: <CarOutlined />, label: 'Xe tải', value: selectedSurvey.suggestedVehicle },
+                                        { icon: <TeamOutlined />, label: 'Nhân viên', value: `${selectedSurvey.suggestedStaffCount} người` },
+                                        { icon: <ClockCircleOutlined />, label: 'Thời gian', value: `${selectedSurvey.estimatedHours || selectedTicketPricing.breakdown?.estimatedHours || '—'} giờ` },
+                                    ].map((item, i) => (
+                                        <Col span={8} key={i}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', background: '#fff', borderRadius: 8, border: '1px solid #bae0ff' }}>
+                                                <span style={{ color: '#1677ff', fontSize: 18 }}>{item.icon}</span>
+                                                <div>
+                                                    <div style={{ fontSize: 11, color: '#888' }}>{item.label}</div>
+                                                    <div style={{ fontWeight: 700, color: '#1677ff', fontSize: 14 }}>{item.value}</div>
+                                                </div>
+                                            </div>
+                                        </Col>
+                                    ))}
+                                </Row>
+
+                                {selectedSurvey.items?.length > 0 && (
                                     <>
-                                        <Row justify="space-between" style={{ marginBottom: '8px', color: '#555' }}>
-                                            <Col>Phí xe tải:</Col>
-                                            <Col>{selectedTicketPricing.breakdown.vehicleFee?.toLocaleString() || 0} ₫</Col>
-                                        </Row>
-                                        <Row justify="space-between" style={{ marginBottom: '8px', color: '#555' }}>
-                                            <Col>Phí nhân công:</Col>
-                                            <Col>{selectedTicketPricing.breakdown.laborFee?.toLocaleString() || 0} ₫</Col>
-                                        </Row>
-                                        {(selectedTicketPricing.breakdown.distanceFee || 0) > 0 && (
-                                            <Row justify="space-between" style={{ marginBottom: '8px', color: '#555' }}>
-                                                <Col>Phụ phí quãng đường xa:</Col>
-                                                <Col>{selectedTicketPricing.breakdown.distanceFee?.toLocaleString() || 0} ₫</Col>
-                                            </Row>
-                                        )}
-                                        {(selectedTicketPricing.breakdown.floorFee || 0) > 0 && (
-                                            <Row justify="space-between" style={{ marginBottom: '8px', color: '#555' }}>
-                                                <Col>Phụ phí tầng lầu:</Col>
-                                                <Col>{selectedTicketPricing.breakdown.floorFee?.toLocaleString() || 0} ₫</Col>
-                                            </Row>
-                                        )}
-                                        {(selectedTicketPricing.breakdown.carryFee || 0) > 0 && (
-                                            <Row justify="space-between" style={{ marginBottom: '8px', color: '#555' }}>
-                                                <Col>Phí khuân vác nội bộ:</Col>
-                                                <Col>{selectedTicketPricing.breakdown.carryFee?.toLocaleString() || 0} ₫</Col>
-                                            </Row>
-                                        )}
-                                        {(selectedTicketPricing.breakdown.assemblingFee || 0) > 0 && (
-                                            <Row justify="space-between" style={{ marginBottom: '8px', color: '#555' }}>
-                                                <Col>Phí tháo lắp đồ đạc:</Col>
-                                                <Col>{selectedTicketPricing.breakdown.assemblingFee?.toLocaleString() || 0} ₫</Col>
-                                            </Row>
-                                        )}
-                                        {(selectedTicketPricing.breakdown.packingFee || 0) > 0 && (
-                                            <Row justify="space-between" style={{ marginBottom: '8px', color: '#555' }}>
-                                                <Col>Phí đóng gói:</Col>
-                                                <Col>{selectedTicketPricing.breakdown.packingFee?.toLocaleString() || 0} ₫</Col>
-                                            </Row>
-                                        )}
-                                        <Row justify="space-between" style={{ borderTop: '1px solid #ddd', paddingTop: '8px', marginBottom: '8px', fontWeight: 'bold' }}>
-                                            <Col>Phí cơ bản:</Col>
-                                            <Col>{selectedTicketPricing.subtotal?.toLocaleString() || 0} ₫</Col>
-                                        </Row>
+                                        <Divider style={{ margin: '12px 0 10px', borderColor: '#91caff' }} />
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 8 }}>
+                                            <InboxOutlined style={{ color: '#1677ff', fontSize: 14 }} />
+                                            <Typography.Text strong style={{ color: '#1677ff', fontSize: 13 }}>
+                                                Đồ đạc cần chuyển ({selectedSurvey.items.length} món)
+                                            </Typography.Text>
+                                        </div>
+                                        <div style={{ maxHeight: 150, overflowY: 'auto', display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                                            {selectedSurvey.items.map((item, idx) => {
+                                                const isCritical = item.name?.startsWith('⚠️') || item.name?.startsWith('[CRIT');
+                                                const isSec = item.name?.startsWith('[SEC:');
+                                                const displayName = isSec
+                                                    ? item.name.replace(/^\[SEC:[^\]]+\]\s*/, '')
+                                                    : item.name?.replace('⚠️ ', '') || item.name;
+                                                const conditionTooltip = { GOOD: 'Tình trạng tốt', FRAGILE: 'Dễ vỡ — cần bảo quản kỹ', DAMAGED: 'Đã hư hỏng' }[item.condition];
+                                                return (
+                                                    <Tooltip key={idx} title={conditionTooltip || ''}>
+                                                        <Tag
+                                                            icon={isCritical ? <WarningOutlined /> : null}
+                                                            color={isCritical ? 'error' : isSec ? 'orange' : 'blue'}
+                                                            style={{ fontSize: 12, padding: '2px 8px', cursor: 'default', marginBottom: 0 }}
+                                                        >
+                                                            {displayName}
+                                                            {item.actualWeight > 0 && (
+                                                                <span style={{ opacity: 0.7, fontSize: 11, marginLeft: 4 }}>{item.actualWeight}kg</span>
+                                                            )}
+                                                        </Tag>
+                                                    </Tooltip>
+                                                );
+                                            })}
+                                        </div>
                                     </>
-                                ) : (
-                                    <Row justify="space-between" style={{ marginBottom: '8px', fontWeight: 'bold' }}>
-                                        <Col>Phí cơ bản (Xe + Quãng đường + Nhân sự):</Col>
-                                        <Col>{selectedTicketPricing.subtotal?.toLocaleString() || 0} ₫</Col>
-                                    </Row>
                                 )}
+                            </div>
 
-                                <Row justify="space-between" style={{ marginBottom: '8px' }}>
-                                    <Col>Thuế / Phụ phí khác:</Col>
-                                    <Col><strong>{selectedTicketPricing.tax?.toLocaleString() || 0} ₫</strong></Col>
-                                </Row>
-                                <Row justify="space-between" style={{ borderTop: '2px solid #ddd', paddingTop: '8px', fontSize: '18px', fontWeight: 'bold', color: '#52c41a' }}>
-                                    <Col>Tổng cộng:</Col>
-                                    <Col>{selectedTicketPricing.totalPrice?.toLocaleString() || 0} ₫</Col>
-                                </Row>
+                            {/* ── SECTION 3: PRICING BREAKDOWN ── */}
+                            <div style={{
+                                background: '#fff', border: '1px solid #e8e8e8',
+                                borderRadius: 10, padding: '14px 18px'
+                            }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+                                    <div style={{
+                                        background: '#44624A', borderRadius: 6,
+                                        padding: '4px 10px', display: 'inline-flex', alignItems: 'center', gap: 6
+                                    }}>
+                                        <DollarOutlined style={{ color: '#fff', fontSize: 13 }} />
+                                        <span style={{ color: '#fff', fontWeight: 600, fontSize: 13 }}>Cấu thành giá chi tiết</span>
+                                    </div>
+                                </div>
+
+                                {(() => {
+                                    const bd = selectedTicketPricing?.breakdown || {};
+                                    const lines = [
+                                        { icon: <ArrowRightOutlined />, label: 'Phí vận chuyển cơ bản', value: bd.baseTransportFee, always: true },
+                                        { icon: <CarOutlined />, label: 'Phí xe tải (theo km)', value: bd.vehicleFee, always: true },
+                                        { icon: <TeamOutlined />, label: 'Phí nhân công', value: bd.laborFee, always: true },
+                                        { icon: <AppstoreOutlined />, label: 'Phí dịch vụ đồ vật', value: bd.serviceFee, always: false },
+                                        { icon: <EnvironmentOutlined />, label: 'Phụ phí chặng xa (>30km)', value: bd.distanceSurcharge, always: false },
+                                        { icon: <TeamOutlined />, label: 'Phí khiêng vác bộ', value: bd.carryFee, always: false },
+                                        { icon: <AppstoreOutlined />, label: 'Phí tầng lầu', value: bd.floorFee, always: false },
+                                        { icon: <SafetyOutlined />, label: 'Phí bảo hiểm', value: bd.insuranceFee, always: false },
+                                        { icon: <InfoCircleOutlined />, label: 'Phí quản lý', value: bd.managementFee, always: false },
+                                    ].filter(l => l.always || (l.value != null && l.value > 0));
+
+                                    return (
+                                        <>
+                                            {lines.map((l, i) => (
+                                                <div key={i} style={{
+                                                    display: 'flex', justifyContent: 'space-between',
+                                                    alignItems: 'center', padding: '7px 0',
+                                                    borderBottom: '1px solid #f5f5f5'
+                                                }}>
+                                                    <span style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#555', fontSize: 13 }}>
+                                                        <span style={{ color: '#44624A', fontSize: 12 }}>{l.icon}</span>
+                                                        {l.label}
+                                                    </span>
+                                                    <strong style={{ color: '#333', fontSize: 13 }}>{(l.value || 0).toLocaleString()} ₫</strong>
+                                                </div>
+                                            ))}
+
+                                            {/* Subtotal */}
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0 6px', marginTop: 2 }}>
+                                                <span style={{ fontWeight: 600, color: '#444' }}>Tạm tính</span>
+                                                <span style={{ fontWeight: 600, color: '#444' }}>{(selectedTicketPricing.subtotal || 0).toLocaleString()} ₫</span>
+                                            </div>
+
+                                            {/* Discount */}
+                                            {selectedTicketPricing.discountAmount > 0 && (
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0', color: '#cf1322' }}>
+                                                    <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                                        <GiftOutlined />
+                                                        Khuyến mãi (trước thuế)
+                                                    </span>
+                                                    <span style={{ fontWeight: 500 }}>− {selectedTicketPricing.discountAmount.toLocaleString()} ₫</span>
+                                                </div>
+                                            )}
+
+                                            {/* Tax */}
+                                            <div style={{
+                                                display: 'flex', justifyContent: 'space-between',
+                                                padding: '5px 0 10px', color: '#888',
+                                                borderBottom: '2px dashed #e8e8e8'
+                                            }}>
+                                                <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                                    <PercentageOutlined />
+                                                    Thuế VAT
+                                                </span>
+                                                <span>{(selectedTicketPricing.tax || 0).toLocaleString()} ₫</span>
+                                            </div>
+
+                                            {/* Min charge notice */}
+                                            {selectedTicketPricing.minimumChargeApplied && (
+                                                <Tag icon={<WarningOutlined />} color="orange" style={{ marginTop: 10, width: '100%', textAlign: 'center', borderRadius: 6 }}>
+                                                    Áp dụng phí tối thiểu
+                                                </Tag>
+                                            )}
+
+                                            {/* TOTAL */}
+                                            <div style={{
+                                                display: 'flex', justifyContent: 'space-between',
+                                                alignItems: 'center', padding: '12px 16px', marginTop: 12,
+                                                background: 'linear-gradient(135deg, #f6ffed, #d9f7be)',
+                                                borderRadius: 8, border: '1.5px solid #73d13d'
+                                            }}>
+                                                <span style={{ fontSize: 16, fontWeight: 700, color: '#237804', display: 'flex', alignItems: 'center', gap: 8 }}>
+                                                    <DollarOutlined />
+                                                    TỔNG CỘNG
+                                                </span>
+                                                <span style={{ fontSize: 24, fontWeight: 800, color: '#237804' }}>
+                                                    {(selectedTicketPricing.totalPrice || 0).toLocaleString()} ₫
+                                                </span>
+                                            </div>
+                                        </>
+                                    );
+                                })()}
                             </div>
                         </div>
                     ) : (
@@ -713,169 +764,70 @@ const [selectedTicketForTime, setSelectedTicketForTime] = useState(null);
         <Empty description="Chưa có lịch khảo sát" />
     )}
 
-</Modal>
-                {/* FURNITURE LIST */}
-                <section className="order-options-section">
-                    <div style={{ marginBottom: "30px", paddingLeft: "5px" }}>
-                        <h2 style={{ color: "#44624A", fontSize: "28px" }}>Sơ đồ phòng & Đồ đạc</h2>
-                        <p style={{ color: "#666" }}>Chi tiết danh sách đồ đạc cần vận chuyển theo từng phòng.</p>
-                    </div>
+                {/* ITEMS GRID — Real data from selected survey */}
+                {selectedSurvey && (
+                    <section className="order-options-section">
+                        <div style={{ marginBottom: 20, paddingLeft: 5 }}>
+                            <h2 style={{ color: '#44624A', fontSize: 26, marginBottom: 4, display: 'flex', alignItems: 'center', gap: 10 }}>
+                                <InboxOutlined style={{ color: '#44624A' }} />
+                                Danh sách đồ đạc khảo sát
+                            </h2>
+                            <p style={{ color: '#666', margin: 0 }}>
+                                Đơn <strong>#{selectedTicket?.code?.slice(-10).toUpperCase()}</strong> — {selectedSurvey.items?.length || 0} món đồ
+                            </p>
+                        </div>
 
-                    <div className="tabbed-room-layout-container">
-                        <Tabs
-                            defaultActiveKey="1"
-                            tabPosition="top"
-                            type="card"
-                            className="room-tabs-custom"
-                            items={[
-                                {
-                                    key: '1',
-                                    label: 'Phòng Khách',
-                                    children: (
-                                        <Row gutter={[30, 30]} className="tab-room-content-enhanced">
-                                            {/* LEFT: Furniture Cards */}
-                                            <Col xs={24} lg={14}>
-                                                <Row gutter={[16, 16]}>
-                                                    {[
-                                                        { name: "Sofa da", quantity: 1, types: ["Cồng kềnh", "Dễ rách/trầy xước"], icon: <Sofa size={24} /> },
-                                                        { name: "TV 65 inch", quantity: 1, types: ["Dễ vỡ", "Giá trị cao"], icon: <Tv size={24} /> },
-                                                        { name: "Bàn trà kính", quantity: 1, types: ["Dễ vỡ", "Dễ nứt mẻ"], icon: <UtensilsCrossed size={24} /> },
-                                                        { name: "Loa Thanh", quantity: 1, types: ["Thiết bị điện tử"], icon: <MonitorSpeaker size={24} /> }
-                                                    ].map((item, idx) => (
-                                                        <Col xs={24} sm={12} key={idx}>
-                                                            <div className="furniture-item-card with-icon">
-                                                                <div className="fi-icon-box">{item.icon}</div>
-                                                                <div className="fi-info-box">
-                                                                    <div className="fi-top">
-                                                                        <span className="fi-name">{item.name}</span>
-                                                                        <strong className="fi-qty">x{item.quantity}</strong>
-                                                                    </div>
-                                                                    <div style={{ marginTop: 6, display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                                                                        {item.types && item.types.map((t, i) => (
-                                                                            <Tag key={i} color={t === "Dễ vỡ" || t.includes("rách") || t.includes("nứt mẻ") ? "red" : "orange"}>{t}</Tag>
-                                                                        ))}
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </Col>
-                                                    ))}
-                                                </Row>
-                                            </Col>
+                        <Row gutter={[16, 16]}>
+                            {(selectedSurvey.items || []).map((item, idx) => {
+                                const isCritical = item.name?.startsWith('⚠️') || item.name?.startsWith('[CRIT');
+                                const isSec = item.name?.startsWith('[SEC:');
+                                const displayName = isSec
+                                    ? item.name.replace(/^\[SEC:[^\]]+\]\s*/, '')
+                                    : item.name?.replace('⚠️ ', '') || item.name;
+                                const conditionLabel = { GOOD: 'Tốt', FRAGILE: 'Dễ vỡ', DAMAGED: 'Hư hỏng' }[item.condition] || item.condition;
+                                const conditionColor = { GOOD: '#52c41a', FRAGILE: '#ff4d4f', DAMAGED: '#fa8c16' }[item.condition] || '#aaa';
+                                const cardBorder = isCritical ? '#ff4d4f' : isSec ? '#faad14' : '#d9d9d9';
+                                const cardBg = isCritical ? '#fff1f0' : isSec ? '#fffbe6' : '#fafafa';
 
-                                            {/* RIGHT: Room Photo */}
-                                            <Col xs={24} lg={10}>
-                                                <div className="room-image-reference">
-                                                    <Image
-                                                        src="https://images.unsplash.com/photo-1554995207-c18c203602cb"
-                                                        alt="Phòng Khách Tham Khảo"
-                                                        className="room-img-cover"
-                                                        preview={{ mask: 'Xem Toàn Màn Hình' }}
-                                                    />
-                                                    <div className="room-image-caption">Hình ảnh tham khảo trước khi vận chuyển</div>
+                                return (
+                                    <Col xs={24} sm={12} md={8} lg={6} key={idx}>
+                                        <div style={{
+                                            border: `1.5px solid ${cardBorder}`, background: cardBg,
+                                            borderRadius: 10, padding: '12px 14px',
+                                            height: '100%', display: 'flex', flexDirection: 'column', gap: 5
+                                        }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                                <span style={{ fontWeight: 600, fontSize: 13, color: isCritical ? '#cf1322' : '#222', flex: 1, marginRight: 4 }}>
+                                                    {isCritical && <WarningOutlined style={{ marginRight: 4, color: '#ff4d4f' }} />}
+                                                    {displayName}
+                                                </span>
+                                                {item.condition && (
+                                                    <span style={{ fontSize: 11, color: conditionColor, fontWeight: 600, whiteSpace: 'nowrap' }}>
+                                                        ● {conditionLabel}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div style={{ display: 'flex', gap: 10, color: '#777', fontSize: 12 }}>
+                                                {item.actualWeight > 0 && <span><InfoCircleOutlined style={{ marginRight: 3 }} />{item.actualWeight} kg</span>}
+                                                {item.actualVolume > 0 && <span>{item.actualVolume} m³</span>}
+                                            </div>
+                                            {item.notes && (
+                                                <div style={{ fontSize: 11, color: '#999', fontStyle: 'italic' }}>
+                                                    {item.notes}
                                                 </div>
-                                            </Col>
-                                        </Row>
-                                    )
-                                },
-                                {
-                                    key: '2',
-                                    label: 'Phòng Ngủ Master',
-                                    children: (
-                                        <Row gutter={[30, 30]} className="tab-room-content-enhanced">
-                                            {/* LEFT: Furniture Cards */}
-                                            <Col xs={24} lg={14}>
-                                                <Row gutter={[16, 16]}>
-                                                    {[
-                                                        { name: "Giường King Size", quantity: 1, types: ["Cồng kềnh", "Cần tháo lắp"], icon: <BedDouble size={24} /> },
-                                                        { name: "Tủ quần áo 4 cánh", quantity: 1, types: ["Cồng kềnh", "Cần tháo lắp", "Rất nặng"], icon: <Shirt size={24} /> },
-                                                        { name: "Đèn ngủ", quantity: 2, types: ["Dễ vỡ", "Bọc lót giảm xóc"], icon: <Lamp size={24} /> }
-                                                    ].map((item, idx) => (
-                                                        <Col xs={24} sm={12} key={idx}>
-                                                            <div className="furniture-item-card with-icon">
-                                                                <div className="fi-icon-box">{item.icon}</div>
-                                                                <div className="fi-info-box">
-                                                                    <div className="fi-top">
-                                                                        <span className="fi-name">{item.name}</span>
-                                                                        <strong className="fi-qty">x{item.quantity}</strong>
-                                                                    </div>
-                                                                    <div style={{ marginTop: 6, display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                                                                        {item.types && item.types.map((t, i) => (
-                                                                            <Tag key={i} color={t === "Dễ vỡ" ? "red" : "orange"}>{t}</Tag>
-                                                                        ))}
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </Col>
-                                                    ))}
-                                                </Row>
-                                            </Col>
-
-                                            {/* RIGHT: Room Photo */}
-                                            <Col xs={24} lg={10}>
-                                                <div className="room-image-reference">
-                                                    <Image
-                                                        src="https://images.unsplash.com/photo-1616594039964-ae9021a400a0"
-                                                        alt="Phòng Ngủ Tham Khảo"
-                                                        className="room-img-cover"
-                                                        preview={{ mask: 'Xem Toàn Màn Hình' }}
-                                                    />
-                                                    <div className="room-image-caption">Hình ảnh tham khảo trước khi vận chuyển</div>
-                                                </div>
-                                            </Col>
-                                        </Row>
-                                    )
-                                },
-                                {
-                                    key: '3',
-                                    label: 'Phòng Bếp',
-                                    children: (
-                                        <Row gutter={[30, 30]} className="tab-room-content-enhanced">
-                                            {/* LEFT: Furniture Cards */}
-                                            <Col xs={24} lg={14}>
-                                                <Row gutter={[16, 16]}>
-                                                    {[
-                                                        { name: "Tủ lạnh Side-by-side", quantity: 1, types: ["Cồng kềnh", "Tránh đặt nằm ngang", "Rất nặng"], icon: <Refrigerator size={24} /> },
-                                                        { name: "Bàn ăn lớn", quantity: 1, types: ["Cồng kềnh", "Dễ nứt góc"], icon: <UtensilsCrossed size={24} /> }
-                                                    ].map((item, idx) => (
-                                                        <Col xs={24} sm={12} key={idx}>
-                                                            <div className="furniture-item-card with-icon">
-                                                                <div className="fi-icon-box">{item.icon}</div>
-                                                                <div className="fi-info-box">
-                                                                    <div className="fi-top">
-                                                                        <span className="fi-name">{item.name}</span>
-                                                                        <strong className="fi-qty">x{item.quantity}</strong>
-                                                                    </div>
-                                                                    <div style={{ marginTop: 6, display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                                                                        {item.types && item.types.map((t, i) => (
-                                                                            <Tag key={i} color={t.includes("nứt") || t.includes("Tránh") ? "red" : "orange"}>{t}</Tag>
-                                                                        ))}
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </Col>
-                                                    ))}
-                                                </Row>
-                                            </Col>
-
-                                            {/* RIGHT: Room Photo */}
-                                            <Col xs={24} lg={10}>
-                                                <div className="room-image-reference">
-                                                    <Image
-                                                        src="https://images.unsplash.com/photo-1556910103-1c02745aae4d"
-                                                        alt="Phòng Bếp Tham Khảo"
-                                                        className="room-img-cover"
-                                                        preview={{ mask: 'Xem Toàn Màn Hình' }}
-                                                    />
-                                                    <div className="room-image-caption">Hình ảnh tham khảo trước khi vận chuyển</div>
-                                                </div>
-                                            </Col>
-                                        </Row>
-                                    )
-                                }
-                            ]}
-                        />
-                    </div>
-                </section>
+                                            )}
+                                        </div>
+                                    </Col>
+                                );
+                            })}
+                            {(!selectedSurvey.items || selectedSurvey.items.length === 0) && (
+                                <Col span={24}>
+                                    <Empty description="Chưa có danh sách đồ đạc từ khảo sát" />
+                                </Col>
+                            )}
+                        </Row>
+                    </section>
+                )}
             </Content>
 
             <AppFooter />
