@@ -8,24 +8,26 @@ import VehicleManagement from '../../pages/AdminPage/VehicleManagement/VehicleMa
 import PricingManagement from '../../pages/AdminPage/Pricing/PricingManagement';
 import ReportManagement from '../../pages/AdminPage/Report/ReportManagement';
 import ContractManagement from '../../pages/AdminPage/Contract/ContractManagement';
+import ProtectedRoute from "../../components/ProtectRoute/ProtectedRoute";
 
 const RoutesAdmin = () => {
-    return (
-        <AdminLayout>
-            <Routes>
-                <Route path="/" element={<Navigate to="dashboard" />} />
-                <Route path="dashboard" element={<Dashboard />} />
-                <Route path="users" element={<UserManagement />} />
-                <Route path="users/:id" element={<UserProfile />} />
-                <Route path="vehicles" element={<VehicleManagement />} />
-                <Route path="pricing" element={<PricingManagement />} />
-                <Route path="reports" element={<ReportManagement />} />
-                <Route path="contracts" element={<ContractManagement />} />
-                {/* Fallback for undefined admin routes */}
-                <Route path="*" element={<Navigate to="dashboard" />} />
-            </Routes>
-        </AdminLayout>
-    );
+  return (
+    <ProtectedRoute allowedRoles={["admin"]}>
+      <AdminLayout>
+        <Routes>
+          <Route path="/" element={<Navigate to="dashboard" />} />
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="users" element={<UserManagement />} />
+          <Route path="users/:id" element={<UserProfile />} />
+          <Route path="vehicles" element={<VehicleManagement />} />
+          <Route path="pricing" element={<PricingManagement />} />
+          <Route path="reports" element={<ReportManagement />} />
+          <Route path="contracts" element={<ContractManagement />} />
+          <Route path="*" element={<Navigate to="dashboard" />} />
+        </Routes>
+      </AdminLayout>
+    </ProtectedRoute>
+  );
 };
 
 export default RoutesAdmin;

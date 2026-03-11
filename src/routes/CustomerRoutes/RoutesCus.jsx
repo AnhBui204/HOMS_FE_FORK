@@ -11,26 +11,93 @@ import Deposit from "../../pages/CustomerPage/Deposit/Deposit";
 import Dashboard from "../../pages/CustomerPage/Dashboard/Dashboard";
 import SignContract from "../../pages/CustomerPage/SignContract/SignContract";
 // import CustomerLayout from "../../pages/CustomerPage/components/layout/CustomerLayout";
-
+import ProtectedRoute from "../../components/ProtectRoute/ProtectedRoute";
 const RoutesCus = () => {
   return (
     <Routes>
-      {/* <Route element={<CustomerLayout />}> */}
 
-      <Route path="/dashboard" element={<Dashboard />} />
-      <Route path="/order" element={<ViewMovingOrder />} />
-      <Route path="/profile" element={<Profile />} />
-      <Route path="/service-packages" element={<ViewServicePackages />} />
-      <Route path="/create-order" element={<CreateMovingOrder />} />
-      <Route path="/create-moving-order" element={<CreateMovingOrder />} />
-      <Route path="/confirm-order" element={<ConfirmMovingOrder />} />
-      <Route path="/survey-agreement" element={<SurveyAgreement />} />
-      <Route path="/deposit" element={<Deposit />} />
-      <Route path="/sign-contract/:ticketId" element={<SignContract />} />
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute allowedRoles={["customer"]}>
+            <Dashboard />
+          </ProtectedRoute>
+        }
+      />
 
-      {/* </Route> */}
+      <Route
+        path="/order"
+        element={
+          <ProtectedRoute allowedRoles={["customer"]}>
+            <ViewMovingOrder />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute allowedRoles={["customer"]}>
+            <Profile />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/service-packages"
+        element={
+          <ProtectedRoute allowedRoles={["customer"]}>
+            <ViewServicePackages />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/create-order"
+        element={
+          <ProtectedRoute allowedRoles={["customer"]}>
+            <CreateMovingOrder />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/confirm-order"
+        element={
+          <ProtectedRoute allowedRoles={["customer"]}>
+            <ConfirmMovingOrder />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/survey-agreement"
+        element={
+          <ProtectedRoute allowedRoles={["customer"]}>
+            <SurveyAgreement />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/deposit"
+        element={
+          <ProtectedRoute allowedRoles={["customer"]}>
+            <Deposit />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/sign-contract/:ticketId"
+        element={
+          <ProtectedRoute allowedRoles={["customer"]}>
+            <SignContract />
+          </ProtectedRoute>
+        }
+      />
+
     </Routes>
   );
 };
-
 export default RoutesCus;

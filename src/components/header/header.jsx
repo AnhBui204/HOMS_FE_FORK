@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { Layout, Row, Col, Button, Input, Drawer, Menu } from "antd";
-import { MenuOutlined, SearchOutlined, RightOutlined } from "@ant-design/icons";
+import {  Layout, Row, Col, Button, Input, Drawer, Menu, Avatar, Dropdown, Badge, Popover, List, Typography } from "antd";
+import { MenuOutlined, SearchOutlined, RightOutlined, BellOutlined } from "@ant-design/icons";
 import "./header.css";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import useUser from "../../contexts/UserContext";
-import { useNavigate } from "react-router-dom";
-
-import { Avatar, Dropdown } from "antd";
+import useNotificationSocket from "../../hooks/useNotificationSocket";
+import { getNotifications,markNotificationRead } from "../../services/notificationService";
 const { Header } = Layout;
-
+const { Text } = Typography;
 const AppHeader = () => {
 
   const [mobileMenuVisible, setMobileMenuVisible] = useState(false);
@@ -17,6 +16,9 @@ const AppHeader = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const isDispatcherMode = location.pathname.startsWith("/dispatcher");
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  useNotificationSocket(user, setNotifications, setUnreadCount);
   // Danh sách menu mới theo yêu cầu
   const navItems = [
     { key: "dashboard", label: "Bảng Điều Khiển", path: "/customer/dashboard" },
@@ -36,7 +38,82 @@ const AppHeader = () => {
       setActiveMenu("");
     }
   }, [location.pathname]);
+useEffect(() => {
 
+  const fetchNotifications = async () => {
+    if (!user) return;
+
+    try {
+
+      const data = await getNotifications();
+
+      setNotifications(data);
+
+      setUnreadCount(data.filter(n => !n.isRead).length);
+
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  fetchNotifications();
+
+}, [user]);
+ const handleNotificationClick = async (notification) => {
+  try {
+    await markNotificationRead(notification._id);
+
+    const updatedNotifications = notifications.map(notif =>
+      notif._id === notification._id
+        ? { ...notif, isRead: true }
+        : notif
+    );
+
+    setNotifications(updatedNotifications);
+    setUnreadCount(updatedNotifications.filter(n => !n.isRead).length);
+
+    if (notification.ticketId) {
+      navigate(`/customer/order/`);
+    }
+
+  } catch (err) {
+    console.error(err);
+  }
+};
+   const notificationContent = (
+    <div style={{ width: 320, maxHeight: 400, overflowY: 'auto' }}>
+      <List
+        itemLayout="horizontal"
+        dataSource={notifications}
+        locale={{ emptyText: "Không có thông báo nào" }}
+        renderItem={item => (
+          <List.Item 
+            style={{ 
+              padding: '12px', 
+              cursor: 'pointer',
+              backgroundColor: item.isRead ? '#ffffff' : '#f0f5ff', // Highlight màu xanh nhạt nếu chưa đọc
+              borderBottom: '1px solid #f0f0f0'
+            }}
+            onClick={() => handleNotificationClick(item)}
+          >
+            <List.Item.Meta
+              title={
+                <Text strong={!item.isRead} style={{ color: '#2D4F36' }}>
+                  {item.title}
+                </Text>
+              }
+              description={
+                <div>
+                  <div style={{ fontSize: '13px', color: '#555' }}>{item.message}</div>
+                  <div style={{ fontSize: '11px', color: '#888', marginTop: '4px' }}>{item.date}</div>
+                </div>
+              }
+            />
+          </List.Item>
+        )}
+      />
+    </div>
+  );
   const handleMenuClick = (key, path) => {
     setActiveMenu(key);
     navigate(path);
@@ -119,6 +196,17 @@ const AppHeader = () => {
                     </Link>
                   </>
                 ) : (
+                   <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                    <Popover 
+                      placement="bottomRight" 
+                      title="Thông báo của bạn" 
+                      content={notificationContent} 
+                      trigger="click"
+                    >
+                      <Badge count={unreadCount} overflowCount={99} size="small">
+                        <BellOutlined style={{ fontSize: '20px', cursor: 'pointer', color: '#2D4F36' }} />
+                      </Badge>
+                    </Popover>
                   <Dropdown
                     placement="bottomRight"
                     menu={{
@@ -126,7 +214,7 @@ const AppHeader = () => {
                         {
                           key: "profile",
                           label: "Trang cá nhân",
-                          onClick: () => navigate("/profile")
+                          onClick: () => navigate("/customer/profile")
                         },
                         {
                           type: "divider",
@@ -157,7 +245,7 @@ const AppHeader = () => {
                       </span>
                     </Button>
                   </Dropdown>
-
+</div>
                 )}
 
               </div>

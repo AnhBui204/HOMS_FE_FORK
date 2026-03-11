@@ -38,7 +38,8 @@ const ViewMovingOrder = () => {
     const [selectedSurvey, setSelectedSurvey] = useState(null);
     const [selectedTicket, setSelectedTicket] = useState(null);
     const [selectedTicketPricing, setSelectedTicketPricing] = useState(null);
-
+const [isSurveyTimeModalVisible, setIsSurveyTimeModalVisible] = useState(false);
+const [selectedTicketForTime, setSelectedTicketForTime] = useState(null);
     const handleViewSurvey = async (ticket) => {
         try {
             // Lấy khảo sát
@@ -204,6 +205,21 @@ const ViewMovingOrder = () => {
             })
         },
         {
+    title: "Yêu cầu khảo sát",
+    dataIndex: "scheduledTime",
+    render: (time) => {
+        if (!time) return <span style={{color:"#aaa"}}>Chưa xác định</span>
+
+        return new Date(time).toLocaleString("vi-VN", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit"
+        })
+    }
+},
+        {
             title: "Chuyển từ",
             dataIndex: "pickup",
             render: (pickup) => pickup?.address || "Chưa cập nhật"
@@ -283,7 +299,17 @@ const ViewMovingOrder = () => {
             title: "Thao tác",
             render: (_, record) => (
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-
+  {record.proposedSurveyTimes?.length > 0 && record.status === "CREATED" && (
+    <Button
+        type="primary"
+        onClick={() => {
+            setSelectedTicketForTime(record);
+            setIsSurveyTimeModalVisible(true);
+        }}
+    >
+        Xem lịch khảo sát
+    </Button>
+)}
                     {/* Hành động khi đơn hàng ở trạng thái QUOTED (Chờ khách chốt) */}
                     {record.status === 'QUOTED' && (
                         <>
@@ -324,7 +350,13 @@ const ViewMovingOrder = () => {
                                                     reason: 'Khách hàng từ chối báo giá'
                                                 });
                                                 message.success("Đã từ chối báo giá và hủy đơn.");
-                                                window.location.reload();
+                                                setTickets(prev =>
+    prev.map(t =>
+        t._id === record._id
+            ? { ...t, status: "CANCELLED" }
+            : t
+    )
+);
                                             } catch (err) {
                                                 message.error("Lỗi khi hủy đơn: " + (err.response?.data?.message || err.message));
                                             }
@@ -334,6 +366,7 @@ const ViewMovingOrder = () => {
                             >
                                 Từ chối
                             </Button>
+                          
                         </>
                     )}
 
@@ -536,7 +569,151 @@ const ViewMovingOrder = () => {
                         <Empty description="Chưa có thông tin khảo sát" />
                     )}
                 </Modal>
+<Modal
+    title="Chọn thời gian khảo sát"
+    open={isSurveyTimeModalVisible}
+    onCancel={() => setIsSurveyTimeModalVisible(false)}
+    footer={null}
+>
+{selectedTicketForTime?.rescheduleReason && (
+    <div
+        style={{
+            background: "#fff7e6",
+            border: "1px solid #ffd591",
+            padding: "10px",
+            borderRadius: "6px",
+            marginBottom: "15px"
+        }}
+    >
+        <b>Lý do đề xuất lịch mới:</b> {selectedTicketForTime.rescheduleReason}
+    </div>
+)}
+{selectedTicketForTime?.dispatcherId && (
+    <div
+        style={{
+            background: "#f6ffed",
+            border: "1px solid #b7eb8f",
+            padding: "10px",
+            borderRadius: "6px",
+            marginBottom: "15px"
+        }}
+    >
+        <b>Nhân viên khảo sát:</b>{" "}
+        {selectedTicketForTime.dispatcherId.fullName} 
+        {selectedTicketForTime.dispatcherId.phone && 
+            ` - ${selectedTicketForTime.dispatcherId.phone}`}
+    </div>
+)}
+    {selectedTicketForTime?.proposedSurveyTimes?.map((time, index) => (
+        <div
+            key={index}
+            style={{
+                border: "1px solid #ddd",
+                padding: "12px",
+                borderRadius: "6px",
+                marginBottom: "10px",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center"
+            }}
+        >
+            <span>
+                {new Date(time).toLocaleString("vi-VN", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit"
+                })}
+            </span>
 
+            <Button
+                type="primary"
+                icon={<CheckCircleOutlined />}
+                onClick={async () => {
+                    try {
+
+                        await orderService.acceptSurveyTime(
+                            selectedTicketForTime._id,
+                            time
+                        )
+
+                        message.success("Đã chấp nhận lịch khảo sát")
+
+                        setIsSurveyTimeModalVisible(false)
+
+                       setTickets(prev =>
+            prev.map(t =>
+                t._id === selectedTicketForTime._id
+                    ? { ...t, status: "WAITING_SURVEY", scheduledTime: time }
+                    : t
+            )
+        )
+
+                    } catch (err) {
+                        message.error(err.response?.data?.message || err.message)
+                    }
+                }}
+            >
+                Chấp nhận
+            </Button>
+
+        </div>
+    ))}
+
+    {/* Reject toàn bộ */}
+    {selectedTicketForTime?.proposedSurveyTimes?.length > 0 && (
+        <div style={{ marginTop: 20, textAlign: "right" }}>
+          <Button
+    danger
+    icon={<CloseCircleOutlined />}
+    onClick={() => {
+
+        confirm({
+            title: "Bạn có chắc muốn hủy yêu cầu chuyển nhà?",
+            content: "Yêu cầu này sẽ bị hủy và không thể khôi phục.",
+            okText: "Xác nhận hủy",
+            okType: "danger",
+            cancelText: "Quay lại",
+
+            onOk: async () => {
+                try {
+
+                    await orderService.cancelOrder(
+                        selectedTicketForTime._id,
+                        "Khách hàng từ chối lịch khảo sát"
+                    );
+
+                    message.success("Đã hủy yêu cầu chuyển nhà");
+
+                    setIsSurveyTimeModalVisible(false);
+
+                  setTickets(prev =>
+    prev.map(t =>
+        t._id === selectedTicketForTime._id
+            ? { ...t, status: "CANCELLED" }
+            : t
+    )
+);
+
+                } catch (err) {
+                    message.error(err.response?.data?.message || err.message);
+                }
+            }
+        });
+
+    }}
+>
+    Hủy yêu cầu
+</Button>
+        </div>
+    )}
+
+    {selectedTicketForTime?.proposedSurveyTimes?.length === 0 && (
+        <Empty description="Chưa có lịch khảo sát" />
+    )}
+
+</Modal>
                 {/* FURNITURE LIST */}
                 <section className="order-options-section">
                     <div style={{ marginBottom: "30px", paddingLeft: "5px" }}>

@@ -119,15 +119,15 @@ export const updateTicketStatus = async (ticketId, newStatus) => {
 };
 
 // Cancel order
-export const cancelOrder = async (ticketId) => {
-    try {
-        const response = await api.put(`/request-tickets/${ticketId}/cancel`);
-        return response.data;
-    } catch (error) {
-        console.error('Error cancelling order:', error);
-        normalizeApiError(error);
-    }
-};
+// export const cancelOrder = async (ticketId) => {
+//     try {
+//         const response = await api.put(`/request-tickets/${ticketId}/cancel`);
+//         return response.data;
+//     } catch (error) {
+//         console.error('Error cancelling order:', error);
+//         normalizeApiError(error);
+//     }
+// };
 export const createPaymentLink = async (ticketId, amount) => {
     try {
         const response = await api.post(`/request-tickets/${ticketId}/create-payment-link`, { amount });
@@ -146,14 +146,47 @@ export const createMovingDeposit = async (ticketId) => {
         normalizeApiError(error);
     }
 }
+export const acceptSurveyTime = async (ticketId, selectedTime) => {
+    try {
+        const response = await api.put(`/request-tickets/${ticketId}/accept-survey-time`, {
+            selectedTime
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error accepting survey time:", error);
+        normalizeApiError(error);
+    }
+};
 
+export const rejectSurveyTime = async (ticketId) => {
+    try {
+        const response = await api.put(`/request-tickets/${ticketId}/reject-survey-time`);
+        return response.data;
+    } catch (error) {
+        console.error("Error rejecting survey time:", error);
+        normalizeApiError(error);
+    }
+};
+export const cancelOrder = async (ticketId, reason) => {
+    try {
+        const response = await api.put(`/request-tickets/${ticketId}/cancel`, {
+            reason
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error cancelling order:", error);
+        normalizeApiError(error);
+    }
+};
 const orderService = {
     createOrder,
     getMyOrders,
     getOrderById,
     cancelOrder,
     createPaymentLink,
-    createMovingDeposit
+    createMovingDeposit,
+      acceptSurveyTime,
+    rejectSurveyTime
 };
 
 export default orderService;
