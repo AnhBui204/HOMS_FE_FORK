@@ -44,3 +44,28 @@ export const userService = {
     return response.data;
   }
 };
+export const getSurveyDetail = async (ticket) => {
+
+    const surveyRes = await api.get(`/surveys/ticket/${ticket._id}`);
+    const surveyData = surveyRes.data?.data || surveyRes.data;
+
+    let pricing = ticket.pricing;
+
+    try {
+        const pricingRes = await api.get(`/pricing/${ticket._id}`);
+        const detail = pricingRes.data?.data;
+
+        pricing = {
+            ...ticket.pricing,
+            breakdown: detail?.breakdown
+        };
+
+    } catch {
+        pricing = ticket.pricing;
+    }
+
+    return {
+        survey: surveyData,
+        pricing
+    };
+};
