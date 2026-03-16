@@ -27,7 +27,9 @@ const LoginForm = () => {
 
     switch (userData.role) {
       case "dispatcher":
-        redirectPath = "/dispatcher/surveys";
+        redirectPath = userData.dispatcherProfile?.isGeneral
+          ? "/dispatcher/dashboard"
+          : "/dispatcher/calendar";
         break;
       case "customer":
         redirectPath = "/customer/order";
