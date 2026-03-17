@@ -16,7 +16,9 @@ import {
   UpOutlined,
   FileTextOutlined,
   NotificationOutlined,
-  CarOutlined
+  CarOutlined,
+  StarOutlined,         // [RATING] icon nút đánh giá
+  StarFilled,           // [RATING] icon đã đánh giá
 } from "@ant-design/icons";
 import AppHeader from "../../../components/header/header";
 import AppFooter from "../../../components/footer/footer";
@@ -27,6 +29,7 @@ import ReportIncidentModal from "../../../components/MovingOrder/ReportIncidentM
 import ViewIncidentModal from "../../../components/MovingOrder/ViewIncidentModal";
 import SurveyPricingModal from "../../../components/MovingOrder/SurveyPricingModal";
 import SurveyTimeModal from "../../../components/MovingOrder/SurveyTimeModal";
+import RateServiceModal from "../../../components/ServiceRating/RateServiceModal"; 
 import "./style.css";
 
 const { Content } = Layout;
@@ -50,7 +53,7 @@ const TICKET_STATUS = {
   WAITING_SURVEY: { label: "Đã phân công nhân viên khảo sát",  cls: "mo-tag--orange" },
   SURVEYED:       { label: "Đã khảo sát",                      cls: "mo-tag--cyan" },
   QUOTED:         { label: "Đã báo giá",                       cls: "mo-tag--orange" },
-  ACCEPTED:       { label: "Đã chấp nhận báo giá",                      cls: "mo-tag--geekblue" },
+  ACCEPTED:       { label: "Đã chấp nhận báo giá",             cls: "mo-tag--geekblue" },
   CONVERTED:      { label: "Đã tạo HĐ",                        cls: "mo-tag--purple" },
   IN_PROGRESS:    { label: "Đang vận chuyển",                   cls: "mo-tag--processing" },
   COMPLETED:      { label: "Hoàn thành",                        cls: "mo-tag--green" },
@@ -81,12 +84,12 @@ const INCIDENT_STATUS = {
 
 /* ─── filter tabs config ──────────────────────────────────── */
 const FILTERS = [
-  { key: "ALL", label: "Tất cả" },
-  { key: "QUOTED", label: "Chờ chấp nhận báo giá" },
-  { key: "PROCESSING", label: "Đang xử lý" },
+  { key: "ALL",         label: "Tất cả" },
+  { key: "QUOTED",      label: "Chờ chấp nhận báo giá" },
+  { key: "PROCESSING",  label: "Đang xử lý" },
   { key: "IN_PROGRESS", label: "Đang vận chuyển" },
-  { key: "COMPLETED", label: "Hoàn thành" },
-  { key: "CANCELLED", label: "Đã hủy" },
+  { key: "COMPLETED",   label: "Hoàn thành" },
+  { key: "CANCELLED",   label: "Đã hủy" },
 ];
 
 /* ─── StatusTag ───────────────────────────────────────────── */
@@ -97,8 +100,7 @@ const StatusTag = ({ cls, children, onClick, icon }) => (
   </span>
 );
 
-
-/* ─── IncidentTag — clickable with animated dot ───────────── */
+/* ─── IncidentTag ─────────────────────────────────────────── */
 const IncidentTag = ({ incident, status, onClick }) => {
   const isActive = ["Open", "Investigating"].includes(incident?.status);
   if (isActive) {
@@ -123,23 +125,29 @@ const OrderCard = ({
   onReportIncident,
   onViewIncident,
   onCancelQuote,
+  onRateService,    // [RATING] handler mở modal đánh giá
 }) => {
   const [expanded, setExpanded] = useState(false);
 
   // Status mapping
-  const invoiceSt = ticket.invoice ? INVOICE_STATUS[ticket.invoice.status] : null;
-  const ticketSt = TICKET_STATUS[ticket.status] || { label: ticket.status, cls: "mo-tag--gray" };
-  const displaySt = invoiceSt || ticketSt;
-  const paymentSt = ticket.invoice?.paymentStatus ? PAYMENT_STATUS[ticket.invoice.paymentStatus] : null;
-  const incident = ticket.invoice?.incident;
+  const invoiceSt  = ticket.invoice ? INVOICE_STATUS[ticket.invoice.status] : null;
+  const ticketSt   = TICKET_STATUS[ticket.status] || { label: ticket.status, cls: "mo-tag--gray" };
+  const displaySt  = invoiceSt || ticketSt;
+  const paymentSt  = ticket.invoice?.paymentStatus ? PAYMENT_STATUS[ticket.invoice.paymentStatus] : null;
+  const incident   = ticket.invoice?.incident;
   const incidentSt = incident ? INCIDENT_STATUS[incident.status] : null;
 
   // Conditions
-  const isQuoted = ticket.status === "QUOTED";
+  const isQuoted        = ticket.status === "QUOTED";
   const isAcceptedUnpaid = ticket.status === "ACCEPTED" && ticket.invoice?.paymentStatus === "UNPAID";
-  const canReport = ["COMPLETED", "IN_PROGRESS"].includes(ticket.invoice?.status) && !incident;
-  const hasPricing = ticket.pricing?.totalPrice > 0;
-  const shortCode = `#${(ticket.code || "").slice(-14).toUpperCase() || "N/A"}`;
+  const canReport       = ["COMPLETED", "IN_PROGRESS"].includes(ticket.invoice?.status) && !incident;
+  const hasPricing      = ticket.pricing?.totalPrice > 0;
+  const shortCode       = `#${(ticket.code || "").slice(-14).toUpperCase() || "N/A"}`;
+
+  // [RATING] Kiểm tra điều kiện hiển thị nút đánh giá
+  const isInvoiceCompleted = ticket.invoice?.status === "COMPLETED";
+  const isRated            = ticket.invoice?.isRated === true;
+  const canRate            = isInvoiceCompleted && !isRated;
 
   return (
     <div className={`mo-card ${isQuoted ? "mo-card--highlight" : ""}`}>
@@ -162,7 +170,6 @@ const OrderCard = ({
             <CalendarOutlined style={{ marginRight: 4 }} />
             Tạo: {fmtDate(ticket.createdAt)}
           </span>
-          {/* CẢI TIẾN: Di chuyển lịch khảo sát lên Header */}
           {ticket.scheduledTime && (
             <span className="mo-card__date" style={{ color: '#0284c7', fontWeight: 600 }}>
               <CalendarOutlined style={{ marginRight: 4 }} />
@@ -171,9 +178,16 @@ const OrderCard = ({
           )}
         </div>
         <div className="mo-card__head-right" style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-          {/* CẢI TIẾN: Nổi bật hóa trạng thái "Đã báo cáo" ở góc trên cùng */}
           {incidentSt && (
             <IncidentTag incident={incident} status={incidentSt} onClick={() => onViewIncident(incident)} />
+          )}
+          {/* [RATING] Badge "Đã đánh giá" ở header nếu isRated */}
+          {isRated && (
+            <span className="mo-tag mo-tag--rated"style={{ cursor: 'pointer' }} 
+    onClick={() => onRateService(ticket)}>
+              <StarFilled style={{ marginRight: 4, color: '#f59e0b' }} />
+              Đã đánh giá
+            </span>
           )}
           <StatusTag cls={displaySt.cls} icon={<CarOutlined />}>{displaySt.label}</StatusTag>
         </div>
@@ -183,24 +197,18 @@ const OrderCard = ({
       <div className="mo-card__route-container">
         <div className="mo-route-timeline">
           <div className="mo-route-point mo-route-point--pickup">
-            <div className="mo-route-icon-box">
-              <HomeOutlined />
-            </div>
+            <div className="mo-route-icon-box"><HomeOutlined /></div>
             <div className="mo-route-info">
               <span className="mo-route-label">Từ (Nơi đi)</span>
               <span className="mo-route-address">{ticket.pickup?.address || "Chưa cập nhật"}</span>
             </div>
           </div>
-
           <div className="mo-route-divider">
             <div className="mo-route-line"></div>
             <div className="mo-route-distance">Chuyển đến</div>
           </div>
-
           <div className="mo-route-point mo-route-point--delivery">
-            <div className="mo-route-icon-box">
-              <EnvironmentOutlined />
-            </div>
+            <div className="mo-route-icon-box"><EnvironmentOutlined /></div>
             <div className="mo-route-info">
               <span className="mo-route-label">Đến (Nơi đến)</span>
               <span className="mo-route-address">{ticket.delivery?.address || "Chưa cập nhật"}</span>
@@ -211,19 +219,14 @@ const OrderCard = ({
 
       {/* ── META & PRICE ── */}
       <div className="mo-card__meta">
-       <div className="mo-card__tags">
-        {/* Đưa badge thanh toán vào đây */}
-        {paymentSt ? (
+        <div className="mo-card__tags">
+          {paymentSt ? (
             <StatusTag cls={paymentSt.cls} icon={<DollarCircleOutlined />}>{paymentSt.label}</StatusTag>
-        ) : (
+          ) : (
             <StatusTag cls="mo-tag--gray" icon={<DollarCircleOutlined />}>Chưa TT</StatusTag>
-        )}
-    </div>
-
-        {/* CẢI TIẾN: Đưa tag Thanh toán sát vào Tổng chi phí */}
+          )}
+        </div>
         <div className="mo-card__price-wrapper">
-          
-          
           <div className="mo-card__price-box">
             <span className="mo-price-label">Tổng chi phí:</span>
             {hasPricing ? (
@@ -253,7 +256,6 @@ const OrderCard = ({
               <CreditCardOutlined /> Thanh toán cọc
             </button>
           )}
-          {/* Nút Xem báo giá lùi về Secondary nếu đơn đã chốt */}
           {hasPricing && !isQuoted && (
             <button className="mo-btn mo-btn--contact" onClick={() => onViewSurvey(ticket)}>
               <FileTextOutlined /> Xem báo giá
@@ -264,14 +266,23 @@ const OrderCard = ({
               <WarningOutlined /> Báo cáo sự cố
             </button>
           )}
+
+          {/* [RATING] Nút Đánh giá — vàng cam, nổi bật */}
+          {canRate && (
+            <button className="mo-btn mo-btn--rate" onClick={() => onRateService(ticket)}>
+              <StarOutlined /> Đánh giá dịch vụ
+            </button>
+          )}
         </div>
 
         <div className="mo-card__btns-secondary">
           {ticket.status !== "QUOTED" && (
-             <button className="mo-btn mo-btn--contact"><PhoneOutlined /> CSKH</button>
+            <button className="mo-btn mo-btn--contact"><PhoneOutlined /> CSKH</button>
           )}
-          {/* Nút Chi tiết làm nổi bật hơn */}
-          <button className={`mo-btn ${expanded ? 'mo-btn--ghost' : 'mo-btn--view-quote'}`} onClick={() => setExpanded(!expanded)}>
+          <button
+            className={`mo-btn ${expanded ? 'mo-btn--ghost' : 'mo-btn--view-quote'}`}
+            onClick={() => setExpanded(!expanded)}
+          >
             {expanded ? <><UpOutlined /> Thu gọn</> : <>Chi tiết <DownOutlined /></>}
           </button>
         </div>
@@ -296,30 +307,50 @@ const OrderCard = ({
               <span className="mo-expand-val">#{ticket.invoice.code}</span>
             </div>
           )}
+          {/* [RATING] Hiển thị trạng thái đánh giá trong chi tiết */}
+          {isInvoiceCompleted && (
+            <div className="mo-expand-item">
+              <span className="mo-expand-label">Đánh giá dịch vụ</span>
+              <span className="mo-expand-val">
+                {isRated ? (
+                  <span style={{ color: '#f59e0b', fontWeight: 600 }}>
+                    <StarFilled style={{ marginRight: 4 }} />Đã đánh giá
+                  </span>
+                ) : (
+                  <span style={{ color: '#64748b' }}>Chưa đánh giá</span>
+                )}
+              </span>
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
 };
+
 /* ─── main page ───────────────────────────────────────────── */
 const ViewMovingOrder = () => {
   const location = useLocation();
   const { user, isAuthenticated } = useUser();
 
-  const [tickets, setTickets]                                   = useState([]);
-  const [loading, setLoading]                                   = useState(true);
-  const [activeFilter, setActiveFilter]                         = useState("ALL");
-  const [isSurveyModalVisible, setIsSurveyModalVisible]         = useState(false);
-  const [selectedSurvey, setSelectedSurvey]                     = useState(null);
-  const [selectedTicket, setSelectedTicket]                     = useState(null);
-  const [selectedTicketPricing, setSelectedTicketPricing]       = useState(null);
-  const [isSurveyTimeModalVisible, setIsSurveyTimeModalVisible] = useState(false);
-  const [selectedTicketForTime, setSelectedTicketForTime]       = useState(null);
-  const [isIncidentModalVisible, setIsIncidentModalVisible]     = useState(false);
-  const [selectedIncident, setSelectedIncident]                 = useState(null);
-  const [isReportModalVisible, setIsReportModalVisible]         = useState(false);
+  const [tickets,                    setTickets]                    = useState([]);
+  const [loading,                    setLoading]                    = useState(true);
+  const [activeFilter,               setActiveFilter]               = useState("ALL");
+  const [isSurveyModalVisible,       setIsSurveyModalVisible]       = useState(false);
+  const [selectedSurvey,             setSelectedSurvey]             = useState(null);
+  const [selectedTicket,             setSelectedTicket]             = useState(null);
+  const [selectedTicketPricing,      setSelectedTicketPricing]      = useState(null);
+  const [isSurveyTimeModalVisible,   setIsSurveyTimeModalVisible]   = useState(false);
+  const [selectedTicketForTime,      setSelectedTicketForTime]      = useState(null);
+  const [isIncidentModalVisible,     setIsIncidentModalVisible]     = useState(false);
+  const [selectedIncident,           setSelectedIncident]           = useState(null);
+  const [isReportModalVisible,       setIsReportModalVisible]       = useState(false);
 
-  /* handlers */
+  // [RATING] State cho modal đánh giá
+  const [isRateModalVisible,         setIsRateModalVisible]         = useState(false);
+  const [ticketToRate,               setTicketToRate]               = useState(null);
+
+  /* ── handlers ── */
   const handleViewSurvey = async (ticket) => {
     try {
       setSelectedTicket(ticket);
@@ -338,7 +369,7 @@ const ViewMovingOrder = () => {
     } catch (error) {
       message.error(
         "Không thể tải thông tin khảo sát: " +
-          (error.response?.data?.message || error.message),
+          (error.response?.data?.message || error.message)
       );
     }
   };
@@ -353,6 +384,25 @@ const ViewMovingOrder = () => {
   const handleViewIncident = (incident) => {
     setSelectedIncident(incident);
     setIsIncidentModalVisible(true);
+  };
+
+  // [RATING] Mở modal đánh giá
+  const handleRateService = (ticket) => {
+    setTicketToRate(ticket);
+    setIsRateModalVisible(true);
+  };
+
+  // [RATING] Callback sau khi đánh giá thành công — cập nhật isRated trong state
+  const handleRateSuccess = (invoiceId) => {
+    setIsRateModalVisible(false);
+    setTickets((prev) =>
+      prev.map((t) =>
+        t.invoice?._id === invoiceId
+          ? { ...t, invoice: { ...t.invoice, isRated: true } }
+          : t
+      )
+    );
+    message.success("Cảm ơn bạn đã đánh giá dịch vụ!");
   };
 
   const handleDepositPayment = (ticket) => {
@@ -385,7 +435,7 @@ const ViewMovingOrder = () => {
         } catch (err) {
           message.error(
             "Không thể tạo thanh toán: " +
-              (err.response?.data?.message || err.message),
+              (err.response?.data?.message || err.message)
           );
         }
       },
@@ -407,23 +457,19 @@ const ViewMovingOrder = () => {
           message.success("Đã từ chối báo giá và hủy đơn.");
           setTickets((prev) =>
             prev.map((t) =>
-              t._id === record._id ? { ...t, status: "CANCELLED" } : t,
-            ),
+              t._id === record._id ? { ...t, status: "CANCELLED" } : t
+            )
           );
         } catch (err) {
           message.error(
-            "Lỗi khi hủy đơn: " + (err.response?.data?.message || err.message),
+            "Lỗi khi hủy đơn: " + (err.response?.data?.message || err.message)
           );
         }
       },
     });
   };
-  const getDisplayStatus = (ticket) => {
-  if (ticket.invoice?.status) return ticket.invoice.status;
-  return ticket.status;
-};
 
-  /* fetch */
+  /* ── fetch ── */
   useEffect(() => {
     const fetchTickets = async () => {
       if (!isAuthenticated || !user) { setLoading(false); return; }
@@ -436,7 +482,7 @@ const ViewMovingOrder = () => {
           let userTickets = (response.data.data || []).filter(
             (t) =>
               (t.customerId && t.customerId._id === currentUserId) ||
-              t.customerId === currentUserId,
+              t.customerId === currentUserId
           );
           userTickets.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
@@ -446,7 +492,7 @@ const ViewMovingOrder = () => {
             userTickets = userTickets.filter(
               (t) =>
                 (t.code && t.code.toLowerCase().includes(kw)) ||
-                (t.invoice?.code && t.invoice.code.toLowerCase().includes(kw)),
+                (t.invoice?.code && t.invoice.code.toLowerCase().includes(kw))
             );
           }
           setTickets(userTickets);
@@ -460,57 +506,27 @@ const ViewMovingOrder = () => {
     fetchTickets();
   }, [isAuthenticated, user, location.search]);
 
-  /* filter logic */
-const matchFilter = (t, key) => {
-  const ticketStatus = t.status;
-  const invoiceStatus = t.invoice?.status;
+  /* ── filter logic ── */
+  const matchFilter = (t, key) => {
+    const ticketStatus  = t.status;
+    const invoiceStatus = t.invoice?.status;
+    const hasInvoice    = !!invoiceStatus;
 
-  //  Ưu tiên invoice nếu có
-  const hasInvoice = !!invoiceStatus;
-
-  if (key === "ALL") return true;
-
-  if (key === "QUOTED")
-    return ticketStatus === "QUOTED";
-
-  if (key === "PROCESSING") {
-    //  chưa có invoice → xử lý theo ticket
-    if (!hasInvoice) {
-      return [
-        "CREATED",
-        "WAITING_SURVEY",
-        "SURVEYED",
-        "ACCEPTED",
-      ].includes(ticketStatus);
+    if (key === "ALL") return true;
+    if (key === "QUOTED") return ticketStatus === "QUOTED";
+    if (key === "PROCESSING") {
+      if (!hasInvoice) return ["CREATED","WAITING_SURVEY","SURVEYED","ACCEPTED"].includes(ticketStatus);
+      return ["DRAFT", "CONFIRMED"].includes(invoiceStatus);
     }
+    if (key === "IN_PROGRESS")  return ["ASSIGNED","IN_PROGRESS"].includes(invoiceStatus);
+    if (key === "COMPLETED")    return invoiceStatus === "COMPLETED";
+    if (key === "CANCELLED")    return ticketStatus === "CANCELLED" || invoiceStatus === "CANCELLED";
+    return false;
+  };
 
-    //  có invoice → xử lý theo invoice
-    return ["DRAFT", "CONFIRMED"].includes(invoiceStatus);
-  }
+  const filtered  = tickets.filter((t) => matchFilter(t, activeFilter));
+  const countFor  = (key) => tickets.filter((t) => matchFilter(t, key)).length;
 
-  if (key === "IN_PROGRESS") {
-    return ["ASSIGNED", "IN_PROGRESS"].includes(invoiceStatus);
-  }
-
-  if (key === "COMPLETED") {
-    return invoiceStatus === "COMPLETED";
-  }
-
-  if (key === "CANCELLED") {
-    return (
-      ticketStatus === "CANCELLED" ||
-      invoiceStatus === "CANCELLED"
-    );
-  }
-
-  return false;
-};
-
-const filtered = tickets.filter((t) => matchFilter(t, activeFilter));
-
-const countFor = (key) => {
-  return tickets.filter((t) => matchFilter(t, key)).length;
-};
   return (
     <Layout className="view-order-page">
       <AppHeader />
@@ -561,13 +577,14 @@ const countFor = (key) => {
                   onViewIncident={handleViewIncident}
                   onDepositPayment={handleDepositPayment}
                   onCancelQuote={handleCancelQuote}
+                  onRateService={handleRateService}  // [RATING]
                 />
               ))}
             </div>
           )}
         </section>
 
-        {/* Modals — không thay đổi */}
+        {/* ── Modals ── */}
         <SurveyPricingModal
           visible={isSurveyModalVisible}
           onClose={() => setIsSurveyModalVisible(false)}
@@ -582,9 +599,7 @@ const countFor = (key) => {
           survey={selectedSurvey}
           onSuccess={(ticketId, updatedFields) => {
             setTickets((prev) =>
-              prev.map((t) =>
-                t._id === ticketId ? { ...t, ...updatedFields } : t,
-              ),
+              prev.map((t) => t._id === ticketId ? { ...t, ...updatedFields } : t)
             );
           }}
         />
@@ -598,8 +613,8 @@ const countFor = (key) => {
                 prev.map((t) =>
                   t._id === selectedTicket._id
                     ? { ...t, invoice: { ...t.invoice, incident } }
-                    : t,
-                ),
+                    : t
+                )
               );
             }}
           />
@@ -609,6 +624,16 @@ const countFor = (key) => {
           onClose={() => setIsIncidentModalVisible(false)}
           incident={selectedIncident}
         />
+
+        {/* [RATING] Modal đánh giá dịch vụ */}
+        {ticketToRate && (
+          <RateServiceModal
+            visible={isRateModalVisible}
+            onClose={() => setIsRateModalVisible(false)}
+            ticket={ticketToRate}
+            onSuccess={handleRateSuccess}
+          />
+        )}
       </Content>
 
       <AppFooter />
