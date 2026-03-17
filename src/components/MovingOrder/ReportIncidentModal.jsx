@@ -99,11 +99,13 @@ const ReportIncidentModal = ({ visible, onClose, ticket, onSuccess }) => {
                 />
                 <Form.Item name="type" label="Loại sự cố" rules={[{ required: true, message: 'Vui lòng chọn loại sự cố' }]}>
                     <Select placeholder="Chọn loại sự cố">
-                        <Select.Option value="DAMAGE">Hư hỏng đồ đạc</Select.Option>
-                        <Select.Option value="LOSS">Mất mát tài sản</Select.Option>
-                        <Select.Option value="STAFF">Thái độ nhân viên</Select.Option>
-                        <Select.Option value="OTHER">Khác</Select.Option>
-                    </Select>
+  <Select.Option value="DAMAGE">Hư hỏng đồ đạc</Select.Option>
+  <Select.Option value="LOSS">Mất mát tài sản</Select.Option>
+  <Select.Option value="DELAY">Trễ lịch vận chuyển</Select.Option>
+  <Select.Option value="ACCIDENT">Tai nạn</Select.Option>
+  <Select.Option value="STAFF">Thái độ nhân viên</Select.Option>
+  <Select.Option value="OTHER">Khác</Select.Option>
+</Select>
                 </Form.Item>
                 <Form.Item name="description" label="Mô tả chi tiết" rules={[{ required: true, message: 'Vui lòng mô tả chi tiết' }]}>
                     <Input.TextArea rows={4} placeholder="Vui lòng mô tả chi tiết sự cố..." />
@@ -140,7 +142,7 @@ const ReportIncidentModal = ({ visible, onClose, ticket, onSuccess }) => {
                                         <source src={url} />
                                     </video>
                                 ) : (
-                                    <Image src={file.thumbUrl || file.url} />
+                                    <Image src={url} />
                                 ),
                                 afterClose: () => {
                                     if (file.originFileObj) URL.revokeObjectURL(url);

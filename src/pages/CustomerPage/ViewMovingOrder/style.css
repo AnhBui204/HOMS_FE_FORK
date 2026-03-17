@@ -135,124 +135,841 @@
     font-style: italic;
 }
 
-/* OPTION A: TABS & ITEM CARDS ENHANCED */
-.tabbed-room-layout-container {
-    background: white;
+/* ═══════════════════════════════════════════════════════════
+   MOVING ORDER — CARD UI
+   ═══════════════════════════════════════════════════════════ */
+
+/* Section header */
+.mo-section-header {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 1rem;
+}
+
+.mo-section-header h2 {
+    margin-bottom: 0;
+}
+
+.mo-total {
+    font-size: 13px;
+    color: #999;
+    font-weight: 400;
+}
+
+/* ── Filter bar ── */
+.mo-filters {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+    padding-bottom: 5px; 
+}
+
+/* Base button style */
+.mo-filter-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px; 
+    font-weight: 500;
+    padding: 8px 18px; 
+    border-radius: 30px; 
+    border: 1px solid #e2e8f0; 
+    background: #ffffff;
+    color: #64748b; 
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03); 
+    font-family: inherit;
+}
+
+/* Hover effect */
+.mo-filter-btn:hover {
+    color: #2D4F36;
+    background: #f0fdf4; 
+    border-color: #bbf7d0; 
+    transform: translateY(-2px); 
+    box-shadow: 0 4px 12px rgba(45, 79, 54, 0.1); 
+}
+
+/* Active state (Trạng thái đang chọn) */
+.mo-filter-btn--active {
+    background: linear-gradient(135deg, #2D4F36, #44624a); 
+    color: #ffffff;
+    border-color: transparent;
+    box-shadow: 0 6px 16px rgba(45, 79, 54, 0.25); 
+    transform: translateY(-2px);
+    font-weight: 600;
+}
+
+.mo-filter-btn--active:hover {
+    background: linear-gradient(135deg, #1e3825, #2D4F36); 
+    color: #ffffff;
+    border-color: transparent;
+}
+
+/* Badge (Hiển thị số lượng) */
+.mo-filter-badge {
+    background: #f1f5f9; 
+    color: #475569;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 2px 8px;
     border-radius: 12px;
-    padding: 24px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    min-width: 22px;
+    text-align: center;
+    transition: all 0.3s ease;
 }
 
-.room-tabs-custom .ant-tabs-nav {
-    margin-bottom: 24px !important;
+/* Thay đổi Badge khi hover vào nút */
+.mo-filter-btn:hover .mo-filter-badge {
+    background: #dcfce7;
+    color: #16a34a;
 }
 
-.room-tabs-custom .ant-tabs-tab {
-    padding: 8px 24px !important;
-    border-radius: 8px 8px 0 0 !important;
-    font-size: 16px;
+/* Thay đổi Badge khi nút ở trạng thái Active */
+.mo-filter-btn--active .mo-filter-badge {
+    background: #ffffff;
+    color: #2D4F36; 
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.room-tabs-custom .ant-tabs-tab-active {
-    background: #44624A !important;
-    border-color: #44624A !important;
+/* ── Card list ── */
+.mo-card-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
-.room-tabs-custom .ant-tabs-tab-active .ant-tabs-tab-btn {
-    color: white !important;
+/* ── Card ── */
+.mo-card {
+    background: #fff;
+    border: 1px solid #e8e8e8;
+    border-radius: 12px;
+    overflow: hidden;
+    transition: border-color 0.15s, box-shadow 0.15s;
 }
-
-.tab-room-content-enhanced {
-    padding-top: 10px;
-}
-
-/* Furniture Card w/ Icon */
-.furniture-item-card.with-icon {
+.mo-card__price-wrapper {
     display: flex;
     align-items: center;
     gap: 16px;
-    background: #fdfdfd;
-    padding: 16px;
-    border-radius: 12px;
-    border: 1px solid #eee;
-    transition: transform 0.2s ease, box-shadow 0.2s, border-color 0.2s;
-    height: 100%;
+}
+.mo-card:hover {
+    border-color: #b0c4b1;
+    box-shadow: 0 2px 10px rgba(44, 79, 54, 0.08);
 }
 
-.furniture-item-card.with-icon:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 16px rgba(68, 98, 74, 0.1);
-    border-color: #8BA888;
+/* ── QUOTED card: glowing animated border ── */
+.mo-card--highlight {
+    border-color: #f0a500;
+    border-left: 4px solid #f0a500;
+    box-shadow: 0 0 0 0 rgba(240, 165, 0, 0.4);
+    animation: quotedPulse 2.4s ease-in-out infinite;
 }
 
-.fi-icon-box {
-    width: 48px;
-    height: 48px;
+@keyframes quotedPulse {
+    0%   { box-shadow: 0 2px 8px rgba(240, 165, 0, 0.15); }
+    50%  { box-shadow: 0 4px 20px rgba(240, 165, 0, 0.35); }
+    100% { box-shadow: 0 2px 8px rgba(240, 165, 0, 0.15); }
+}
+
+/* ── QUOTED banner strip ── */
+.mo-card--highlight .mo-card__head {
+    background: linear-gradient(90deg, #fff8e6 0%, #fff 60%);
+}
+
+.mo-card__code {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1a1a1a;
+    letter-spacing: 0.3px;
+}
+
+    
+.mo-card__tags {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+
+/* expand */
+.mo-card__expand {
+    border-top: 1px solid #f0f0f0;
+    padding: 12px 16px;
+    background: #fafafa;
+}
+
+.mo-expand-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 10px;
+}
+
+.mo-expand-item {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.mo-expand-label {
+    font-size: 11px;
+    color: #bbb;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.mo-expand-val {
+    font-size: 13px;
+    color: #333;
+    font-weight: 500;
+}
+
+.mo-expand-val--price {
+    color: #2D4F36;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   BUTTONS — base & variants
+   ═══════════════════════════════════════════════════════════ */
+
+.mo-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    padding: 5px 12px;
+    border-radius: 6px;
+    border: 1px solid #d9d9d9;
+    background: #fff;
+    cursor: pointer;
+    color: #333;
+    transition: all 0.12s;
+    font-family: inherit;
+    white-space: nowrap;
+    line-height: 1.5;
+}
+
+.mo-btn:hover {
+    background: #f5f5f5;
+    border-color: #bbb;
+}
+
+/* ── Chấp nhận (QUOTED) ── */
+.mo-btn--accept {
+    background: #2D4F36;
+    color: #fff;
+    border-color: #2D4F36;
+    font-size: 13px;
+    padding: 6px 18px;
+    font-weight: 600;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(45, 79, 54, 0.3);
+    transition: background 0.15s, box-shadow 0.15s, transform 0.1s;
+}
+
+.mo-btn--accept:hover {
+    background: #1e3825;
+    box-shadow: 0 4px 14px rgba(45, 79, 54, 0.45);
+    transform: translateY(-1px);
+}
+
+/* ── Từ chối (QUOTED) ── */
+.mo-btn--reject {
+    background: #fff;
+    color: #a32d2d;
+    border: 1.5px solid #e8a0a0;
+    font-size: 13px;
+    padding: 6px 16px;
+    font-weight: 500;
+    border-radius: 8px;
+    transition: all 0.15s;
+}
+
+.mo-btn--reject:hover {
+    background: #fff0f0;
+    border-color: #c0392b;
+    color: #c0392b;
+}
+
+/* ── Xem báo giá ── */
+.mo-btn--view-quote {
+    background: #f0f7f1;
+    color: #2D4F36;
+    border: 1.5px solid #7aaa82;
+    font-size: 12px;
+    padding: 5px 14px;
+    font-weight: 600;
+    border-radius: 8px;
+    transition: all 0.15s;
+}
+
+.mo-btn--view-quote:hover {
+    background: #2D4F36;
+    color: #fff;
+    border-color: #2D4F36;
+    box-shadow: 0 2px 8px rgba(45, 79, 54, 0.25);
+    transform: translateY(-1px);
+}
+
+/* ── Báo cáo sự cố — the alarm button ── */
+.mo-btn--report {
+    position: relative;
+    background: #fff5f5;
+    color: #c0392b;
+    border: 1.5px solid #e8a0a0;
+    font-size: 12px;
+    padding: 5px 14px;
+    font-weight: 600;
+    border-radius: 8px;
+    overflow: visible;
+    transition: all 0.15s;
+}
+
+.mo-btn--report:hover {
+    background: #c0392b;
+    color: #fff;
+    border-color: #c0392b;
+    box-shadow: 0 3px 12px rgba(192, 57, 43, 0.35);
+    transform: translateY(-1px);
+}
+
+/* Pulsing ring around report button */
+.mo-btn--report::before {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 11px;
+    border: 2px solid rgba(192, 57, 43, 0.4);
+    animation: reportRing 2s ease-out infinite;
+    pointer-events: none;
+}
+
+@keyframes reportRing {
+    0%   { opacity: 0.8; transform: scale(1); }
+    70%  { opacity: 0;   transform: scale(1.12); }
+    100% { opacity: 0;   transform: scale(1.12); }
+}
+
+/* ── Thanh toán cọc ── */
+.mo-btn--deposit {
+    background: linear-gradient(135deg, #0f4c81, #1565c0);
+    color: #fff;
+    border-color: transparent;
+    font-size: 13px;
+    padding: 6px 18px;
+    font-weight: 600;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(15, 76, 129, 0.35);
+    transition: all 0.15s;
+}
+
+.mo-btn--deposit:hover {
+    background: linear-gradient(135deg, #0d3f6e, #0f4c9a);
+    box-shadow: 0 4px 14px rgba(15, 76, 129, 0.45);
+    transform: translateY(-1px);
+}
+
+/* ── Legacy kept for other uses ── */
+.mo-btn--success {
+    background: #2D4F36;
+    color: #fff;
+    border-color: #2D4F36;
+}
+
+.mo-btn--success:hover {
+    background: #223d29;
+}
+
+.mo-btn--danger {
+    background: #a32d2d;
+    color: #fff;
+    border-color: #a32d2d;
+}
+
+.mo-btn--danger:hover {
+    background: #8a2424;
+}
+
+.mo-btn--danger-outline {
+    color: #a32d2d;
+    border-color: #f5a0a0;
+    background: #fff5f5;
+}
+
+.mo-btn--danger-outline:hover {
+    background: #ffe0e0;
+}
+
+.mo-btn--primary {
+    background: #0f4c81;
+    color: #fff;
+    border-color: #0f4c81;
+}
+
+.mo-btn--primary:hover {
+    background: #0d3f6e;
+}
+
+.mo-btn--ghost {
+    color: #999;
+    border-color: #e8e8e8;
+    font-size: 11px;
+}
+
+.mo-btn--ghost:hover {
+    color: #555;
+    background: #f5f5f5;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TAGS
+   ═══════════════════════════════════════════════════════════ */
+
+.mo-tag {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 9px;
     border-radius: 10px;
-    background: #f0f5f1;
-    color: #44624A;
+    line-height: 1.4;
+}
+
+.mo-tag--blue       { background: #E6F1FB; color: #0C447C; }
+.mo-tag--orange     { background: #FAEEDA; color: #633806; }
+.mo-tag--cyan       { background: #E1F5EE; color: #085041; }
+.mo-tag--green      { background: #EAF3DE; color: #27500A; }
+.mo-tag--geekblue   { background: #EEEDFE; color: #3C3489; }
+.mo-tag--purple     { background: #EEEDFE; color: #3C3489; }
+.mo-tag--processing { background: #E6F1FB; color: #185FA5; }
+.mo-tag--red        { background: #FCEBEB; color: #791F1F; }
+.mo-tag--gray       { background: #f5f5f5; color: #888; }
+
+/* ── Incident tag: clickable pulse dot ── */
+.mo-tag--incident-open {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #FFF3CD;
+    color: #7d4b00;
+    border: 1px solid #f5c842;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 9px 3px 7px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s, box-shadow 0.15s;
+}
+
+.mo-tag--incident-open:hover {
+    background: #ffe8a3;
+    box-shadow: 0 2px 8px rgba(245, 200, 66, 0.4);
+}
+
+.mo-tag--incident-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #f0a500;
+    flex-shrink: 0;
+    animation: dotBlink 1.6s ease-in-out infinite;
+}
+
+@keyframes dotBlink {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.3; }
+}
+
+/* ── Quoted notice banner ── */
+.mo-quoted-notice {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: linear-gradient(90deg, #fff8e1, #fffef5);
+    border-bottom: 1px solid #f5e0a0;
+    padding: 8px 16px;
+    font-size: 12px;
+    color: #7a4f00;
+    font-weight: 500;
+}
+
+.mo-quoted-notice-icon {
+    font-size: 14px;
+}
+
+/* ── Loading / empty ── */
+.mo-loading {
+    display: flex;
+    justify-content: center;
+    padding: 60px 0;
+}
+
+.mo-empty {
+    text-align: center;
+    padding: 60px 0;
+    color: #bbb;
+    font-size: 14px;
+}
+/* =========================================================
+   NÂNG CẤP UI MOVING ORDER CARD
+   ========================================================= */
+
+/* Nâng cấp Card Box Shadow */
+.mo-card {
+    background: #fff;
+    border: 1px solid #edf2f7;
+    border-radius: 16px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02), 0 10px 15px rgba(0, 0, 0, 0.03);
+    margin-bottom: 20px;
+}
+
+.mo-card:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 10px 25px rgba(45, 79, 54, 0.08);
+    transform: translateY(-2px);
+}
+
+/* Header */
+.mo-card__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+     padding: 12px 16px;
+    background: #fff;
+    border-bottom: 1px dashed #e2e8f0;
+}
+
+.mo-card__head-left {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.mo-card__code {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.mo-card__date {
+    font-size: 12px;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+}
+
+/* =========================================
+   Tuyến Đường (Route Timeline MỚI)
+   ========================================= */
+.mo-card__route-container {
+   padding: 12px 16px; 
+    background: #f8fafc;
+    border-bottom: 1px solid #edf2f7;
+}
+
+.mo-route-timeline {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+}
+
+.mo-route-point {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    min-width: 0;
+}
+
+.mo-route-icon-box {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
+    font-size: 14px;
     flex-shrink: 0;
 }
 
-.fi-info-box {
-    flex: 1;
+.mo-route-point--pickup .mo-route-icon-box {
+    background: #e0f2fe;
+    color: #0284c7;
 }
 
-.fi-top {
+.mo-route-point--delivery .mo-route-icon-box {
+    background: #dcfce7;
+    color: #16a34a;
+}
+
+.mo-route-info {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.mo-route-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: #94a3b8;
+    margin-bottom: 2px;
+    letter-spacing: 0.5px;
+}
+
+.mo-route-address {
+    font-size: 14px;
+    font-weight: 600;
+    color: #334155;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mo-route-divider {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 0 0 90px;
+    position: relative;
+}
+
+.mo-route-line {
+    width: 100%;
+    height: 2px;
+    background: repeating-linear-gradient(90deg, #cbd5e1 0, #cbd5e1 6px, transparent 6px, transparent 12px);
+    margin-bottom: 6px;
+}
+
+.mo-route-distance {
+    font-size: 11px;
+    color: #64748b;
+    background: #f8fafc;
+    padding: 0 8px;
+    position: absolute;
+    top: -7px;
+}
+
+/* =========================================
+   Meta & Giá tiền Nổi Bật
+   ========================================= */
+.mo-card__meta {
+    padding: 12px 16px;
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+.mo-card__price-box {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
 }
 
-.fi-name {
-    font-weight: 600;
-    font-size: 15px;
-    color: #2c3e50;
+.mo-price-label {
+    font-size: 12px;
+    color: #64748b;
+    margin-bottom: 2px;
 }
 
-.fi-qty {
-    background: #e8f0e9;
+.mo-price-value {
+     font-size: 18px;
+    font-weight: 800;
     color: #2D4F36;
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-size: 13px;
-    font-weight: 700;
+    background: linear-gradient(90deg, #2D4F36, #44624a);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 
-/* Room Reference Image */
-.room-image-reference {
-    height: 400px;
-    /* Uniform height across tabs */
-    border-radius: 12px;
-    overflow: hidden;
-    position: relative;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-}
-
-.room-image-reference .ant-image {
-    width: 100%;
-    height: 100%;
-    display: block;
-}
-
-.room-img-cover {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-}
-
-.room-image-caption {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: rgba(0, 0, 0, 0.6);
-    color: white;
-    padding: 12px 16px;
+.mo-price-empty {
     font-size: 14px;
-    backdrop-filter: blur(4px);
+    color: #94a3b8;
+    font-style: italic;
+}
+
+/* =========================================
+   Actions & Buttons
+   ========================================= */
+.mo-card__actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: #fff;
+    border-top: 1px solid #edf2f7;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.mo-card__btns-primary, .mo-card__btns-secondary {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* Buttons style tinh chỉnh lại */
+.mo-btn {
+    padding: 6px 1
+    px;
+    font-size: 13px;
+    border-radius: 8px;
+    font-weight: 600;
+}
+
+.mo-btn--accept {
+    background: #2D4F36;
+    color: #fff;
+    border: none;
+    box-shadow: 0 4px 10px rgba(45, 79, 54, 0.2);
+}
+
+.mo-btn--reject {
+    background: #fff;
+    color: #ef4444;
+    border: 1px solid #fca5a5;
+}
+
+.mo-btn--deposit {
+    background: #0284c7;
+    color: #fff;
+    border: none;
+    box-shadow: 0 4px 10px rgba(2, 132, 199, 0.2);
+}
+
+.mo-btn--view-quote {
+    background: #f0fdf4;
+    color: #16a34a;
+    border: 1px solid #bbf7d0;
+}
+
+.mo-btn--contact {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    color: #475569;
+}
+
+/* =========================================
+   Expand Details (Hiệu ứng mở rộng)
+   ========================================= */
+.mo-card__expand {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-in-out, padding 0.3s ease;
+    background: #f1f5f9;
+    padding: 0 20px;
+}
+
+.mo-card__expand--open {
+    max-height: 300px;
+    padding: 20px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.mo-expand-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+/* =========================================
+   Banner Quoted Animation
+   ========================================= */
+.mo-quoted-notice {
+    background: linear-gradient(90deg, #fffbeb, #fef3c7);
+    color: #b45309;
+    padding: 8px 16px;
+    font-weight: 600;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid #fde68a;
+}
+
+.mo-shake-animation {
+    font-size: 16px;
+    animation: shakeBell 2s ease-in-out infinite;
+}
+
+@keyframes shakeBell {
+    0%, 100% { transform: rotate(0deg); }
+    10%, 30%, 50% { transform: rotate(15deg); }
+    20%, 40% { transform: rotate(-15deg); }
+    60% { transform: rotate(0deg); }
+}
+
+/* Thêm icon vào Tag */
+.mo-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+}
+
+/* Responsive cho Route Timeline trên Mobile */
+@media (max-width: 768px) {
+    .mo-route-timeline {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 20px;
+    }
+    
+    .mo-route-divider {
+        display: none; /* Ẩn đường nối ngang trên mobile */
+    }
+
+    .mo-card__actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .mo-card__btns-primary, .mo-card__btns-secondary {
+        width: 100%;
+    }
+    
+    .mo-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+/* ── Responsive ── */
+@media (max-width: 640px) {
+    .mo-card__head {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+    }
+
+    .mo-card__head-right {
+        justify-content: flex-start;
+    }
+
+    .mo-card__route {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+
+    .mo-card__arrow {
+        transform: rotate(90deg);
+    }
+
+    .mo-card__addr--right {
+        text-align: left;
+    }
+
+    .mo-card__meta {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .mo-card__btns-secondary {
+        margin-left: 0;
+    }
 }
