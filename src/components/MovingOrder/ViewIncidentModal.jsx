@@ -142,6 +142,12 @@ const ViewIncidentModal = ({ visible, onClose, incident }) => {
               {incident.resolution.compensationAmount.toLocaleString()} ₫
             </p>
           )}
+          {incident.resolution?.note && (
+            <p>
+              <b>Ghi chú xử lý:</b>
+              <div style={{ whiteSpace: 'pre-wrap', marginTop: 6 }}>{incident.resolution.note}</div>
+            </p>
+          )}
         </>
       )}
     </Modal>
