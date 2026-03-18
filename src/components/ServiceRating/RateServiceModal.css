@@ -1,0 +1,296 @@
+/* ═══════════════════════════════════════════════════════════
+   RateServiceModal.css
+   Theme: Earthy green — cohesive với #2D4F36 của hệ thống
+═══════════════════════════════════════════════════════════ */
+
+/* ── Modal container ───────────────────────────────────── */
+.rsm-modal .ant-modal-content {
+  border-radius: 20px;
+  overflow: hidden;
+  padding: 0;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.18);
+}
+
+.rsm-modal .ant-modal-body {
+  padding: 0;
+}
+
+/* ── Wrapper ────────────────────────────────────────────── */
+.rsm-wrapper {
+  padding: 20px 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ── Header ─────────────────────────────────────────────── */
+.rsm-header {
+  text-align: center;
+  padding-bottom: 4px;
+}
+
+.rsm-header-emoji {
+  font-size: 32px;
+  margin-bottom: 4px;
+  transition: color 0.3s ease;
+  line-height: 1;
+}
+
+.rsm-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a2e1f;
+  margin: 0 0 4px;
+  font-family: 'Be Vietnam Pro', sans-serif;
+}
+
+.rsm-subtitle {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0;
+}
+
+/* ── Section ─────────────────────────────────────────────── */
+.rsm-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rsm-section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0;
+}
+
+/* ── Overall stars ───────────────────────────────────────── */
+.rsm-overall {
+  align-items: center;
+}
+
+.rsm-main-stars.ant-rate {
+  font-size: 32px;
+  gap: 4px;
+}
+
+.rsm-main-stars .ant-rate-star:not(:last-child) {
+  margin-inline-end: 8px;
+}
+
+.rsm-main-stars .ant-rate-star-full .ant-rate-star-second,
+.rsm-main-stars .ant-rate-star-half .ant-rate-star-first {
+  color: #f59e0b;
+}
+
+/* Mood label */
+.rsm-mood-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 15px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  height: 24px;
+}
+
+/* ── Sub-rate row ────────────────────────────────────────── */
+.rsm-subrate-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 8px 12px;
+  transition: border-color 0.2s;
+}
+
+.rsm-subrate-row:hover {
+  border-color: #2D4F36;
+}
+
+.rsm-subrate-label {
+  font-size: 12px;
+  color: #334155;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.rsm-subrate-stars.ant-rate {
+  font-size: 16px;
+}
+
+.rsm-subrate-stars .ant-rate-star-full .ant-rate-star-second,
+.rsm-subrate-stars .ant-rate-star-half .ant-rate-star-first {
+  color: #f59e0b;
+}
+
+/* ── Quick tags ──────────────────────────────────────────── */
+.rsm-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.rsm-tag {
+  padding: 4px 12px;
+  border-radius: 20px;
+  border: 1.5px solid #cbd5e1;
+  background: #fff;
+  font-size: 12px;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.rsm-tag:hover {
+  border-color: #2D4F36;
+  color: #2D4F36;
+  background: #f0f7f2;
+}
+
+.rsm-tag--active {
+  background: #2D4F36;
+  border-color: #2D4F36;
+  color: #fff;
+  font-weight: 600;
+}
+
+.rsm-tag--active:hover {
+  background: #1e3828;
+  border-color: #1e3828;
+  color: #fff;
+}
+
+/* ── Textarea ────────────────────────────────────────────── */
+.rsm-textarea.ant-input {
+  border-radius: 10px;
+  border-color: #e2e8f0;
+  font-size: 13px;
+  resize: none;
+}
+
+.rsm-textarea.ant-input:focus,
+.rsm-textarea.ant-input:hover {
+  border-color: #2D4F36;
+  box-shadow: 0 0 0 2px rgba(45, 79, 54, 0.1);
+}
+
+/* ── Actions ─────────────────────────────────────────────── */
+.rsm-actions {
+  display: flex;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+.rsm-btn {
+  flex: 1;
+  padding: 11px 20px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+.rsm-btn--cancel {
+  background: #f1f5f9;
+  color: #64748b;
+  flex: 0 0 100px;
+}
+
+.rsm-btn--cancel:hover:not(:disabled) {
+  background: #e2e8f0;
+}
+
+.rsm-btn--submit {
+  background: #2D4F36;
+  color: #fff;
+}
+
+.rsm-btn--submit:hover:not(:disabled) {
+  background: #1e3828;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(45, 79, 54, 0.3);
+}
+
+.rsm-btn--submit:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.rsm-btn--close {
+  background: #2D4F36;
+  color: #fff;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.rsm-btn--close:hover {
+  background: #1e3828;
+}
+
+/* ── Thank you screen ────────────────────────────────────── */
+.rsm-thank-you {
+  padding: 40px 28px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.rsm-thank-icon {
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(135deg, #2D4F36, #4a7c5c);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(45, 79, 54, 0.3);
+  animation: rsm-pop-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes rsm-pop-in {
+  from { transform: scale(0); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+
+.rsm-thank-you h2 {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1a2e1f;
+  margin: 0;
+}
+
+.rsm-thank-you p {
+  font-size: 14px;
+  color: #64748b;
+  margin: 0;
+  max-width: 280px;
+}
+
+/* ── Divider giữa các section ────────────────────────────── */
+.rsm-wrapper > .rsm-section + .rsm-section {
+  padding-top: 4px;
+  border-top: 1px solid #f1f5f9;
+}

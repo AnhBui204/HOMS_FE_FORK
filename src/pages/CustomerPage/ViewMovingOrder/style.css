@@ -853,7 +853,37 @@
     border: 1px solid #e2e8f0;
     color: #475569;
 }
-
+.mo-btn--rate {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #fff;
+  border: none;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+  transition: all 0.2s ease;
+}
+ 
+.mo-btn--rate:hover {
+  background: linear-gradient(135deg, #d97706, #b45309);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.4);
+}
+ 
+.mo-btn--rate:active {
+  transform: translateY(0);
+}
+ 
+/* ── Badge "Đã đánh giá" ──────────────────────────────────── */
+.mo-tag--rated {
+  background: #fffbeb;
+  border: 1.5px solid #f59e0b;
+  color: #92400e;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+}
 /* =========================================
    Expand Details (Hiệu ứng mở rộng)
    ========================================= */
