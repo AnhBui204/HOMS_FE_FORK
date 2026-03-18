@@ -31,6 +31,26 @@ const adminUserService = {
         }
     },
 
+    banUser: async (id, payload) => {
+        try {
+            const response = await api.patch(`/admin/users/${id}/ban`, payload);
+            return response.data;
+        } catch (error) {
+            console.error('Error banning user from admin', error);
+            throw error;
+        }
+    },
+
+    unbanUser: async (id, payload) => {
+        try {
+            const response = await api.patch(`/admin/users/${id}/unban`, payload);
+            return response.data;
+        } catch (error) {
+            console.error('Error unbanning user from admin', error);
+            throw error;
+        }
+    },
+
     deleteUser: async (id) => {
         try {
             const response = await api.delete(`/admin/users/${id}`);
