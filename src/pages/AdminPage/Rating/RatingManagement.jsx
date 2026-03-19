@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Table, Input, Select, Space, Avatar, Rate, Tooltip, Button, Drawer, Image, Tag, Typography, notification, Statistic, Divider } from 'antd';
-import { SearchOutlined, EyeOutlined, ReloadOutlined, CheckOutlined, UserSwitchOutlined, EnvironmentOutlined, CarOutlined, UserOutlined, CalendarOutlined } from '@ant-design/icons';
+import { Card, Table, Input, Select, Space, Avatar, Rate, Tooltip, Button, Drawer, Image, Tag, Typography, notification, Statistic, Divider, Spin, Modal } from 'antd';
+import { SearchOutlined, EyeOutlined, ReloadOutlined, CheckOutlined, UserSwitchOutlined, EnvironmentOutlined, CarOutlined, UserOutlined, CalendarOutlined, FullscreenOutlined } from '@ant-design/icons';
 import adminRatingService from '../../../services/adminRatingService';
 import adminInvoiceService from '../../../services/adminInvoiceService';
+import LocationPicker from '../../../components/LocationPicker';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -22,6 +23,24 @@ const RatingManagement = () => {
     const [selected, setSelected] = useState(null);
     const [invoiceDetail, setInvoiceDetail] = useState(null);
     const [invoiceLoading, setInvoiceLoading] = useState(false);
+    const [mapLoading, setMapLoading] = useState(false);
+    const [mapMarkers, setMapMarkers] = useState(null); // { pickup: {lat,lng}, delivery: {lat,lng} }
+    const [mapFullscreenVisible, setMapFullscreenVisible] = useState(false);
+
+    // Leaflet map in Modal can render blank or stretched when opened; trigger a resize event
+    // shortly after Modal opens so the map invalidates its size and tiles render correctly.
+    useEffect(() => {
+        let t = null;
+        if (mapFullscreenVisible) {
+            // give Modal time to animate and layout
+            t = setTimeout(() => {
+                try {
+                    window.dispatchEvent(new Event('resize'));
+                } catch (e) { /* ignore */ }
+            }, 300);
+        }
+        return () => { if (t) clearTimeout(t); };
+    }, [mapFullscreenVisible]);
 
     const fetchRatings = async (page = 1, pageSize = 10, currentFilters = filters) => {
         setLoading(true);
@@ -151,6 +170,78 @@ const RatingManagement = () => {
         };
         return map[s] || String(s);
     };
+
+    // try to extract lat/lng from various invoice location shapes
+    const parseLatLng = (loc) => {
+        if (!loc) return null;
+        // direct props
+        if (typeof loc.lat === 'number' && typeof loc.lng === 'number') return { lat: loc.lat, lng: loc.lng };
+        if (loc.latitude && loc.longitude) return { lat: Number(loc.latitude), lng: Number(loc.longitude) };
+        if (loc.lat && loc.lng) return { lat: Number(loc.lat), lng: Number(loc.lng) };
+        // geojson style: location.coordinates = [lng, lat]
+        if (loc.location && Array.isArray(loc.location.coordinates) && loc.location.coordinates.length >= 2) {
+            const [lng, lat] = loc.location.coordinates;
+            return { lat: Number(lat), lng: Number(lng) };
+        }
+        // string coordinates like "16.023779, 108.228200"
+        const coordStr = loc.coordinates || loc.coord || (loc.addressDetails && loc.addressDetails.coordinates) || null;
+        if (typeof coordStr === 'string') {
+            const m = coordStr.match(/(-?\d+\.?\d*)[,\s]+(-?\d+\.?\d*)/);
+            if (m) return { lat: Number(m[1]), lng: Number(m[2]) };
+        }
+        return null;
+    };
+
+    // Lightweight client-side geocoding using Nominatim as a fallback when invoice lacks coordinates
+    const geocodeAddress = async (address) => {
+        if (!address || String(address).trim().length === 0) return null;
+        try {
+            const q = encodeURIComponent(String(address));
+            const url = `https://nominatim.openstreetmap.org/search?format=json&q=${q}&limit=1&countrycodes=vn&accept-language=vi`;
+            const res = await fetch(url, { headers: { 'User-Agent': 'HOMS-App' } });
+            if (!res.ok) return null;
+            const arr = await res.json();
+            if (!Array.isArray(arr) || arr.length === 0) return null;
+            const item = arr[0];
+            return { lat: Number(item.lat), lng: Number(item.lon) };
+        } catch (e) {
+            console.warn('Geocode failed', e);
+            return null;
+        }
+    };
+
+    // When invoiceDetail changes, prepare markers: prefer provided coords, otherwise attempt quick geocode
+    useEffect(() => {
+        let mounted = true;
+        const prepare = async () => {
+            if (!invoiceDetail) {
+                if (mounted) setMapMarkers(null);
+                return;
+            }
+            setMapLoading(true);
+            try {
+                let p = parseLatLng(invoiceDetail.pickup);
+                let d = parseLatLng(invoiceDetail.delivery);
+
+                // Attempt geocoding if coords missing
+                if (!p && (invoiceDetail.pickup?.address || invoiceDetail.pickup?.fullAddress)) {
+                    p = await geocodeAddress(invoiceDetail.pickup.address || invoiceDetail.pickup.fullAddress);
+                }
+                if (!d && (invoiceDetail.delivery?.address || invoiceDetail.delivery?.fullAddress)) {
+                    d = await geocodeAddress(invoiceDetail.delivery.address || invoiceDetail.delivery.fullAddress);
+                }
+
+                if (mounted) setMapMarkers({ pickup: p, delivery: d });
+            } catch (e) {
+                console.warn('prepare map markers error', e);
+                if (mounted) setMapMarkers(null);
+            } finally {
+                if (mounted) setMapLoading(false);
+            }
+        };
+        prepare();
+        return () => { mounted = false; };
+    }, [invoiceDetail]);
 
     const columns = [
         {
@@ -347,6 +438,10 @@ const RatingManagement = () => {
                                 .invoice-value { font-weight: 600; color: #111; line-height: 1.35; }
                                 .invoice-status { text-align: right; }
                                 .invoice-status .tag { border-radius: 8px; padding: 6px 10px; font-weight: 700; }
+                                /* When embedding LocationPicker inside invoice drawer, hide its search UI and legend for compact read-only view */
+                                .invoice-map .location-picker .search-bar { display: none !important; }
+                                .invoice-map .location-picker .map-legend { display: none !important; }
+                                .invoice-map .location-picker .map-container { height: 100% !important; }
                                 .rating-table-card .ant-table { table-layout: fixed; width: 100%; background: transparent; }
                                 .rating-table-card .ant-table-tbody > tr > td { white-space: normal !important; word-break: break-word; vertical-align: middle !important; background: #fff; border-radius: 10px; padding: 12px !important; }
                                 /* keep table rows visually stable: remove hover elevation */
@@ -467,6 +562,58 @@ const RatingManagement = () => {
 
                             {invoiceDetail && (
                                 <div className="invoice-card">
+                                    {/* Map area: prefer to show embedded map when coordinates available */}
+                                    <div className="invoice-section invoice-map" style={{ marginBottom: 12 }}>
+                                        {mapLoading ? (
+                                            <div style={{ padding: 12, display: 'flex', alignItems: 'center', gap: 12 }}>
+                                                <Spin />
+                                                <div>Đang chuẩn bị bản đồ...</div>
+                                            </div>
+                                        ) : (() => {
+                                            const p = mapMarkers?.pickup || null;
+                                            const d = mapMarkers?.delivery || null;
+                                            if (p || d) {
+                                                return (
+                                                    <div style={{ height: 220, borderRadius: 8, overflow: 'hidden', border: '1px solid rgba(0,0,0,0.04)', position: 'relative' }}>
+                                                        {/* Fullscreen button overlay */}
+                                                        <div style={{ position: 'absolute', right: 8, top: 8, zIndex: 1100 }}>
+                                                            <Tooltip title="Toàn màn hình">
+                                                                <Button shape="circle" size="small" onClick={() => setMapFullscreenVisible(true)} style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.06)' }} icon={<FullscreenOutlined style={{ color: primaryColor }} />} />
+                                                            </Tooltip>
+                                                        </div>
+                                                        <LocationPicker
+                                                            initialPosition={p || d}
+                                                            otherLocation={d && p ? (p.lat === d.lat && p.lng === d.lng ? null : d) : null}
+                                                            locationType="pickup"
+                                                            currentLocationData={{ address: invoiceDetail.pickup?.address || invoiceDetail.pickup?.fullAddress }}
+                                                            showRoute={true}
+                                                            routeColor={primaryColor}
+                                                        />
+                                                    </div>
+                                                );
+                                            }
+
+                                            // fallback: no coordinates -> show quick links to open Google Maps
+                                            const pickupAddr = invoiceDetail.pickup?.address || invoiceDetail.pickup?.fullAddress || '';
+                                            const deliveryAddr = invoiceDetail.delivery?.address || invoiceDetail.delivery?.fullAddress || '';
+                                            const gmLink = (addr) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addr)}`;
+
+                                            return (
+                                                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                                                    <div style={{ flex: 1 }}>
+                                                        <div className="invoice-key">Bản đồ</div>
+                                                        <div className="invoice-value" style={{ fontWeight: 500 }}>
+                                                            Không có tọa độ sẵn. Bạn có thể mở địa chỉ trên Google Maps:
+                                                            <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
+                                                                {pickupAddr ? <a target="_blank" rel="noreferrer" href={gmLink(pickupAddr)}>Mở địa chỉ lấy</a> : null}
+                                                                {deliveryAddr ? <a target="_blank" rel="noreferrer" href={gmLink(deliveryAddr)}>Mở địa chỉ giao</a> : null}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })()}
+                                    </div>
                                     <div className="invoice-header">
                                         <div style={{ flex: 1 }}>
                                             <div className="invoice-code">{invoiceDetail.code || invoiceDetail._id}</div>
@@ -555,6 +702,31 @@ const RatingManagement = () => {
                     </div>
                 )}
             </Drawer>
+            <Modal
+                centered
+                open={mapFullscreenVisible}
+                onCancel={() => setMapFullscreenVisible(false)}
+                footer={null}
+                width={'90vw'}
+                bodyStyle={{ padding: 0 }}
+            >
+                <div style={{ height: '80vh', width: '100%' }}>
+                    {mapMarkers ? (
+                        <LocationPicker
+                            initialPosition={mapMarkers.pickup || mapMarkers.delivery}
+                            otherLocation={mapMarkers.pickup && mapMarkers.delivery ? (mapMarkers.pickup.lat === mapMarkers.delivery.lat && mapMarkers.pickup.lng === mapMarkers.delivery.lng ? null : mapMarkers.delivery) : null}
+                            locationType="pickup"
+                            currentLocationData={{ address: invoiceDetail?.pickup?.address || invoiceDetail?.pickup?.fullAddress }}
+                            showRoute={true}
+                            routeColor={primaryColor}
+                        />
+                    ) : (
+                        <div style={{ padding: 20 }}>
+                            <div>Không có vị trí để hiển thị trên bản đồ.</div>
+                        </div>
+                    )}
+                </div>
+            </Modal>
         </div>
     );
 };
