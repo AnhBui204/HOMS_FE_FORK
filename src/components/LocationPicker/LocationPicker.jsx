@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents, Circle } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents, Circle, Polyline } from 'react-leaflet';
 import { Input, Button, Spin, Tooltip, Select, message } from 'antd';
 import { SearchOutlined, AimOutlined } from '@ant-design/icons';
 import L from 'leaflet';
@@ -86,7 +86,7 @@ function LocationMarker({ position, setPosition, icon, detailedAddress, location
   );
 }
 
-const LocationPicker = ({ onLocationChange, initialPosition, locationType = 'pickup', otherLocation = null, currentLocationData = null }) => {
+const LocationPicker = ({ onLocationChange, initialPosition, locationType = 'pickup', otherLocation = null, currentLocationData = null, showRoute = false, routeColor = '#44624A' }) => {
   const GEOAPIFY_API_KEY = process.env.REACT_APP_GEOAPIFY_API_KEY;
   const GOONG_API_KEY = process.env.REACT_APP_GOONG_API_KEY;
   const OPENCAGE_API_KEY = process.env.REACT_APP_OPENCAGE_API_KEY;
@@ -95,6 +95,8 @@ const LocationPicker = ({ onLocationChange, initialPosition, locationType = 'pic
 
   const [position, setPosition] = useState(initialPosition || { lat: 16.023779, lng: 108.228200 }); // Default: Da Nang
   const [currentUserLocation, setCurrentUserLocation] = useState(null);
+  const [routeCoords, setRouteCoords] = useState(null);
+  const [routeLoading, setRouteLoading] = useState(false);
   const [address, setAddress] = useState('');
   const [detailedAddress, setDetailedAddress] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -824,6 +826,38 @@ const LocationPicker = ({ onLocationChange, initialPosition, locationType = 'pic
   const markerIcon = locationType === 'pickup' ? pickupIcon : dropoffIcon;
   const otherMarkerIcon = locationType === 'pickup' ? dropoffIcon : pickupIcon;
 
+  // When showRoute is requested and both points exist, try to fetch a driving route (OSRM)
+  useEffect(() => {
+    let mounted = true;
+    const fetchRoute = async () => {
+      if (!showRoute || !position || !otherLocation || !otherLocation.lat || !otherLocation.lng) {
+        if (mounted) setRouteCoords(null);
+        return;
+      }
+
+      setRouteLoading(true);
+      try {
+        // Use public OSRM demo server to request a driving route
+        const url = `https://router.project-osrm.org/route/v1/driving/${position.lng},${position.lat};${otherLocation.lng},${otherLocation.lat}?overview=full&geometries=geojson`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`Routing failed ${res.status}`);
+        const data = await res.json();
+        const coords = data?.routes?.[0]?.geometry?.coordinates || [];
+        // OSRM returns [lon, lat], convert to [lat, lon]
+        const latlngs = coords.map(c => [c[1], c[0]]);
+        if (mounted) setRouteCoords(latlngs.length ? latlngs : null);
+      } catch (e) {
+        console.warn('Route fetch failed', e);
+        if (mounted) setRouteCoords(null);
+      } finally {
+        if (mounted) setRouteLoading(false);
+      }
+    };
+
+    fetchRoute();
+    return () => { mounted = false; };
+  }, [showRoute, position, otherLocation]);
+
   return (
     <div className="location-picker">
       <div className="search-bar">
@@ -915,6 +949,14 @@ const LocationPicker = ({ onLocationChange, initialPosition, locationType = 'pic
                 </div>
               </Popup>
             </Marker>
+          )}
+
+          {/* Draw a polyline between the two points (pickup/delivery) when requested */}
+          {showRoute && position && otherLocation && otherLocation.lat && otherLocation.lng && (
+            <Polyline
+              positions={[[position.lat, position.lng], [otherLocation.lat, otherLocation.lng]]}
+              pathOptions={{ color: routeColor, weight: 4, opacity: 0.9 }}
+            />
           )}
 
           {/* Current user location marker */}
