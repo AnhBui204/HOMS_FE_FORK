@@ -1,6 +1,6 @@
 import React from 'react';
 import { Layout, Menu } from 'antd';
-import { AreaChartOutlined, UserOutlined, CarOutlined, FileTextOutlined, DollarOutlined, FileDoneOutlined } from '@ant-design/icons';
+import { AreaChartOutlined, UserOutlined, CarOutlined, FileTextOutlined, DollarOutlined, FileDoneOutlined, StarOutlined } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import logo from '../../assets/images/logo.png'; // Using standard logo if available, or just text
 
@@ -40,6 +40,11 @@ const AdminSidebar = () => {
             key: '/admin/pricing',
             icon: <DollarOutlined />,
             label: 'Pricing & Compensation',
+        },
+        {
+            key: '/admin/ratings',
+            icon: <StarOutlined />, 
+            label: 'Ratings',
         },
     ];
 
