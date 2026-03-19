@@ -245,7 +245,7 @@ const RatingManagement = () => {
 
     const columns = [
         {
-            title: 'Invoice',
+            title: 'Hóa đơn',
             width: 220,
             dataIndex: ['invoice', 'code'],
             key: 'invoice',
@@ -263,7 +263,7 @@ const RatingManagement = () => {
             )
         },
         {
-            title: 'Customer',
+            title: 'Khách hàng',
             width: 220,
             dataIndex: ['customer', 'fullName'],
             key: 'customer',
@@ -279,7 +279,7 @@ const RatingManagement = () => {
         },
         
         {
-            title: 'Rating',
+            title: 'Đánh giá',
             width: 120,
             align: 'center',
             dataIndex: 'rating',
@@ -307,7 +307,7 @@ const RatingManagement = () => {
             )
         },
         {
-            title: 'Comment',
+            title: 'Bình luận',
             dataIndex: 'comment',
             key: 'comment',
             render: (text) => (
@@ -317,7 +317,7 @@ const RatingManagement = () => {
             )
         },
         {
-            title: 'Created At',
+            title: 'Ngày tạo',
             width: 160,
             align: 'center',
             dataIndex: 'createdAt',
@@ -467,30 +467,30 @@ const RatingManagement = () => {
                                     <div className="kpi-tile">
                                         <div className="kpi-accent" style={{ background: '#fadb14' }} />
                                         <div>
-                                            <div className="kpi-title">Average</div>
+                                            <div className="kpi-title">Trung bình</div>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                                                 <div className="kpi-value">{avgRating ? avgRating.toFixed(1) : '—'}</div>
                                                 <Rate disabled value={Number(avgRating.toFixed(1))} style={{ color: starColor }} />
                                             </div>
-                                            <div className="kpi-sub">Average score across shown reviews</div>
+                                            <div className="kpi-sub">Điểm trung bình của các đánh giá hiển thị</div>
                                         </div>
                                     </div>
 
                                     <div className="kpi-tile">
                                         <div className="kpi-accent" style={{ background: primaryColor }} />
                                         <div>
-                                            <div className="kpi-title">Total reviews</div>
+                                            <div className="kpi-title">Tổng đánh giá</div>
                                             <div className="kpi-value">{totalReviews}</div>
-                                            <div className="kpi-sub">Reviews on this page</div>
+                                            <div className="kpi-sub">Đánh giá trên trang này</div>
                                         </div>
                                     </div>
 
                                     <div className="kpi-tile">
                                         <div className="kpi-accent" style={{ background: '#ff4d4f' }} />
                                         <div>
-                                            <div className="kpi-title">Needs attention</div>
+                                            <div className="kpi-title">Cần chú ý</div>
                                             <div className="kpi-value">{ratings.filter(r => needsAttention(r)).length}</div>
-                                            <div className="kpi-sub">Low or negative feedback</div>
+                                            <div className="kpi-sub">Phản hồi tiêu cực</div>
                                         </div>
                                     </div>
                                 </div>
@@ -511,17 +511,17 @@ const RatingManagement = () => {
                             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                                 <Input.Search className="primary-search" placeholder="Tìm invoice hoặc comment" onSearch={handleSearch} allowClear style={{ width: 260 }} enterButton={<SearchOutlined />} />
                                 <Select value={viewMode} style={{ width: 140 }} onChange={(v) => setViewMode(v)}>
-                                    <Option value="all">View: All</Option>
-                                    <Option value="needs">View: Needs attention</Option>
+                                    <Option value="all">Tất cả</Option>
+                                    <Option value="needs">Cần chú ý</Option>
                                 </Select>
                                 <Select defaultValue="all" style={{ width: 120 }} onChange={handleFilterRating}>
-                                    <Option value="all">All ratings</Option>
+                                    <Option value="all">Tất cả</Option>
                                     <Option value="5">5+</Option>
                                     <Option value="4">4+</Option>
                                     <Option value="3">3+</Option>
                                 </Select>
-                                <Button onClick={() => fetchRatings(1, pagination.pageSize)} style={{ borderColor: primaryColor, color: primaryColor }}>Reload</Button>
-                                <Button type="primary" style={{ background: primaryColor, borderColor: primaryColor }} onClick={exportToExcel}>Export</Button>
+                                <Button onClick={() => fetchRatings(1, pagination.pageSize)} style={{ borderColor: primaryColor, color: primaryColor }}>Tải lại</Button>
+                                <Button type="primary" style={{ background: primaryColor, borderColor: primaryColor }} onClick={exportToExcel}>Xuất</Button>
                             </div>
                         </div>
 
@@ -687,7 +687,7 @@ const RatingManagement = () => {
 
                             {selected.images && selected.images.length > 0 && (
                                 <div>
-                                    <Text strong>Images</Text>
+                                    <Text strong>Hình ảnh</Text>
                                     <div style={{ marginTop: 8 }}>
                                         <Image.PreviewGroup>
                                             {selected.images.map((src, i) => (
