@@ -10,8 +10,6 @@ import SurveyInput from "../../pages/DispatcherPage/SurveyInput";
 import ResourceAllocation from "../../pages/DispatcherPage/ResourceAllocation";
 import DispatchedOrders from "../../pages/DispatcherPage/DispatchedOrders";
 import ProtectedRoute from "../../components/ProtectRoute/ProtectedRoute";
-import VideoChat from "../../pages/VideoChat/VideoChat";
-
 const RoutesDispatcher = () => {
   return (
     <Routes>
@@ -31,11 +29,8 @@ const RoutesDispatcher = () => {
         <Route path="survey-input" element={<SurveyInput />} />
         <Route path="allocation" element={<ResourceAllocation />} />
         <Route path="assigned-orders" element={<DispatchedOrders />} />
-        <Route path="video-chat" element={<VideoChat />} />
 
       </Route>
-
-
     </Routes>
   );
 };

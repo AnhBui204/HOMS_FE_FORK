@@ -9,7 +9,6 @@ import {
   TeamOutlined,
   ShareAltOutlined,
   FileTextOutlined,
-  MessageOutlined,
 } from '@ant-design/icons';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import AppHeader from './header/header';
@@ -22,7 +21,6 @@ const DispatcherLayout = () => {
   const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const isVideoChatRoute = location.pathname.includes('/dispatcher/video-chat');
   const { user } = useUser();
   // isGeneral có thể nằm trong user.dispatcherProfile (từ API) 
   // hoặc nằm thẳng trong user (nếu decode từ Token)
@@ -66,11 +64,6 @@ const DispatcherLayout = () => {
       key: '/dispatcher/assigned-orders',
       icon: <ShareAltOutlined />,
       label: 'Theo dõi điều phối',
-    },
-    {
-      key: '/dispatcher/video-chat',
-      icon: <MessageOutlined />,
-      label: 'Nhắn tin & Video call',
     },
   ];
 
@@ -116,14 +109,14 @@ const DispatcherLayout = () => {
         </Sider>
 
         {/* MAIN CONTENT AREA */}
-        <Layout style={{ padding: isVideoChatRoute ? 0 : '24px' }}>
+        <Layout style={{ padding: '24px' }}>
           <Content
             style={{
-              padding: isVideoChatRoute ? 0 : 24,
+              padding: 24,
               margin: 0,
               minHeight: 280,
               background: colorBgContainer,
-              borderRadius: isVideoChatRoute ? 0 : borderRadiusLG,
+              borderRadius: borderRadiusLG,
             }}
           >
             <Outlet />
