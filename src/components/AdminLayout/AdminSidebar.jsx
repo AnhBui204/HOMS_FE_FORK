@@ -46,6 +46,11 @@ const AdminSidebar = () => {
             icon: <StarOutlined />, 
             label: 'Ratings',
         },
+        {
+            key: '/admin/invoices',
+            icon: <FileTextOutlined />,
+            label: 'Invoice Management',
+        },
     ];
 
     return (

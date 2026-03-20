@@ -9,6 +9,15 @@ const adminInvoiceService = {
       console.error('Error fetching admin invoice by id', error);
       throw error;
     }
+  },
+  getInvoices: async (params) => {
+    try {
+      const response = await api.get('/admin/invoices', { params });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching admin invoices', error);
+      throw error;
+    }
   }
 };
 
