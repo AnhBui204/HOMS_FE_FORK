@@ -35,7 +35,7 @@ function VideoChat() {
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
   const isCustomer = location.pathname.startsWith('/customer');
-  const initialRoomId = searchParams.get('room') || 'test-room';
+  const initialRoomId = searchParams.get('room') || (isCustomer ? 'test-room' : null);
   
   const [dispatcherTickets, setDispatcherTickets] = useState([]);
   const [socket, setSocket] = useState(null);
@@ -43,6 +43,11 @@ function VideoChat() {
   const [roomId, setRoomId] = useState(initialRoomId);
   // Default to full name or email
   const userName = user?.fullName || user?.email || 'User';
+
+  const activeTicket = dispatcherTickets.find(t => t.code === roomId);
+  const receiverName = isCustomer 
+    ? 'Hỗ trợ' 
+    : (activeTicket?.customerId?.fullName || activeTicket?.customer?.fullName || 'Khách hàng');
   
   const [messages, setMessages] = useState([]);
   const [messageInput, setMessageInput] = useState('');
@@ -57,6 +62,7 @@ function VideoChat() {
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
   const messagesEndRef = useRef(null);
+  const chatContainerRef = useRef(null);
   
   const peerConnectionRef = useRef(null);
   const localStreamRef = useRef(null);
@@ -68,6 +74,7 @@ function VideoChat() {
   useEffect(() => {
     let newSocket;
     const initializeSocket = async () => {
+      if (!roomId) return;
       try {
         const token = await getValidAccessToken();
         const BASE_URL = process.env.REACT_APP_SOCKET_URL || 'http://localhost:5000';
@@ -123,7 +130,9 @@ function VideoChat() {
 
   // Scroll to bottom of chat
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
   }, [messages]);
 
   // Listen for socket events
@@ -360,6 +369,17 @@ function VideoChat() {
   }, [isInCall]);
 
   const renderContent = () => {
+    if (!roomId) {
+      return (
+        <div className="app-container">
+          <div className="panel login-container" style={{ textAlign: 'center', padding: '40px' }}>
+              <h3>Select a conversation to start</h3>
+              <p>Please choose a ticket from the sidebar to view the chat and video call interface.</p>
+          </div>
+        </div>
+      );
+    }
+
     if (!joined || !socket) {
       return (
         <div className="app-container">
@@ -396,7 +416,7 @@ function VideoChat() {
         <div className={isInCall ? "panel chat-section split-hidden-mobile" : "panel chat-section"} id="mobile-chat-toggle">
           <div className="chat-header">
             <div>
-              Video Interface <span className="room-badge">{roomId}</span>
+              {receiverName} <span className="room-badge">{roomId}</span>
             </div>
             {!isInCall && (
               <button className="btn-control primary-outline" style={{ width: '36px', height: '36px' }} onClick={initiateCall} title="Start Video Call">
@@ -405,7 +425,7 @@ function VideoChat() {
             )}
           </div>
           
-          <div className="chat-messages">
+          <div className="chat-messages" ref={chatContainerRef}>
             {messages.map((msg, idx) => {
               const isMine = msg.sender === userName;
               return (
