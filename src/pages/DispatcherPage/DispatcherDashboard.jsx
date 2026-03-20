@@ -5,10 +5,8 @@ import {
   CheckCircleOutlined, 
   CarOutlined, 
   ClockCircleOutlined,
-  ReloadOutlined,
-  MessageOutlined
+  ReloadOutlined
 } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import dayjs from 'dayjs';
 
@@ -16,7 +14,6 @@ const { Title, Text } = Typography;
 
 const DispatcherDashboard = () => {
     const [loading, setLoading] = useState(false);
-    const navigate = useNavigate();
     const [data, setData] = useState({
         stats: {
             tickets: { total: 0, CREATED: 0, WAITING_SURVEY: 0 },
@@ -78,19 +75,6 @@ const DispatcherDashboard = () => {
                 if (status === 'WAITING_SURVEY') color = 'orange';
                 return <Tag color={color}>{status}</Tag>;
             }
-        },
-        {
-            title: 'Thao tác',
-            key: 'action',
-            render: (_, record) => (
-                <Button 
-                    type="link" 
-                    icon={<MessageOutlined />} 
-                    onClick={() => navigate(`/dispatcher/video-chat?room=${record.code}`)}
-                >
-                    Chat & Video
-                </Button>
-            )
         }
     ];
 
@@ -123,19 +107,6 @@ const DispatcherDashboard = () => {
                 if (status === 'COMPLETED') color = 'success';
                 return <Tag color={color}>{status}</Tag>;
             }
-        },
-        {
-            title: 'Thao tác',
-            key: 'action',
-            render: (_, record) => (
-                <Button 
-                    type="link" 
-                    icon={<MessageOutlined />} 
-                    onClick={() => navigate(`/dispatcher/video-chat?room=${record.code}`)}
-                >
-                    Chat & Video
-                </Button>
-            )
         }
     ];
 

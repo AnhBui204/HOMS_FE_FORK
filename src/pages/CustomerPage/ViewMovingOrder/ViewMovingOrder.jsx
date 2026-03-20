@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from "react";
-import {
-    Layout, Table, Tag, Empty, Button, Tabs, Row, Col, Typography, Image, Modal, message, Divider, Tooltip
-} from "antd";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Layout, Modal, message, Spin } from "antd";
+import { useLocation } from "react-router-dom";
 import {
     PhoneOutlined,
     CheckCircleOutlined,
@@ -45,18 +43,100 @@ const InfoRow = ({ icon, label, value }) => (
 );
 
 const ViewMovingOrder = () => {
-    const location = useLocation();
-    const navigate = useNavigate();
-    const { user, isAuthenticated } = useUser();
-    const [tickets, setTickets] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [isSurveyModalVisible, setIsSurveyModalVisible] = useState(false);
-    const [selectedSurvey, setSelectedSurvey] = useState(null);
-    const [selectedTicket, setSelectedTicket] = useState(null);
-    const [selectedTicketPricing, setSelectedTicketPricing] = useState(null);
-    const [isSurveyTimeModalVisible, setIsSurveyTimeModalVisible] = useState(false);
-    const [selectedTicketForTime, setSelectedTicketForTime] = useState(null);
-    const handleViewSurvey = async (ticket) => {
+  const location = useLocation();
+  const { user, isAuthenticated } = useUser();
+
+  const [tickets,                    setTickets]                    = useState([]);
+  const [loading,                    setLoading]                    = useState(true);
+  const [activeFilter,               setActiveFilter]               = useState("ALL");
+  const [isSurveyModalVisible,       setIsSurveyModalVisible]       = useState(false);
+  const [selectedSurvey,             setSelectedSurvey]             = useState(null);
+  const [selectedTicket,             setSelectedTicket]             = useState(null);
+  const [selectedTicketPricing,      setSelectedTicketPricing]      = useState(null);
+  const [isSurveyTimeModalVisible,   setIsSurveyTimeModalVisible]   = useState(false);
+  const [selectedTicketForTime,      setSelectedTicketForTime]      = useState(null);
+  const [isIncidentModalVisible,     setIsIncidentModalVisible]     = useState(false);
+  const [selectedIncident,           setSelectedIncident]           = useState(null);
+  const [isReportModalVisible,       setIsReportModalVisible]       = useState(false);
+
+  // [RATING] State cho modal đánh giá
+  const [isRateModalVisible,         setIsRateModalVisible]         = useState(false);
+  const [ticketToRate,               setTicketToRate]               = useState(null);
+
+  /* ── handlers ── */
+  const handleViewSurvey = async (ticket) => {
+    try {
+      setSelectedTicket(ticket);
+      const res = await api.get(`/surveys/ticket/${ticket._id}`);
+      setSelectedSurvey(res.data?.data || res.data);
+      try {
+        const resPricing = await api.get(`/pricing/${ticket._id}`);
+        setSelectedTicketPricing({
+          ...ticket.pricing,
+          breakdown: resPricing.data?.data?.breakdown,
+        });
+      } catch {
+        setSelectedTicketPricing(ticket.pricing);
+      }
+      setIsSurveyModalVisible(true);
+    } catch (error) {
+      message.error(
+        "Không thể tải thông tin khảo sát: " +
+          (error.response?.data?.message || error.message)
+      );
+    }
+  };
+
+  const handleReportIncident = (ticket) => {
+    setSelectedTicket(ticket);
+    setIsReportModalVisible(true);
+  };
+
+  const handleCloseReportModal = () => setIsReportModalVisible(false);
+
+  const handleViewIncident = (incident) => {
+    setSelectedIncident(incident);
+    setIsIncidentModalVisible(true);
+  };
+
+  // [RATING] Mở modal đánh giá
+  const handleRateService = (ticket) => {
+    setTicketToRate(ticket);
+    setIsRateModalVisible(true);
+  };
+
+  // [RATING] Callback sau khi đánh giá thành công — cập nhật isRated trong state
+  const handleRateSuccess = (invoiceId) => {
+    setIsRateModalVisible(false);
+    setTickets((prev) =>
+      prev.map((t) =>
+        t.invoice?._id === invoiceId
+          ? { ...t, invoice: { ...t.invoice, isRated: true } }
+          : t
+      )
+    );
+    message.success("Cảm ơn bạn đã đánh giá dịch vụ!");
+  };
+
+  const handleDepositPayment = (ticket) => {
+    confirm({
+      title: "Xác nhận thanh toán cọc",
+      content: (
+        <>
+          <p>Bạn sắp thanh toán <b>50% giá trị đơn hàng</b>.</p>
+          <p>
+            Số tiền cọc:{" "}
+            <b style={{ color: "#d9363e" }}>
+              {(ticket.pricing.totalPrice / 2).toLocaleString()} ₫
+            </b>
+          </p>
+          <p>Bạn có chắc chắn muốn tiếp tục?</p>
+        </>
+      ),
+      okText: "Thanh toán",
+      cancelText: "Hủy",
+      okType: "primary",
+      onOk: async () => {
         try {
             setSelectedTicket(ticket);
             const res = await api.get(`/surveys/ticket/${ticket._id}`);
@@ -105,289 +185,56 @@ const ViewMovingOrder = () => {
             }
         });
     };
+    fetchTickets();
+  }, [isAuthenticated, user, location.search]);
 
-    useEffect(() => {
-        const fetchTickets = async () => {
-            if (!isAuthenticated || !user) { setLoading(false); return; }
-            try {
-                const response = await api.get(`/request-tickets`, {
-                    params: { customerId: user._id || user.id }
-                });
-                if (response.data?.success) {
-                    let userTickets = response.data.data || [];
-                    const currentUserId = user._id || user.id;
-                    userTickets = userTickets.filter(t =>
-                        (t.customerId && t.customerId._id === currentUserId) ||
-                        t.customerId === currentUserId
-                    );
-                    userTickets.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  /* ── filter logic ── */
+  const matchFilter = (t, key) => {
+    const ticketStatus  = t.status;
+    const invoiceStatus = t.invoice?.status;
+    const hasInvoice    = !!invoiceStatus;
 
-                    // Lọc theo searchCode từ header
-                    const searchParams = new URLSearchParams(location.search);
-                    const searchCode = searchParams.get("searchCode");
-                    if (searchCode) {
-                        const keyword = searchCode.toLowerCase();
-                        userTickets = userTickets.filter(t =>
-                            (t.code && t.code.toLowerCase().includes(keyword)) ||
-                            (t.invoice?.code && t.invoice.code.toLowerCase().includes(keyword))
-                        );
-                    }
+    if (key === "ALL") return true;
+    if (key === "QUOTED") return ticketStatus === "QUOTED";
+    if (key === "PROCESSING") {
+      if (!hasInvoice) return ["CREATED","WAITING_SURVEY","SURVEYED","ACCEPTED"].includes(ticketStatus);
+      return ["DRAFT", "CONFIRMED"].includes(invoiceStatus);
+    }
+    if (key === "IN_PROGRESS")  return ["ASSIGNED","IN_PROGRESS"].includes(invoiceStatus);
+    if (key === "COMPLETED")    return invoiceStatus === "COMPLETED";
+    if (key === "CANCELLED")    return ticketStatus === "CANCELLED" || invoiceStatus === "CANCELLED";
+    return false;
+  };
 
-                    setTickets(userTickets);
-                }
-            } catch (error) {
-                console.error("Could not fetch moving orders.", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchTickets();
-    }, [isAuthenticated, user, location.search]);
+  const filtered  = tickets.filter((t) => matchFilter(t, activeFilter));
+  const countFor  = (key) => tickets.filter((t) => matchFilter(t, key)).length;
 
-    const statusColorMap = {
-        CREATED: "blue", WAITING_SURVEY: "orange", SURVEYED: "cyan",
-        QUOTED: "green", ACCEPTED: "geekblue", CONVERTED: "purple",
-        IN_PROGRESS: "processing", COMPLETED: "success", CANCELLED: "error"
-    };
-    const statusLabelMap = {
-        CREATED: "Chờ xác nhận lịch", WAITING_SURVEY: "Đã phân công", SURVEYED: "Đã khảo sát",
-        QUOTED: "Đã báo giá", ACCEPTED: "Đã chốt đơn", CONVERTED: "Đã tạo HĐ",
-        IN_PROGRESS: "Đang vận chuyển", COMPLETED: "Hoàn thành", CANCELLED: "Đã hủy"
-    };
+  return (
+    <Layout className="view-order-page">
+      <AppHeader />
 
-    const columns = [
-        {
-            title: "Mã Đơn",
-            dataIndex: "code",
-            render: (text) => <strong>#{text?.slice(-14).toUpperCase() || "N/A"}</strong>
-        },
-        {
-            title: "Ngày Tạo",
-            dataIndex: "createdAt",
-            render: (date) => new Date(date).toLocaleString("vi-VN", {
-                day: "2-digit", month: "2-digit", year: "numeric",
-                hour: "2-digit", minute: "2-digit"
-            })
-        },
-        {
-            title: "Yêu cầu khảo sát",
-            dataIndex: "scheduledTime",
-            render: (time) => {
-                if (!time) return <span style={{ color: "#aaa" }}>Chưa xác định</span>
+      <Content>
+        {/* HERO */}
+        <section className="order-hero">
+          <div className="overlay" />
+          <h1>Thông Tin Chi Tiết</h1>
+        </section>
 
-                return new Date(time).toLocaleString("vi-VN", {
-                    day: "2-digit",
-                    month: "2-digit",
-                    year: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit"
-                })
-            }
-        },
-        {
-            title: "Chuyển từ",
-            dataIndex: "pickup",
-            render: (pickup) => pickup?.address || "Chưa cập nhật"
-        },
-        {
-            title: "Chuyển đến",
-            dataIndex: "delivery",
-            render: (delivery) => delivery?.address || "Chưa cập nhật"
-        },
-        {
-            title: "Trạng thái",
-            render: (_, record) => {
-                if (record.invoice) {
-                    const invoiceStatusMap = {
-                        DRAFT: { color: "purple", label: "Nháp hóa đơn" },
-                        CONFIRMED: { color: "blue", label: "Đã xác nhận" },
-                        ASSIGNED: { color: "cyan", label: "Đã phân công xe" },
-                        IN_PROGRESS: { color: "processing", label: "Đang vận chuyển" },
-                        COMPLETED: { color: "success", label: "Hoàn thành" },
-                        CANCELLED: { color: "error", label: "Đã hủy" }
-                    };
-                    const s = invoiceStatusMap[record.invoice.status];
-                    return <Tag color={s?.color || "purple"}>{s?.label || record.invoice.status}</Tag>;
-                }
-                return <Tag color={statusColorMap[record.status] || "default"}>{statusLabelMap[record.status] || record.status}</Tag>;
-            }
-        },
-        {
-            title: "Thanh toán",
-            render: (_, record) => {
-                const paymentStatus = record?.invoice?.paymentStatus;
-                if (!paymentStatus) return <Tag color="default">Chưa phát sinh</Tag>;
-                const paymentMap = {
-                    UNPAID: { color: "orange", label: "Chưa thanh toán" },
-                    PARTIAL: { color: "green", label: "Đã đặt cọc" },
-                    PAID: { color: "success", label: "Đã thanh toán" }
-                };
-                const p = paymentMap[paymentStatus];
-                return <Tag color={p?.color || "default"}>{p?.label || paymentStatus}</Tag>;
-            }
-        },
-        {
-            title: "Báo giá",
-            render: (_, record) => record.pricing?.totalPrice
-                ? <strong style={{ color: "#52c41a" }}>{record.pricing.totalPrice.toLocaleString()} ₫</strong>
-                : <span style={{ color: "#aaa" }}>Chưa có</span>
-        },
-        {
-            title: "Thao tác",
-            render: (_, record) => (
-                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                    {record.status === 'QUOTED' && (
-                        <>
-                            <Button
-                                type="primary"
-                                size="small"
-                                style={{ background: '#52c41a', borderColor: '#52c41a' }}
-                                icon={<CheckCircleOutlined />}
-                                onClick={() => handleViewSurvey(record)}
-                            >
-                                Chấp nhận
-                            </Button>
-                            <Button
-                                danger
-                                size="small"
-                                icon={<CloseCircleOutlined />}
-                                onClick={() => {
-                                    confirm({
-                                        title: 'Từ chối báo giá này?',
-                                        content: 'Yêu cầu chuyển nhà sẽ bị hủy bỏ.',
-                                        okText: 'Từ chối & Hủy',
-                                        okType: 'danger',
-                                        cancelText: 'Quay lại',
-                                        onOk: async () => {
-                                            try {
-                                                await api.put(`/request-tickets/${record._id}/cancel`, { reason: 'Khách hàng từ chối báo giá' });
-                                                message.success("Đã từ chối báo giá và hủy đơn.");
-                                                setTickets(prev =>
-                                                    prev.map(t =>
-                                                        t._id === record._id
-                                                            ? { ...t, status: "CANCELLED" }
-                                                            : t
-                                                    )
-                                                );
-                                            } catch (err) {
-                                                message.error("Lỗi khi hủy đơn: " + (err.response?.data?.message || err.message));
-                                            }
-                                        }
-                                    });
-                                }}
-                            >
-                                Từ chối
-                            </Button>
+        {/* CARD SECTION */}
+        <section className="order-section">
+          <div className="mo-section-header">
+            <h2>Lịch Chuyển Nhà Của Tôi</h2>
+          </div>
 
-                        </>
-                    )}
-                    {record.status !== 'QUOTED' && (
-                        <Button 
-                            type="link" 
-                            size="small" 
-                            icon={<PhoneOutlined />}
-                            onClick={() => window.open(`/customer/video-chat?room=${record.code}`, '_blank')}
-                        >
-                            Liên hệ
-                        </Button>
-                    )}
-                    {record.pricing?.totalPrice > 0 && (
-                        <Button type="dashed" size="small" icon={<EyeOutlined />} onClick={() => handleViewSurvey(record)}>
-                            Xem báo giá
-                        </Button>
-                    )}
-                    {record.status === 'ACCEPTED' && record.invoice?.paymentStatus === 'UNPAID' && (
-                        <Button
-                            type="primary"
-                            size="small"
-                            style={{ background: '#d9363e', borderColor: '#d9363e' }}
-                            onClick={() => window.location.href = `/customer/sign-contract/${record._id}`}
-                        >
-                            Thanh toán cọc
-                        </Button>
-                    )}
-                </div>
-            ),
-        },
-    ];
-
-    return (
-        <Layout className="view-order-page">
-            <AppHeader />
-
-            <Content>
-                {/* HERO */}
-                <section className="order-hero">
-                    <div className="overlay" />
-                    <h1>Thông Tin Chi Tiết</h1>
-                </section>
-
-                {/* SCHEDULE TABLE */}
-                <section className="order-section">
-                    <h2>Lịch Chuyển Nhà Của Tôi</h2>
-                    <Table
-                        columns={columns}
-                        dataSource={tickets}
-                        loading={loading}
-                        pagination={{ pageSize: 5 }}
-                        rowKey="_id"
-                        scroll={{ x: 900 }}
-                    />
-                </section>
-
-                {/* ── SURVEY & PRICING MODAL ── */}
-                <Modal
-                    title={
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                            <EyeOutlined style={{ color: '#44624A', fontSize: 18 }} />
-                            <span>
-                                Chi tiết khảo sát &amp; Báo giá —{' '}
-                                <strong style={{ color: '#44624A' }}>
-                                    #{selectedTicket?.code?.slice(-10).toUpperCase()}
-                                </strong>
-                            </span>
-                        </div>
-                    }
-                    open={isSurveyModalVisible}
-                    onCancel={() => setIsSurveyModalVisible(false)}
-                    width={880}
-                    styles={{ body: { padding: '16px 20px', maxHeight: '80vh', overflowY: 'auto' } }}
-                    footer={[
-                        selectedTicket?.status === 'QUOTED' && (
-                            <Button
-                                key="accept"
-                                type="primary"
-                                icon={<CheckCircleOutlined />}
-                                style={{ background: '#52c41a', borderColor: '#52c41a' }}
-                                onClick={async () => {
-                                    try {
-                                        await api.put(`/request-tickets/${selectedTicket._id}/accept-quote`);
-                                        message.success('Đã chấp nhận báo giá, vui lòng ký hợp đồng và thanh toán cọc.');
-                                        setIsSurveyModalVisible(false);
-                                        window.location.href = `/customer/sign-contract/${selectedTicket._id}`;
-                                    } catch (err) {
-                                        message.error('Lỗi: ' + (err.response?.data?.message || err.message));
-                                    }
-                                }}
-                            >
-                                Chấp nhận &amp; Ký hợp đồng
-                            </Button>
-                        ),
-                        selectedTicket?.status === 'ACCEPTED' && selectedTicket?.invoice?.paymentStatus === 'UNPAID' && (
-                            <Button
-                                key="pay"
-                                type="primary"
-                                style={{ background: '#d9363e', borderColor: '#d9363e' }}
-                                onClick={() => {
-                                    setIsSurveyModalVisible(false);
-                                    window.location.href = `/customer/sign-contract/${selectedTicket._id}`;
-                                }}
-                            >
-                                Xem HĐ &amp; Thanh toán cọc
-                            </Button>
-                        ),
-                        <Button key="close" onClick={() => setIsSurveyModalVisible(false)}>Đóng</Button>
-                    ]}
+          {/* filter tabs */}
+          <div className="mo-filters">
+            {FILTERS.map((f) => {
+              const cnt = countFor(f.key);
+              return (
+                <button
+                  key={f.key}
+                  className={`mo-filter-btn${activeFilter === f.key ? " mo-filter-btn--active" : ""}`}
+                  onClick={() => setActiveFilter(f.key)}
                 >
                     {selectedSurvey && selectedTicketPricing ? (
                         <div style={{ fontSize: 14 }}>

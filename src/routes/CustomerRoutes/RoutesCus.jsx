@@ -12,8 +12,6 @@ import Dashboard from "../../pages/CustomerPage/Dashboard/Dashboard";
 import SignContract from "../../pages/CustomerPage/SignContract/SignContract";
 // import CustomerLayout from "../../pages/CustomerPage/components/layout/CustomerLayout";
 import ProtectedRoute from "../../components/ProtectRoute/ProtectedRoute";
-import VideoChat from "../../pages/VideoChat/VideoChat";
-
 const RoutesCus = () => {
   return (
     <Routes>
@@ -95,15 +93,6 @@ const RoutesCus = () => {
         element={
           <ProtectedRoute allowedRoles={["customer"]}>
             <SignContract />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/video-chat"
-        element={
-          <ProtectedRoute allowedRoles={["customer"]}>
-            <VideoChat />
           </ProtectedRoute>
         }
       />
