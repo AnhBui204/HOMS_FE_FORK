@@ -1,6 +1,6 @@
 import React from 'react';
 import { Layout, Menu } from 'antd';
-import { AreaChartOutlined, UserOutlined, CarOutlined, FileTextOutlined, DollarOutlined, FileDoneOutlined, StarOutlined } from '@ant-design/icons';
+import { AreaChartOutlined, UserOutlined, CarOutlined, FileTextOutlined, DollarOutlined, FileDoneOutlined } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import logo from '../../assets/images/logo.png'; // Using standard logo if available, or just text
 
@@ -41,16 +41,6 @@ const AdminSidebar = () => {
             icon: <DollarOutlined />,
             label: 'Pricing & Compensation',
         },
-        {
-            key: '/admin/ratings',
-            icon: <StarOutlined />, 
-            label: 'Ratings',
-        },
-        {
-            key: '/admin/invoices',
-            icon: <FileTextOutlined />,
-            label: 'Invoice Management',
-        },
     ];
 
     return (
@@ -60,26 +50,7 @@ const AdminSidebar = () => {
                 <img src={logo} alt="HOMS Logo" style={{ height: '40px', width: 'auto' }} onError={(e) => { e.target.style.display = 'none'; }} />
                 <h2 style={{ margin: 0, fontWeight: 'bold', color: '#1890ff' }}>HOMS</h2>
             </div>
-            {/* Scoped styles to make the selected menu item match Figma color #8BA888 */}
-            <style>{`.admin-sider-menu .ant-menu-item-selected, .admin-sider-menu .ant-menu-item-active {
-                    background-color: #8BA888 !important;
-                    color: #ffffff !important;
-                    border-radius: 8px;
-                }
-                .admin-sider-menu .ant-menu-item-selected .anticon, .admin-sider-menu .ant-menu-item-active .anticon {
-                    color: #ffffff !important;
-                }
-                .admin-sider-menu .ant-menu-item {
-                    margin: 6px 0;
-                    border-radius: 8px;
-                }
-                .admin-sider-menu .ant-menu-item:hover {
-                    background-color: rgba(139,168,136,0.12);
-                    color: #ffffff;
-                }
-            `}</style>
             <Menu
-                className="admin-sider-menu"
                 mode="inline"
                 padding={16}
                 selectedKeys={[location.pathname]}

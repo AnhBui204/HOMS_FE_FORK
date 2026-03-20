@@ -16,14 +16,12 @@ import RoutesCus from "./routes/CustomerRoutes/RoutesCus";
 import RoutesAdmin from "./routes/AdminRoutes/RoutesAdmin";
 import RoutesDispatcher from './routes/DispatcherRoutes/DispatcherRoutes';
 import RoutesStaff from "./routes/StaffRoutes/RoutesStaff";
-import ScrollToTop from "./components/ScrollToTop";
 
 function App() {
   const googleClientId = process.env.REACT_APP_GOOGLE_CLIENT_ID;
   return (
     <GoogleOAuthProvider clientId={googleClientId}>
       <BrowserRouter>
-        <ScrollToTop />
         <UserProvider>
           <Routes>
             <Route path="/" element={<HomeRedirect />} />

@@ -3,7 +3,7 @@ import api from './api';
 const adminStatisticService = {
     getOverview: async () => {
         try {
-            const response = await api.get('/admin/dashboard/overview');
+            const response = await api.get('/admin/statistics/overview');
             return response.data;
         } catch (error) {
             console.error('Error fetching admin overview stats', error);
@@ -13,7 +13,7 @@ const adminStatisticService = {
 
     getRevenue: async (params) => {
         try {
-            const response = await api.get('/admin/dashboard/revenue', { params });
+            const response = await api.get('/admin/statistics/revenue', { params });
             return response.data;
         } catch (error) {
             console.error('Error fetching admin revenue stats', error);
@@ -23,29 +23,10 @@ const adminStatisticService = {
 
     getOrders: async (params) => {
         try {
-            const response = await api.get('/admin/dashboard/orders', { params });
+            const response = await api.get('/admin/statistics/orders', { params });
             return response.data;
         } catch (error) {
             console.error('Error fetching admin order stats', error);
-            throw error;
-        }
-    }
-    ,
-    getRequestTicketsDaily: async (params) => {
-        try {
-            const response = await api.get('/admin/statistics/request-tickets/daily', { params });
-            return response.data;
-        } catch (error) {
-            console.error('Error fetching request tickets daily', error);
-            throw error;
-        }
-    },
-    getRecentInvoices: async (params) => {
-        try {
-            const response = await api.get('/admin/dashboard/recent-invoices', { params });
-            return response.data;
-        } catch (error) {
-            console.error('Error fetching recent invoices', error);
             throw error;
         }
     }

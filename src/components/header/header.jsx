@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { Layout, Row, Col, Button, Input, Drawer, Menu, Avatar, Dropdown, Badge, Popover, List, Typography } from "antd";
+import {  Layout, Row, Col, Button, Input, Drawer, Menu, Avatar, Dropdown, Badge, Popover, List, Typography } from "antd";
 import { MenuOutlined, SearchOutlined, RightOutlined, BellOutlined } from "@ant-design/icons";
 import "./header.css";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import useUser from "../../contexts/UserContext";
 import useNotificationSocket from "../../hooks/useNotificationSocket";
-import { getNotifications, markNotificationRead } from "../../services/notificationService";
+import { getNotifications,markNotificationRead } from "../../services/notificationService";
 const { Header } = Layout;
 const { Text } = Typography;
 const AppHeader = () => {
@@ -38,58 +38,58 @@ const AppHeader = () => {
       setActiveMenu("");
     }
   }, [location.pathname]);
-  useEffect(() => {
+useEffect(() => {
 
-    const fetchNotifications = async () => {
-      if (!user) return;
+  const fetchNotifications = async () => {
+    if (!user) return;
 
-      try {
-
-        const data = await getNotifications();
-
-        setNotifications(data);
-
-        setUnreadCount(data.filter(n => !n.isRead).length);
-
-      } catch (err) {
-        console.error(err);
-      }
-    };
-
-    fetchNotifications();
-
-  }, [user]);
-  const handleNotificationClick = async (notification) => {
     try {
-      await markNotificationRead(notification._id);
 
-      const updatedNotifications = notifications.map(notif =>
-        notif._id === notification._id
-          ? { ...notif, isRead: true }
-          : notif
-      );
+      const data = await getNotifications();
 
-      setNotifications(updatedNotifications);
-      setUnreadCount(updatedNotifications.filter(n => !n.isRead).length);
+      setNotifications(data);
 
-      if (notification.ticketId) {
-        navigate(`/customer/order/`);
-      }
+      setUnreadCount(data.filter(n => !n.isRead).length);
 
     } catch (err) {
       console.error(err);
     }
   };
-  const notificationContent = (
+
+  fetchNotifications();
+
+}, [user]);
+ const handleNotificationClick = async (notification) => {
+  try {
+    await markNotificationRead(notification._id);
+
+    const updatedNotifications = notifications.map(notif =>
+      notif._id === notification._id
+        ? { ...notif, isRead: true }
+        : notif
+    );
+
+    setNotifications(updatedNotifications);
+    setUnreadCount(updatedNotifications.filter(n => !n.isRead).length);
+
+    if (notification.ticketId) {
+      navigate(`/customer/order/`);
+    }
+
+  } catch (err) {
+    console.error(err);
+  }
+};
+   const notificationContent = (
     <div style={{ width: 320, maxHeight: 400, overflowY: 'auto' }}>
       <List
         itemLayout="horizontal"
         dataSource={notifications}
         locale={{ emptyText: "Không có thông báo nào" }}
         renderItem={item => (
-          <List.Item
-            style={{
-              padding: '12px',
+          <List.Item 
+            style={{ 
+              padding: '12px', 
               cursor: 'pointer',
               backgroundColor: item.isRead ? '#ffffff' : '#f0f5ff', // Highlight màu xanh nhạt nếu chưa đọc
               borderBottom: '1px solid #f0f0f0'
@@ -143,11 +143,7 @@ const AppHeader = () => {
                 onClick={() => {
                   let dashboardPath = "/";
                   if (user?.role === "admin") dashboardPath = "/admin";
-                  else if (user?.role === "dispatcher") {
-                    dashboardPath = user.dispatcherProfile?.isGeneral
-                      ? "/dispatcher/dashboard"
-                      : "/dispatcher/calendar";
-                  }
+                  else if (user?.role === "dispatcher") dashboardPath = "/dispatcher";
                   else if (user?.role === "customer") dashboardPath = "/";
 
                   navigate(dashboardPath);
@@ -200,56 +196,56 @@ const AppHeader = () => {
                     </Link>
                   </>
                 ) : (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                    <Popover
-                      placement="bottomRight"
-                      title="Thông báo của bạn"
-                      content={notificationContent}
+                   <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                    <Popover 
+                      placement="bottomRight" 
+                      title="Thông báo của bạn" 
+                      content={notificationContent} 
                       trigger="click"
                     >
                       <Badge count={unreadCount} overflowCount={99} size="small">
                         <BellOutlined style={{ fontSize: '20px', cursor: 'pointer', color: '#2D4F36' }} />
                       </Badge>
                     </Popover>
-                    <Dropdown
-                      placement="bottomRight"
-                      menu={{
-                        items: [
-                          {
-                            key: "profile",
-                            label: "Trang cá nhân",
-                            onClick: () => navigate("/customer/profile")
-                          },
-                          {
-                            type: "divider",
-                          },
-                          {
-                            key: "logout",
-                            label: "Đăng xuất",
-                            danger: true,
-                            onClick: handleLogout,
-                          },
-                        ],
-                      }}
+                  <Dropdown
+                    placement="bottomRight"
+                    menu={{
+                      items: [
+                        {
+                          key: "profile",
+                          label: "Trang cá nhân",
+                          onClick: () => navigate("/customer/profile")
+                        },
+                        {
+                          type: "divider",
+                        },
+                        {
+                          key: "logout",
+                          label: "Đăng xuất",
+                          danger: true,
+                          onClick: handleLogout,
+                        },
+                      ],
+                    }}
+                  >
+                    <Button
+                      type="text"
+                      className="user-btn"
                     >
-                      <Button
-                        type="text"
-                        className="user-btn"
+                      <Avatar
+                        src={user.avatar}
+                        size={32}
+                        style={{ backgroundColor: "#44624A" }}
                       >
-                        <Avatar
-                          src={user.avatar}
-                          size={32}
-                          style={{ backgroundColor: "#44624A" }}
-                        >
-                          {user.fullName?.charAt(0) || user.name?.charAt(0)}
-                        </Avatar>
+                        {user.fullName?.charAt(0) || user.name?.charAt(0)}
+                      </Avatar>
 
-                        <span className="user-name">
-                          {user.fullName || user.name}
-                        </span>
-                      </Button>
-                    </Dropdown>
-                  </div>
+                      <span className="user-name">
+                        {user.fullName || user.name}
+                      </span>
+                    </Button>
+                  </Dropdown>
+</div>
                 )}
 
               </div>

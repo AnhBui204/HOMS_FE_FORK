@@ -178,40 +178,6 @@ export const cancelOrder = async (ticketId, reason) => {
         normalizeApiError(error);
     }
 };
-export const fetchUserTickets = async (userId, searchCode) => {
-  try {
-    const response = await api.get('/request-tickets', {
-      params: { customerId: userId }
-    });
-
-    let tickets = response.data?.data || [];
-
-    // filter đúng user
-    tickets = tickets.filter(t =>
-      (t.customerId && t.customerId._id === userId) ||
-      t.customerId === userId
-    );
-
-    // sort mới nhất
-    tickets.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
-    // search code
-    if (searchCode) {
-      const keyword = searchCode.toLowerCase();
-
-      tickets = tickets.filter(t =>
-        (t.code && t.code.toLowerCase().includes(keyword)) ||
-        (t.invoice?.code && t.invoice.code.toLowerCase().includes(keyword))
-      );
-    }
-
-    return tickets;
-
-  } catch (error) {
-    console.error("Fetch tickets error", error);
-    normalizeApiError(error);
-  }
-};
 const orderService = {
     createOrder,
     getMyOrders,
@@ -220,8 +186,7 @@ const orderService = {
     createPaymentLink,
     createMovingDeposit,
       acceptSurveyTime,
-    rejectSurveyTime,
-    fetchUserTickets
+    rejectSurveyTime
 };
 
 export default orderService;

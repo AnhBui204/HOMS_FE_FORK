@@ -8,8 +8,6 @@ import VehicleManagement from '../../pages/AdminPage/VehicleManagement/VehicleMa
 import PricingManagement from '../../pages/AdminPage/Pricing/PricingManagement';
 import ReportManagement from '../../pages/AdminPage/Report/ReportManagement';
 import ContractManagement from '../../pages/AdminPage/Contract/ContractManagement';
-import RatingManagement from '../../pages/AdminPage/Rating/RatingManagement';
-import InvoiceManagement from '../../pages/AdminPage/Invoice/InvoiceManagement';
 import ProtectedRoute from "../../components/ProtectRoute/ProtectedRoute";
 
 const RoutesAdmin = () => {
@@ -23,8 +21,6 @@ const RoutesAdmin = () => {
           <Route path="users/:id" element={<UserProfile />} />
           <Route path="vehicles" element={<VehicleManagement />} />
           <Route path="pricing" element={<PricingManagement />} />
-          <Route path="invoices" element={<InvoiceManagement />} />
-          <Route path="ratings" element={<RatingManagement />} />
           <Route path="reports" element={<ReportManagement />} />
           <Route path="contracts" element={<ContractManagement />} />
           <Route path="*" element={<Navigate to="dashboard" />} />
