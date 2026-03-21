@@ -19,6 +19,7 @@ const adminInvoiceService = {
       throw error;
     }
   }
+  
 };
 
 export default adminInvoiceService;
