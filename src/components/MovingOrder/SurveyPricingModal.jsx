@@ -16,7 +16,7 @@ const InfoRow = ({ icon, label, value }) => (
     </div>
 );
 
-const SurveyPricingModal = ({ visible, onClose, ticket, survey, pricing }) => {
+const SurveyPricingModal = ({ visible, onClose, ticket, survey, pricing, tourRefs }) => {
     return (
         <Modal
             title={
@@ -74,7 +74,7 @@ const SurveyPricingModal = ({ visible, onClose, ticket, survey, pricing }) => {
             {survey && pricing ? (
                 <div style={{ fontSize: 14 }}>
                     {/* ── SECTION 1: SURVEY INFO ── */}
-                    <div style={{ background: '#f6ffed', border: '1px solid #b7eb8f', borderRadius: 10, padding: '14px 18px', marginBottom: 14 }}>
+                    <div ref={tourRefs?.refModalSurvey} style={{ background: '#f6ffed', border: '1px solid #b7eb8f', borderRadius: 10, padding: '14px 18px', marginBottom: 14 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
                             <div style={{ background: '#52c41a', borderRadius: 6, padding: '4px 10px', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                                 <FileTextOutlined style={{ color: '#fff', fontSize: 13 }} />
@@ -111,7 +111,7 @@ const SurveyPricingModal = ({ visible, onClose, ticket, survey, pricing }) => {
                     </div>
 
                     {/* ── SECTION 2: RESOURCES & ITEMS ── */}
-                    <div style={{ background: '#e6f4ff', border: '1px solid #91caff', borderRadius: 10, padding: '14px 18px', marginBottom: 14 }}>
+                    <div ref={tourRefs?.refModalResources} style={{ background: '#e6f4ff', border: '1px solid #91caff', borderRadius: 10, padding: '14px 18px', marginBottom: 14 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
                             <div style={{ background: '#1677ff', borderRadius: 6, padding: '4px 10px', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                                 <CarOutlined style={{ color: '#fff', fontSize: 13 }} />
@@ -167,7 +167,7 @@ const SurveyPricingModal = ({ visible, onClose, ticket, survey, pricing }) => {
                     </div>
 
                     {/* ── SECTION 3: PRICING BREAKDOWN ── */}
-                    <div style={{ background: '#fff', border: '1px solid #e8e8e8', borderRadius: 10, padding: '14px 18px' }}>
+                    <div ref={tourRefs?.refModalPricing} style={{ background: '#fff', border: '1px solid #e8e8e8', borderRadius: 10, padding: '14px 18px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
                             <div style={{ background: '#44624A', borderRadius: 6, padding: '4px 10px', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                                 <DollarOutlined style={{ color: '#fff', fontSize: 13 }} />

@@ -20,97 +20,95 @@ const RoutesCus = () => {
     <>
       <AIAssistant />
       <Routes>
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute allowedRoles={["customer"]}>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
 
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute allowedRoles={["customer"]}>
-            <Dashboard />
-          </ProtectedRoute>
-        }
-      />
+        <Route
+          path="/order"
+          element={
+            <ProtectedRoute allowedRoles={["customer"]}>
+              <ViewMovingOrder />
+            </ProtectedRoute>
+          }
+        />
 
-      <Route
-        path="/order"
-        element={
-          <ProtectedRoute allowedRoles={["customer"]}>
-            <ViewMovingOrder />
-          </ProtectedRoute>
-        }
-      />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute allowedRoles={["customer"]}>
+              <Profile />
+            </ProtectedRoute>
+          }
+        />
 
-      <Route
-        path="/profile"
-        element={
-          <ProtectedRoute allowedRoles={["customer"]}>
-            <Profile />
-          </ProtectedRoute>
-        }
-      />
+        <Route
+          path="/service-packages"
+          element={
+            <ProtectedRoute allowedRoles={["customer"]}>
+              <ViewServicePackages />
+            </ProtectedRoute>
+          }
+        />
 
-      <Route
-        path="/service-packages"
-        element={
-          <ProtectedRoute allowedRoles={["customer"]}>
-            <ViewServicePackages />
-          </ProtectedRoute>
-        }
-      />
+        <Route
+          path="/create-order"
+          element={
+            <ProtectedRoute allowedRoles={["customer"]}>
+              <CreateMovingOrder />
+            </ProtectedRoute>
+          }
+        />
 
-      <Route
-        path="/create-order"
-        element={
-          <ProtectedRoute allowedRoles={["customer"]}>
-            <CreateMovingOrder />
-          </ProtectedRoute>
-        }
-      />
+        <Route
+          path="/confirm-order"
+          element={
+            <ProtectedRoute allowedRoles={["customer"]}>
+              <ConfirmMovingOrder />
+            </ProtectedRoute>
+          }
+        />
 
-      <Route
-        path="/confirm-order"
-        element={
-          <ProtectedRoute allowedRoles={["customer"]}>
-            <ConfirmMovingOrder />
-          </ProtectedRoute>
-        }
-      />
+        <Route
+          path="/survey-agreement"
+          element={
+            <ProtectedRoute allowedRoles={["customer"]}>
+              <SurveyAgreement />
+            </ProtectedRoute>
+          }
+        />
 
-      <Route
-        path="/survey-agreement"
-        element={
-          <ProtectedRoute allowedRoles={["customer"]}>
-            <SurveyAgreement />
-          </ProtectedRoute>
-        }
-      />
+        <Route
+          path="/deposit"
+          element={
+            <ProtectedRoute allowedRoles={["customer"]}>
+              <Deposit />
+            </ProtectedRoute>
+          }
+        />
 
-      <Route
-        path="/deposit"
-        element={
-          <ProtectedRoute allowedRoles={["customer"]}>
-            <Deposit />
-          </ProtectedRoute>
-        }
-      />
+        <Route
+          path="/sign-contract/:ticketId"
+          element={
+            <ProtectedRoute allowedRoles={["customer"]}>
+              <SignContract />
+            </ProtectedRoute>
+          }
+        />
 
-      <Route
-        path="/sign-contract/:ticketId"
-        element={
-          <ProtectedRoute allowedRoles={["customer"]}>
-            <SignContract />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/video-chat"
-        element={
-          <ProtectedRoute allowedRoles={["customer"]}>
-            <VideoChat />
-          </ProtectedRoute>
-        }
-      />
-
+        <Route
+          path="/video-chat"
+          element={
+            <ProtectedRoute allowedRoles={["customer"]}>
+              <VideoChat />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </>
   );

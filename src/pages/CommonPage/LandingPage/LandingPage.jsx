@@ -25,6 +25,7 @@ import './LandingPage.css';
 import AppHeader from '../../../components/header/header';
 import AppFooter from '../../../components/footer/footer';
 import api from '../../../services/api'; // Dùng helper API call có sẵn
+import AIAssistant from '../../../utils/AIAssistant';
 
 const { Header, Content, Footer } = Layout;
 const { TextArea } = Input;
@@ -658,6 +659,7 @@ const LandingPage = () => {
             </Content>
 
             <AppFooter className="landing-footer" />
+            <AIAssistant />
         </Layout>
     );
 };

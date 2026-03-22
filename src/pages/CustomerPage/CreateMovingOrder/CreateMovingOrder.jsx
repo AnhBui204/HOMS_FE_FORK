@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Layout, Steps, Card, Row, Col, Input, Button, DatePicker, message, Alert } from "antd";
-import { EnvironmentOutlined } from "@ant-design/icons";
+import { Layout, Steps, Card, Row, Col, Input, Button, DatePicker, message, Alert, Tour, ConfigProvider } from "antd";
+import { QuestionCircleOutlined, EnvironmentOutlined } from "@ant-design/icons";
+import viVN from 'antd/locale/vi_VN';
 import dayjs from 'dayjs';
 
 import AppHeader from "../../../components/header/header";
@@ -59,6 +60,49 @@ const MovingInformationPage = () => {
             setDropoffLocation(locationData);
         }
     };
+
+    // Product Tour Setup
+    const refSteps = React.useRef(null);
+    const refLocationToggle = React.useRef(null);
+    const refDatePicker = React.useRef(null);
+    const refMap = React.useRef(null);
+    const refNextBtn = React.useRef(null);
+    const [tourOpen, setTourOpen] = useState(false);
+
+    React.useEffect(() => {
+        if (!localStorage.getItem('hasSeenBookingTour')) {
+            setTimeout(() => setTourOpen(true), 800);
+            localStorage.setItem('hasSeenBookingTour', 'true');
+        }
+    }, []);
+
+    const tourSteps = [
+        {
+            title: 'Tiến độ Đặt Lịch',
+            description: 'Các bước bạn cần thực hiện để hoàn thành việc đặt dịch vụ.',
+            target: () => refSteps.current,
+        },
+        {
+            title: 'Bản Đồ Trực Quan',
+            description: 'Bạn có thể tìm kiếm và ghim trực tiếp địa điểm bằng bản đồ tương tác này.',
+            target: () => refMap.current,
+        },
+        {
+            title: 'Chuyển Đổi Địa Điểm',
+            description: 'Nhấp vào đây để luân phiên nhập thông tin giữa "Nơi chuyển đi" và "Nơi chuyển đến".',
+            target: () => refLocationToggle.current,
+        },
+        {
+            title: 'Thời Gian Chuyển',
+            description: 'Lựa chọn ngày và giờ cụ thể bạn muốn chúng tôi thực hiện dịch vụ.',
+            target: () => refDatePicker.current,
+        },
+        {
+            title: 'Hoàn Tất & Xem Ước Tính',
+            description: 'Sau khi đã kiểm tra kỹ thông tin, hãy nhấn "Tiếp theo" để tiếp tục.',
+            target: () => refNextBtn.current,
+        },
+    ];
 
     const handleNext = async () => {
         // Validate required fields
@@ -132,12 +176,20 @@ const MovingInformationPage = () => {
             <Content>
 
                 {/* HERO */}
-                <section className="moving-hero">
+                <section className="moving-hero" style={{ position: 'relative' }}>
                     <h1>{selectedService.title}</h1>
+                    <Button 
+                        type="primary" 
+                        icon={<QuestionCircleOutlined />} 
+                        onClick={() => setTourOpen(true)}
+                        style={{ position: 'absolute', right: 40, top: '50%', transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.2)', borderColor: 'white', color: 'white' }}
+                    >
+                        Hướng dẫn đặt lịch
+                    </Button>
                 </section>
 
                 {/* STEPS */}
-                <section className="service-steps-container">
+                <section className="service-steps-container" ref={refSteps}>
                     <Card className="steps-card">
                         <Steps
                             current={1}
@@ -173,30 +225,32 @@ const MovingInformationPage = () => {
                                         readOnly
                                     />
 
-                                    <DatePicker
-                                        placeholder="Chọn thời gian"
-                                        onChange={(date) => setMovingDate(date)}
-                                        showTime
-                                        format="DD/MM/YYYY HH:mm"
-                                        className="custom-input"
-                                        style={{ width: '100%' }}
-                                        disabledDate={(current) => current && current.isBefore(dayjs().add(2, 'day').startOf('day'))}
-                                        disabledTime={(current) => {
-                                            const now = dayjs();
-                                            if (current && dayjs(current).isSame(now, 'day')) {
-                                                return {
-                                                    disabledHours: () => [...Array(now.hour()).keys()],
-                                                    disabledMinutes: (selectedHour) => {
-                                                        if (selectedHour === now.hour()) {
-                                                            return [...Array(now.minute() + 1).keys()];
+                                    <div ref={refDatePicker} style={{ width: '100%', marginBottom: '15px' }}>
+                                        <DatePicker
+                                            placeholder="Chọn thời gian"
+                                            onChange={(date) => setMovingDate(date)}
+                                            showTime
+                                            format="DD/MM/YYYY HH:mm"
+                                            className="custom-input"
+                                            style={{ width: '100%', marginBottom: 0 }}
+                                            disabledDate={(current) => current && current.isBefore(dayjs().add(2, 'day').startOf('day'))}
+                                            disabledTime={(current) => {
+                                                const now = dayjs();
+                                                if (current && dayjs(current).isSame(now, 'day')) {
+                                                    return {
+                                                        disabledHours: () => [...Array(now.hour()).keys()],
+                                                        disabledMinutes: (selectedHour) => {
+                                                            if (selectedHour === now.hour()) {
+                                                                return [...Array(now.minute() + 1).keys()];
+                                                            }
+                                                            return [];
                                                         }
-                                                        return [];
-                                                    }
-                                                };
-                                            }
-                                            return {};
-                                        }}
-                                    />
+                                                    };
+                                                }
+                                                return {};
+                                            }}
+                                        />
+                                    </div>
 
                                     <Alert
                                         message="Lưu ý đặt lịch"
@@ -217,7 +271,7 @@ const MovingInformationPage = () => {
                                         }
                                     />
 
-                                    <div className="location-switch-group">
+                                    <div className="location-switch-group" ref={refLocationToggle}>
                                         <Button
                                             type={activeLocation === 'pickup' ? 'primary' : 'default'}
                                             onClick={() => setActiveLocation('pickup')}
@@ -245,7 +299,8 @@ const MovingInformationPage = () => {
                         </Col>
 
                         <Col md={14} xs={24}>
-                            <LocationPicker
+                            <div ref={refMap} style={{ height: '100%' }}>
+                                <LocationPicker
                                 onLocationChange={handleLocationChange}
                                 initialPosition={
                                     activeLocation === 'pickup'
@@ -260,13 +315,14 @@ const MovingInformationPage = () => {
                                 }
                                 locationType={activeLocation}
                             />
+                            </div>
                         </Col>
                     </Row>
                 </section>
 
                 {/* ITEMS SECTION TEMPORARILY DISABLED: item details will be collected by survey staff after onsite survey */}
 
-                <div className="next-button">
+                <div className="next-button" ref={refNextBtn}>
                     <Button
                         type="primary"
                         size="large"
@@ -279,6 +335,10 @@ const MovingInformationPage = () => {
                 </div>
 
             </Content>
+
+            <ConfigProvider locale={viVN}>
+                <Tour open={tourOpen} onClose={() => setTourOpen(false)} steps={tourSteps} />
+            </ConfigProvider>
 
             <AppFooter />
         </Layout>

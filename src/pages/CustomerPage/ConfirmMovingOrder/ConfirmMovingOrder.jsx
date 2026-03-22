@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Layout, Steps, Card, Row, Col, Button, Calendar, Checkbox, message, Modal, Alert } from "antd";
+import { Layout, Steps, Card, Row, Col, Button, Calendar, Checkbox, message, Modal, Alert, Tour, ConfigProvider } from "antd";
+import { QuestionCircleOutlined } from "@ant-design/icons";
+import viVN from 'antd/locale/vi_VN';
 import { Monitor, Users } from "lucide-react";
 import dayjs from 'dayjs';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
@@ -30,6 +32,43 @@ const ConfirmMovingOrder = () => {
     const [selectedTimeIndex, setSelectedTimeIndex] = useState(null);
     const [isConfirmed, setIsConfirmed] = useState(false);
     const [showAuthModal, setShowAuthModal] = useState(false);
+
+    // Tour Refs & State
+    const refSurveyMethods = React.useRef(null);
+    const refAlert = React.useRef(null);
+    const refCalendar = React.useRef(null);
+    const refConfirm = React.useRef(null);
+    const [tourOpen, setTourOpen] = useState(false);
+
+    useEffect(() => {
+        if (!localStorage.getItem('hasSeenConfirmTour')) {
+            setTimeout(() => setTourOpen(true), 800);
+            localStorage.setItem('hasSeenConfirmTour', 'true');
+        }
+    }, []);
+
+    const tourSteps = [
+        {
+            title: 'Hình Thức Khảo Sát',
+            description: 'Mặc định HOMS sử dụng phương thức Khảo Sát Tự Động bằng Video Call để tiết kiệm thời gian cho bạn.',
+            target: () => refSurveyMethods.current,
+        },
+        {
+            title: 'Lưu Ý Quan Trọng Về Thời Gian',
+            description: 'Lịch khảo sát BẮT BUỘC phải TRƯỚC ngày chuyển nhà ít nhất 24 giờ. Hãy lưu ý chọn thời gian hợp lệ nhé!',
+            target: () => refAlert.current,
+        },
+        {
+            title: 'Khung Giờ Khảo Sát',
+            description: 'Chọn ngày và khung giờ bạn rảnh để chuyên viên HOMS có thể gọi Video Call đánh giá đồ đạc.',
+            target: () => refCalendar.current,
+        },
+        {
+            title: 'Đồng Ý & Xác Nhận',
+            description: 'Đánh dấu tick xác nhận và nhấn Gửi yêu cầu để chuyển sang bước thanh toán.',
+            target: () => refConfirm.current,
+        },
+    ];
 
     // Check if orderData exists
     useEffect(() => {
@@ -255,8 +294,16 @@ const ConfirmMovingOrder = () => {
 
             <Content>
                 {/* HERO */}
-                <section className="confirm-hero">
+                <section className="confirm-hero" style={{ position: 'relative' }}>
                     <h1>{orderData?.serviceName || 'Chuyển Nhà Trọn Gói'}</h1>
+                    <Button 
+                        type="primary" 
+                        icon={<QuestionCircleOutlined />} 
+                        onClick={() => setTourOpen(true)}
+                        style={{ position: 'absolute', right: 40, top: '50%', transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.2)', borderColor: 'white', color: 'white' }}
+                    >
+                        Hướng dẫn đặt lịch
+                    </Button>
                 </section>
 
                 {/* STEPS */}
@@ -283,7 +330,7 @@ const ConfirmMovingOrder = () => {
 
                     <Row gutter={40} className="survey-methods">
                         {/* ONLINE METHOD */}
-                        <Col md={12} xs={24}>
+                        <Col md={12} xs={24} ref={refSurveyMethods}>
                             <div
                                 className={`survey-card ${selectedMethod === 'online' ? 'active' : ''}`}
                                 onClick={() => setSelectedMethod('online')}
@@ -305,19 +352,20 @@ const ConfirmMovingOrder = () => {
                                 showIcon
                                 className="survey-info-alert"
                             />
-                            <Alert
-                                message="Quý khách lưu ý"
-                                description="Lịch khảo sát bắt buộc phải được thực hiện trước thời gian chuyển nhà ít nhất 1 ngày (24 giờ) để chúng tôi có thể chốt phương án vận chuyển và sắp xếp nhân sự, xe tải phù hợp nhất."
-                                type="warning"
-                                showIcon
-                                className="survey-warning-alert"
-                            />
+                            <div ref={refAlert}>
+                                <Alert
+                                    message="Quý khách lưu ý"
+                                    description="Lịch khảo sát bắt buộc phải được thực hiện trước thời gian chuyển nhà ít nhất 1 ngày (24 giờ) để chúng tôi có thể chốt phương án vận chuyển và sắp xếp nhân sự, xe tải phù hợp nhất."
+                                    type="warning"
+                                    showIcon
+                                    className="survey-warning-alert"
+                                />
+                            </div>
                         </Col>
                     </Row>
 
                     {/* CALENDAR AND TIME SLOTS - SHOWN BELOW CARDS */}
-                    {/* CALENDAR AND TIME SLOTS - SHOWN BELOW CARDS */}
-                    <div className="survey-details-container">
+                    <div className="survey-details-container" ref={refCalendar}>
                         <div className="survey-details">
                             <Calendar
                                 fullscreen={false}
@@ -376,33 +424,39 @@ const ConfirmMovingOrder = () => {
                         </div>
                     </div>
 
-                    <div className="confirmation-info">
-                        <Checkbox
-                            checked={isConfirmed}
-                            onChange={(e) => setIsConfirmed(e.target.checked)}
-                            disabled={!selectedMethod || !selectedDate || selectedTimeIndex === null}
-                        >
-                            Tôi xác nhận thông tin là chính xác
-                        </Checkbox>
-                    </div>
+                    <div ref={refConfirm}>
+                        <div className="confirmation-info">
+                            <Checkbox
+                                checked={isConfirmed}
+                                onChange={(e) => setIsConfirmed(e.target.checked)}
+                                disabled={!selectedMethod || !selectedDate || selectedTimeIndex === null}
+                            >
+                                Tôi xác nhận thông tin là chính xác
+                            </Checkbox>
+                        </div>
 
-                    {/* ACTION BUTTONS */}
-                    <div className="action-buttons">
-                        <Button size="large" className="cancel-button" onClick={handleCancel}>
-                            Hủy bỏ
-                        </Button>
-                        <Button
-                            type="primary"
-                            size="large"
-                            className={`confirm-button ${!isConfirmed || !selectedMethod || !selectedDate || selectedTimeIndex === null ? 'disabled' : ''}`}
-                            onClick={handleConfirm}
-                            disabled={!isConfirmed || !selectedMethod || !selectedDate || selectedTimeIndex === null}
-                        >
-                            Xác nhận & Gửi yêu cầu
-                        </Button>
+                        {/* ACTION BUTTONS */}
+                        <div className="action-buttons">
+                            <Button size="large" className="cancel-button" onClick={handleCancel}>
+                                Hủy bỏ
+                            </Button>
+                            <Button
+                                type="primary"
+                                size="large"
+                                className={`confirm-button ${!isConfirmed || !selectedMethod || !selectedDate || selectedTimeIndex === null ? 'disabled' : ''}`}
+                                onClick={handleConfirm}
+                                disabled={!isConfirmed || !selectedMethod || !selectedDate || selectedTimeIndex === null}
+                            >
+                                Xác nhận & Gửi yêu cầu
+                            </Button>
+                        </div>
                     </div>
                 </section>
             </Content>
+
+            <ConfigProvider locale={viVN}>
+                <Tour open={tourOpen} onClose={() => setTourOpen(false)} steps={tourSteps} />
+            </ConfigProvider>
 
             <AppFooter />
 

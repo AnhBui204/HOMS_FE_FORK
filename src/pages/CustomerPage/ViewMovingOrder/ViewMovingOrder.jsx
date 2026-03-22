@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
-import { Layout, Modal, message, Spin } from "antd";
+import React, { useState, useEffect, useRef } from "react";
+import { Layout, Modal, message, Spin, Tour, Button, ConfigProvider } from "antd";
+import viVN from 'antd/locale/vi_VN';
 import { useLocation } from "react-router-dom";
 import {
   EnvironmentOutlined,
@@ -19,6 +20,7 @@ import {
   CarOutlined,
   StarOutlined,         // [RATING] icon nút đánh giá
   StarFilled,           // [RATING] icon đã đánh giá
+  QuestionCircleOutlined,
 } from "@ant-design/icons";
 import AppHeader from "../../../components/header/header";
 import AppFooter from "../../../components/footer/footer";
@@ -126,6 +128,7 @@ const OrderCard = ({
   onViewIncident,
   onCancelQuote,
   onRateService,    // [RATING] handler mở modal đánh giá
+  tourRefs,         // Refs for Ant Design Tour
 }) => {
   const [expanded, setExpanded] = useState(false);
 
@@ -177,7 +180,7 @@ const OrderCard = ({
             </span>
           )}
         </div>
-        <div className="mo-card__head-right" style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+        <div className="mo-card__head-right" ref={tourRefs?.refStatus} style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
           {incidentSt && (
             <IncidentTag incident={incident} status={incidentSt} onClick={() => onViewIncident(incident)} />
           )}
@@ -194,7 +197,7 @@ const OrderCard = ({
       </div>
 
       {/* ── ROUTE UI ── */}
-      <div className="mo-card__route-container">
+      <div className="mo-card__route-container" ref={tourRefs?.refRoute}>
         <div className="mo-route-timeline">
           <div className="mo-route-point mo-route-point--pickup">
             <div className="mo-route-icon-box"><HomeOutlined /></div>
@@ -218,7 +221,7 @@ const OrderCard = ({
       </div>
 
       {/* ── META & PRICE ── */}
-      <div className="mo-card__meta">
+      <div className="mo-card__meta" ref={tourRefs?.refMeta}>
         <div className="mo-card__tags">
           {paymentSt ? (
             <StatusTag cls={paymentSt.cls} icon={<DollarCircleOutlined />}>{paymentSt.label}</StatusTag>
@@ -226,7 +229,7 @@ const OrderCard = ({
             <StatusTag cls="mo-tag--gray" icon={<DollarCircleOutlined />}>Chưa TT</StatusTag>
           )}
         </div>
-        <div className="mo-card__price-wrapper">
+        <div className="mo-card__price-wrapper" ref={tourRefs?.refPricing}>
           <div className="mo-card__price-box">
             <span className="mo-price-label">Tổng chi phí:</span>
             {hasPricing ? (
@@ -239,7 +242,7 @@ const OrderCard = ({
       </div>
 
       {/* ── ACTIONS ── */}
-      <div className="mo-card__actions">
+      <div className="mo-card__actions" ref={tourRefs?.refActions}>
         <div className="mo-card__btns-primary">
           {isQuoted && (
             <>
@@ -354,6 +357,115 @@ const ViewMovingOrder = () => {
   // [RATING] State cho modal đánh giá
   const [isRateModalVisible,         setIsRateModalVisible]         = useState(false);
   const [ticketToRate,               setTicketToRate]               = useState(null);
+
+  // [TOUR] State & Refs
+  const refStatus = useRef(null);
+  const refRoute = useRef(null);
+  const refMeta = useRef(null);
+  const refPricing = useRef(null);
+  const refActions = useRef(null);
+
+  // Modal Refs
+  const refModalSurvey = useRef(null);
+  const refModalResources = useRef(null);
+  const refModalPricing = useRef(null);
+
+  const [tourOpen, setTourOpen] = useState(false);
+
+  useEffect(() => {
+      if (!localStorage.getItem('hasSeenViewOrderTour')) {
+          setTimeout(() => setTourOpen(true), 800);
+          localStorage.setItem('hasSeenViewOrderTour', 'true');
+      }
+  }, []);
+
+  const tourSteps = [
+    {
+      title: 'Tình Trạng Đơn Hàng',
+      description: 'Cập nhật liên tục trạng thái hiện tại (Tạo mới, Đã khảo sát, Đang vận chuyển).',
+      target: () => refStatus.current,
+    },
+    {
+      title: 'Lộ Trình Vận Chuyển',
+      description: 'Cho biết địa điểm bắt đầu (Nơi đi) và đích đến (Nơi đến) chính xác của bạn.',
+      target: () => refRoute.current,
+    },
+    {
+      title: 'Chi Phí Dự Kiến (Pricing Meta)',
+      description: 'Hiển thị tóm tắt tổng chi phí dự kiến. Giá trị này được thuật toán tổng kết tự động.',
+      target: () => refPricing.current,
+    },
+    {
+      title: 'Xem Chi Tiết Báo Giá',
+      description: 'Nhấn vào nút "Chấp nhận báo giá" hoặc "Xem báo giá" để mở Bảng Phân Tích Cấu Thành Giá cực kỳ chi tiết của hệ thống.',
+      target: () => refActions.current,
+    },
+    {
+      title: 'Mục 1: Thông tin khảo sát địa hình',
+      description: 'Các yếu tố then chốt như Tổng Quãng Đường (km), Số lầu nhà, Có/Không Thang máy và Quãng đường khênh vác (nếu hẻm nhỏ xe không vào được) sẽ trực tiếp ảnh hưởng đến thuật toán tính giá.',
+      target: () => refModalSurvey.current,
+    },
+    {
+      title: 'Mục 2: Tài Nguyên & Nhân Dực',
+      description: 'Dựa vào bảng kê khai số lượng và loại đồ đạc bên dưới, hệ thống tự động suy ra loại Xe Tải phù hợp và số lượng Nhân viên khuân vác, đóng gói cần thiết.',
+      target: () => refModalResources.current,
+    },
+    {
+      title: 'Mục 3: Cấu Thành Giá (Phân Rã Toán Học)',
+      description: (
+        <div>
+          <p>Thuật toán lõi sẽ chia nhỏ chi phí một cách minh bạch, KHÔNG BAO GIỜ có chi phí ẩn:</p>
+          <ul style={{ paddingLeft: '20px', margin: '4px 0' }}>
+            <li><b>Phí xe tải:</b> Lấy quãng đường (km) nhân với Đơn giá của loại xe Tải được cấu hình sẵn.</li>
+            <li><b>Phí Nhân công & Khuân vác:</b> Là tập hợp của Phí khiêng bộ xa, Phí số tầng lầu bê vác, và khối lượng đồ đạc.</li>
+            <li><b>Phí dịch vụ:</b> Các phụ phí như bọc màng co, thùng carton, bảo hiểm hàng hóa, tháo ráp máy lạnh.</li>
+          </ul>
+        </div>
+      ),
+      target: () => refModalPricing.current,
+    },
+  ];
+
+  const mockTicketForTour = {
+    _id: "mock_123",
+    code: "MOK-99999999",
+    createdAt: new Date().toISOString(),
+    scheduledTime: new Date(Date.now() + 86400000).toISOString(),
+    status: "QUOTED", 
+    pickup: { address: "123 Đường Bắt Đầu, Phường 1, Quận 10" },
+    delivery: { address: "456 Đường Kết Thúc, Quận 7, TP.HCM" },
+    pricing: { totalPrice: 1850000 },
+    invoice: null,
+    isMock: true,
+  };
+
+  const mockSurveyForTour = {
+     distanceKm: 15, floors: 2, hasElevator: false, carryMeter: 50, needsPacking: true, needsAssembling: true,
+     insuranceRequired: true, declaredValue: 50000000, estimatedHours: 4, notes: "Ghi chú: Đồ đạc cồng kềnh, cần bọc lót kỹ.",
+     suggestedVehicle: "Xe tải 1.5 Tấn", suggestedStaffCount: 4, 
+     items: [
+       {name: "Sofa góc L", condition: "GOOD", actualWeight: 80},
+       {name: "Tủ lạnh 400L", condition: "FRAGILE"},
+       {name: "⚠️ Tủ kính trang trí", condition: "FRAGILE"}
+     ]
+  };
+
+  const mockPricingBreakdownForTour = {
+     totalPrice: 1850000, subtotal: 1850000, discountAmount: 0, tax: 0,
+     breakdown: { baseTransportFee: 300000, vehicleFee: 400000, laborFee: 600000, distanceSurcharge: 100000, floorFee: 250000, carryFee: 200000, serviceFee: 0 }
+  };
+
+  const handleTourChange = (currentStep) => {
+      // Steps 4, 5, 6 require the modal to be open
+      if (currentStep >= 4) {
+          setSelectedTicket(mockTicketForTour);
+          setSelectedSurvey(mockSurveyForTour);
+          setSelectedTicketPricing(mockPricingBreakdownForTour);
+          setIsSurveyModalVisible(true);
+      } else {
+          setIsSurveyModalVisible(false);
+      }
+  };
 
   /* ── handlers ── */
   const handleViewSurvey = async (ticket) => {
@@ -532,15 +644,25 @@ const ViewMovingOrder = () => {
   const filtered  = tickets.filter((t) => matchFilter(t, activeFilter));
   const countFor  = (key) => tickets.filter((t) => matchFilter(t, key)).length;
 
+  const displayTickets = tourOpen && tickets.length === 0 ? [mockTicketForTour] : (tourOpen ? [mockTicketForTour, ...filtered] : filtered);
+
   return (
     <Layout className="view-order-page">
       <AppHeader />
 
       <Content>
         {/* HERO */}
-        <section className="order-hero">
+        <section className="order-hero" style={{ position: 'relative' }}>
           <div className="overlay" />
           <h1>Thông Tin Chi Tiết</h1>
+          <Button 
+            type="primary" 
+            icon={<QuestionCircleOutlined />} 
+            onClick={() => setTourOpen(true)}
+            style={{ position: 'absolute', right: 40, top: '50%', transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.2)', borderColor: 'white', color: 'white', zIndex: 2 }}
+          >
+            Hướng dẫn xem đơn
+          </Button>
         </section>
 
         {/* CARD SECTION */}
@@ -569,25 +691,37 @@ const ViewMovingOrder = () => {
           {/* cards */}
           {loading ? (
             <div className="mo-loading"><Spin size="large" /></div>
-          ) : filtered.length === 0 ? (
+          ) : displayTickets.length === 0 ? (
             <div className="mo-empty"><p>Không có đơn hàng nào.</p></div>
           ) : (
             <div className="mo-card-list">
-              {filtered.map((ticket) => (
+              {displayTickets.map((ticket, idx) => (
                 <OrderCard
                   key={ticket._id}
                   ticket={ticket}
-                  onViewSurvey={handleViewSurvey}
-                  onReportIncident={handleReportIncident}
-                  onViewIncident={handleViewIncident}
-                  onDepositPayment={handleDepositPayment}
-                  onCancelQuote={handleCancelQuote}
-                  onRateService={handleRateService}  // [RATING]
+                  tourRefs={idx === 0 && tourOpen ? { refStatus, refRoute, refMeta, refPricing, refActions } : null}
+                  onViewSurvey={ticket.isMock ? () => message.info('Đây là dữ liệu mẫu.') : handleViewSurvey}
+                  onReportIncident={ticket.isMock ? () => message.info('Đây là dữ liệu mẫu.') : handleReportIncident}
+                  onViewIncident={ticket.isMock ? () => message.info('Đây là dữ liệu mẫu.') : handleViewIncident}
+                  onDepositPayment={ticket.isMock ? () => message.info('Đây là dữ liệu mẫu.') : handleDepositPayment}
+                  onCancelQuote={ticket.isMock ? () => message.info('Đây là dữ liệu mẫu.') : handleCancelQuote}
+                  onRateService={ticket.isMock ? () => message.info('Đây là dữ liệu mẫu.') : handleRateService}
                 />
               ))}
             </div>
           )}
         </section>
+
+        {/* Tour Component */}
+        <ConfigProvider locale={viVN}>
+          <Tour 
+            open={tourOpen} 
+            onChange={handleTourChange}
+            onClose={() => { setTourOpen(false); setIsSurveyModalVisible(false); }} 
+            steps={tourSteps} 
+            mask={{ color: 'rgba(0, 0, 0, 0.4)' }}
+          />
+        </ConfigProvider>
 
         {/* ── Modals ── */}
         <SurveyPricingModal
@@ -596,6 +730,7 @@ const ViewMovingOrder = () => {
           ticket={selectedTicket}
           survey={selectedSurvey}
           pricing={selectedTicketPricing}
+          tourRefs={{ refModalSurvey, refModalResources, refModalPricing }}
         />
         <SurveyTimeModal
           visible={isSurveyTimeModalVisible}
