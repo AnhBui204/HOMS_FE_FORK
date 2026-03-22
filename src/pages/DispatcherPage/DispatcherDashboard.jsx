@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useNavigate } from 'react';
-import { Row, Col, Card, Statistic, Table, Tag, Typography, Spin, message, Space, Button } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Row, Col, Card, Statistic, Table, Tag, Typography, Skeleton, Spin, message, Space, Button } from 'antd';
 import { 
   FileTextOutlined, 
   CheckCircleOutlined, 
