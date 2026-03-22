@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useNavigate } from 'react';
-import { Row, Col, Card, Statistic, Table, Tag, Typography, Spin, message, Space, Button } from 'antd';
+import { Row, Col, Card, Statistic, Table, Tag, Typography, Skeleton, message, Space, Button } from 'antd';
 import { 
   FileTextOutlined, 
   CheckCircleOutlined, 
@@ -145,43 +145,50 @@ const DispatcherDashboard = () => {
                 <Button icon={<ReloadOutlined />} onClick={fetchStats} loading={loading}>Làm mới</Button>
             </div>
 
-            <Spin spinning={loading}>
                 <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
                     <Col xs={24} sm={12} lg={6}>
                         <Card bordered={false} className="stat-card" style={{ borderLeft: '4px solid #1890ff' }}>
-                            <Statistic 
-                                title="Đơn hàng mới" 
-                                value={data.stats.tickets.CREATED} 
-                                prefix={<FileTextOutlined style={{ color: '#1890ff' }} />}
-                                suffix={`/ ${data.stats.tickets.total}`}
-                            />
+                            <Skeleton loading={loading} active paragraph={{ rows: 1 }} title={false}>
+                                <Statistic 
+                                    title="Đơn hàng mới" 
+                                    value={data.stats.tickets.CREATED} 
+                                    prefix={<FileTextOutlined style={{ color: '#1890ff' }} />}
+                                    suffix={`/ ${data.stats.tickets.total}`}
+                                />
+                            </Skeleton>
                         </Card>
                     </Col>
                     <Col xs={24} sm={12} lg={6}>
                         <Card bordered={false} className="stat-card" style={{ borderLeft: '4px solid #faad14' }}>
-                            <Statistic 
-                                title="Chờ khảo sát" 
-                                value={data.stats.tickets.WAITING_SURVEY} 
-                                prefix={<ClockCircleOutlined style={{ color: '#faad14' }} />}
-                            />
+                            <Skeleton loading={loading} active paragraph={{ rows: 1 }} title={false}>
+                                <Statistic 
+                                    title="Chờ khảo sát" 
+                                    value={data.stats.tickets.WAITING_SURVEY} 
+                                    prefix={<ClockCircleOutlined style={{ color: '#faad14' }} />}
+                                />
+                            </Skeleton>
                         </Card>
                     </Col>
                     <Col xs={24} sm={12} lg={6}>
                         <Card bordered={false} className="stat-card" style={{ borderLeft: '4px solid #722ed1' }}>
-                            <Statistic 
-                                title="Chờ điều phối" 
-                                value={data.stats.invoices.CONFIRMED} 
-                                prefix={<CarOutlined style={{ color: '#722ed1' }} />}
-                            />
+                            <Skeleton loading={loading} active paragraph={{ rows: 1 }} title={false}>
+                                <Statistic 
+                                    title="Chờ điều phối" 
+                                    value={data.stats.invoices.CONFIRMED} 
+                                    prefix={<CarOutlined style={{ color: '#722ed1' }} />}
+                                />
+                            </Skeleton>
                         </Card>
                     </Col>
                     <Col xs={24} sm={12} lg={6}>
                         <Card bordered={false} className="stat-card" style={{ borderLeft: '4px solid #52c41a' }}>
-                            <Statistic 
-                                title="Đã hoàn thành" 
-                                value={data.stats.invoices.COMPLETED} 
-                                prefix={<CheckCircleOutlined style={{ color: '#52c41a' }} />}
-                            />
+                            <Skeleton loading={loading} active paragraph={{ rows: 1 }} title={false}>
+                                <Statistic 
+                                    title="Đã hoàn thành" 
+                                    value={data.stats.invoices.COMPLETED} 
+                                    prefix={<CheckCircleOutlined style={{ color: '#52c41a' }} />}
+                                />
+                            </Skeleton>
                         </Card>
                     </Col>
                 </Row>
@@ -189,28 +196,31 @@ const DispatcherDashboard = () => {
                 <Row gutter={[16, 16]}>
                     <Col xs={24} lg={12}>
                         <Card title="Yêu cầu khảo sát mới nhất" bordered={false}>
-                            <Table 
-                                dataSource={data.recentTickets} 
-                                columns={ticketColumns} 
-                                pagination={false} 
-                                rowKey="_id" 
-                                size="small"
-                            />
+                            {loading ? <Skeleton active paragraph={{ rows: 5 }} title={false} /> : (
+                                <Table 
+                                    dataSource={data.recentTickets} 
+                                    columns={ticketColumns} 
+                                    pagination={false} 
+                                    rowKey="_id" 
+                                    size="small"
+                                />
+                            )}
                         </Card>
                     </Col>
                     <Col xs={24} lg={12}>
                         <Card title="Hóa đơn & Vận chuyển gần đây" bordered={false}>
-                            <Table 
-                                dataSource={data.recentInvoices} 
-                                columns={invoiceColumns} 
-                                pagination={false} 
-                                rowKey="_id" 
-                                size="small"
-                            />
+                            {loading ? <Skeleton active paragraph={{ rows: 5 }} title={false} /> : (
+                                <Table 
+                                    dataSource={data.recentInvoices} 
+                                    columns={invoiceColumns} 
+                                    pagination={false} 
+                                    rowKey="_id" 
+                                    size="small"
+                                />
+                            )}
                         </Card>
                     </Col>
                 </Row>
-            </Spin>
 
             <style jsx>{`
                 .stat-card {

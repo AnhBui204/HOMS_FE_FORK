@@ -1,40 +1,44 @@
-import React from "react";
+import React, { Suspense, lazy } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
+import { Spin } from "antd";
 
 // Import Layout vào đây
 import DispatcherLayout from "../../components/DispatcherLayout";
-import DispatcherDashboard from "../../pages/DispatcherPage/DispatcherDashboard";
-import SurveySchedulingScreen from "../../pages/DispatcherPage/SurveySchedulingPage";
-import SurveyCalendar from "../../pages/DispatcherPage/SurveyCalendar";
-import SurveyInput from "../../pages/DispatcherPage/SurveyInput";
-import ResourceAllocation from "../../pages/DispatcherPage/ResourceAllocation";
-import DispatchedOrders from "../../pages/DispatcherPage/DispatchedOrders";
 import ProtectedRoute from "../../components/ProtectRoute/ProtectedRoute";
-import VideoChat from "../../pages/VideoChat/VideoChat";
+
+const DispatcherDashboard = lazy(() => import("../../pages/DispatcherPage/DispatcherDashboard"));
+const SurveySchedulingScreen = lazy(() => import("../../pages/DispatcherPage/SurveySchedulingPage"));
+const SurveyCalendar = lazy(() => import("../../pages/DispatcherPage/SurveyCalendar"));
+const SurveyInput = lazy(() => import("../../pages/DispatcherPage/SurveyInput"));
+const ResourceAllocation = lazy(() => import("../../pages/DispatcherPage/ResourceAllocation"));
+const DispatchedOrders = lazy(() => import("../../pages/DispatcherPage/DispatchedOrders"));
+const VideoChat = lazy(() => import("../../pages/VideoChat/VideoChat"));
 
 const RoutesDispatcher = () => {
   return (
-    <Routes>
+    <Suspense fallback={<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}><Spin size="large" tip="Đang tải trang..." /></div>}>
+      <Routes>
 
-      <Route
-        element={
-          <ProtectedRoute allowedRoles={["dispatcher"]}>
-            <DispatcherLayout />
-          </ProtectedRoute>
-        }
-      >
+        <Route
+          element={
+            <ProtectedRoute allowedRoles={["dispatcher"]}>
+              <DispatcherLayout />
+            </ProtectedRoute>
+          }
+        >
 
-        <Route path="/" element={<Navigate to="dashboard" replace />} />
-        <Route path="dashboard" element={<DispatcherDashboard />} />
-        <Route path="surveys" element={<SurveySchedulingScreen />} />
-        <Route path="calendar" element={<SurveyCalendar />} />
-        <Route path="survey-input" element={<SurveyInput />} />
-        <Route path="allocation" element={<ResourceAllocation />} />
-        <Route path="assigned-orders" element={<DispatchedOrders />} />
-        <Route path="video-chat" element={<VideoChat />} />
+          <Route path="/" element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<DispatcherDashboard />} />
+          <Route path="surveys" element={<SurveySchedulingScreen />} />
+          <Route path="calendar" element={<SurveyCalendar />} />
+          <Route path="survey-input" element={<SurveyInput />} />
+          <Route path="allocation" element={<ResourceAllocation />} />
+          <Route path="assigned-orders" element={<DispatchedOrders />} />
+          <Route path="video-chat" element={<VideoChat />} />
 
-      </Route>
-    </Routes>
+        </Route>
+      </Routes>
+    </Suspense>
   );
 };
 
