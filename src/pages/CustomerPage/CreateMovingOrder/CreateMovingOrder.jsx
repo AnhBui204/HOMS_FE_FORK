@@ -41,13 +41,38 @@ const MovingInformationPage = () => {
     // Get serviceId from navigation state, default to 1 if not provided
     const serviceId = location.state?.serviceId || 1;
     const selectedService = serviceDetails[serviceId] || serviceDetails[1];
-    // Location state management
-    const [activeLocation, setActiveLocation] = useState('pickup'); // 'pickup' or 'dropoff'
-    const [pickupLocation, setPickupLocation] = useState(null);
-    const [dropoffLocation, setDropoffLocation] = useState(null);
-    const [pickupDescription, setPickupDescription] = useState('');
-    const [dropoffDescription, setDropoffDescription] = useState('');
-    const [movingDate, setMovingDate] = useState(null);
+    // Location state management with Session Storage caching
+    const [activeLocation, setActiveLocation] = useState(() => {
+        return sessionStorage.getItem('homs_activeLocation') || 'pickup';
+    });
+    const [pickupLocation, setPickupLocation] = useState(() => {
+        const cached = sessionStorage.getItem('homs_pickupLocation');
+        return cached ? JSON.parse(cached) : null;
+    });
+    const [dropoffLocation, setDropoffLocation] = useState(() => {
+        const cached = sessionStorage.getItem('homs_dropoffLocation');
+        return cached ? JSON.parse(cached) : null;
+    });
+    const [pickupDescription, setPickupDescription] = useState(() => {
+        return sessionStorage.getItem('homs_pickupDescription') || '';
+    });
+    const [dropoffDescription, setDropoffDescription] = useState(() => {
+        return sessionStorage.getItem('homs_dropoffDescription') || '';
+    });
+    const [movingDate, setMovingDate] = useState(() => {
+        const cached = sessionStorage.getItem('homs_movingDate');
+        return cached ? dayjs(cached) : null;
+    });
+
+    // Save state changes to Session Storage
+    React.useEffect(() => {
+        sessionStorage.setItem('homs_activeLocation', activeLocation);
+        sessionStorage.setItem('homs_pickupDescription', pickupDescription);
+        sessionStorage.setItem('homs_dropoffDescription', dropoffDescription);
+        if (pickupLocation) sessionStorage.setItem('homs_pickupLocation', JSON.stringify(pickupLocation));
+        if (dropoffLocation) sessionStorage.setItem('homs_dropoffLocation', JSON.stringify(dropoffLocation));
+        if (movingDate) sessionStorage.setItem('homs_movingDate', movingDate.toISOString());
+    }, [activeLocation, pickupLocation, dropoffLocation, pickupDescription, dropoffDescription, movingDate]);
 
     // Loading and error states
     const [isSubmitting, setIsSubmitting] = useState(false);
