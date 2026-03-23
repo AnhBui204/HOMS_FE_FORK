@@ -127,7 +127,12 @@ const RatingManagement = () => {
             setDetailVisible(true);
         } catch (err) {
             console.error('Failed to fetch invoice', err);
-            notification.error({ message: 'Không thể lấy thông tin invoice' });
+            // suppress noisy toast when id was invalid on client side
+            if (err && err.isClientValidation) {
+                console.warn('openInvoice: invalid invoice id, skipping toast');
+            } else {
+                notification.error({ message: 'Không thể lấy thông tin invoice' });
+            }
         } finally {
             setInvoiceLoading(false);
         }

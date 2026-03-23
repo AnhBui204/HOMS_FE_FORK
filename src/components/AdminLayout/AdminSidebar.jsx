@@ -49,7 +49,7 @@ const AdminSidebar = () => {
         {
             key: '/admin/invoices',
             icon: <FileTextOutlined />,
-            label: 'Invoice Management',
+            label: 'Invoice & Revenue',
         },
     ];
 
