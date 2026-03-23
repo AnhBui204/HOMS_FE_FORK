@@ -203,3 +203,58 @@
   background-color: #8ba888 !important;
   border-color: #8ba888 !important;
 }
+
+/* Logistics Compare Panel */
+.logistics-compare-panel {
+  background-color: #fffbe6;
+  border: 1px solid #ffe58f;
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 20px;
+}
+
+.logistics-compare-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.logistics-compare-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #ffffff;
+  border: 1px solid #f0e6c8;
+  margin-bottom: 8px;
+}
+
+.logistics-compare-row:last-child {
+  margin-bottom: 0;
+}
+
+.compare-field-label {
+  font-weight: 600;
+  color: #595959;
+  font-size: 13px;
+  min-width: 72px;
+}
+
+.compare-values {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.compare-tag {
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.compare-override {
+  margin-left: auto;
+  flex-shrink: 0;
+}

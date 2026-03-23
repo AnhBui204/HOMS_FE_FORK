@@ -34,13 +34,15 @@ export const analyzeMedia = async (file) => {
     };
   }));
 
-  const prompt = `You are an expert appraiser and moving logistics coordinator. 
-Examine the provided media carefully. 
+  const prompt = `You are an expert appraiser and moving logistics coordinator working in Vietnam.
+Examine the provided media carefully.
+IMPORTANT LANGUAGE REQUIREMENT: All text fields in your response (item "name", "notes", and the top-level "notes") MUST be written in Vietnamese. Do not use English for any descriptive text.
 Please provide your analysis strictly in the following JSON format without any markdown wrappers or codeblocks (just the raw JSON string):
 {
   "items": [
     {
-      "name": "String (Name of the discovered object)",
+      "name": "Chuỗi (Tên đồ vật được nhận diện, viết bằng tiếng Việt)",
+      "category": "String (Must be EXACTLY one of: 'primary' or 'secondary'. Use 'primary' for large/heavy furniture like beds, wardrobes, sofas, refrigerators, washing machines, TVs, motorcycles. Use 'secondary' for small, light, miscellaneous items like bowls, clothes, books, shoes, lamps, fans, small appliances, plants, mirrors, curtains, toys, toiletries, boxes.)",
       "actualWeight": "Number (Estimated weight in kg)",
       "actualDimensions": {
         "length": "Number (in cm)",
@@ -49,7 +51,7 @@ Please provide your analysis strictly in the following JSON format without any m
       },
       "actualVolume": "Number (Estimated volume in cubic meters)",
       "condition": "String (Must be EXACTLY one of: 'GOOD', 'DAMAGED', 'FRAGILE')",
-      "notes": "String (Any specific material or handling notes)"
+      "notes": "Chuỗi (Ghi chú về chất liệu hoặc cách xử lý, viết bằng tiếng Việt)"
     }
   ],
   "totalActualWeight": "Number (Total sum of weights)",
@@ -57,8 +59,9 @@ Please provide your analysis strictly in the following JSON format without any m
   "totalActualItems": "Number (Total count of items)",
   "suggestedVehicle": "String (Must be EXACTLY one of: '500KG', '1TON', '1.5TON', '2TON')",
   "suggestedStaffCount": "Number (Minimum 1)",
-  "notes": "String (General notes about the overall move or survey)"
+  "notes": "Chuỗi (Nhận xét chung về buổi chuyển nhà, viết bằng tiếng Việt)"
 }`;
+
 
   // We use the REST API to avoid any Browser/Node SDK mismatch issues entirely.
   const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;

@@ -174,13 +174,22 @@ const { Title, Text } = Typography;
 const { Option } = Select;
 const { TextArea } = Input;
 
+// Mirror backend _estimateHours logic
+const computeEstimatedHours = ({ distanceKm = 0, floors = 0, suggestedStaffCount = 2 }) => {
+  let hours = 2;
+  hours += distanceKm * 0.1;
+  hours += floors * 0.5;
+  if (suggestedStaffCount <= 2) hours += 1;
+  return Math.ceil(hours);
+};
+
 const SurveyInput = () => {
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [form] = Form.useForm();
-  
+
   // AI Vision analyzer modal state
   const [isAIVisionModalOpen, setIsAIVisionModalOpen] = useState(false);
 
@@ -375,6 +384,13 @@ const SurveyInput = () => {
           if (estimatedKm > 0) message.success(`Đã tự động tính toán khoảng cách: ${estimatedKm} km`);
         }
 
+        const staffCount = surveyData.suggestedStaffCount || 2;
+        const floors = surveyData.floors || 0;
+        const computedHours = computeEstimatedHours({
+          distanceKm: estimatedKm,
+          floors,
+          suggestedStaffCount: staffCount
+        });
         form.setFieldsValue({
           floors: surveyData.floors,
           carryMeter: surveyData.carryMeter,
@@ -385,8 +401,8 @@ const SurveyInput = () => {
           insuranceRequired: surveyData.insuranceRequired,
           declaredValue: surveyData.declaredValue,
           suggestedVehicle: surveyData.suggestedVehicle,
-          suggestedStaffCount: surveyData.suggestedStaffCount,
-          estimatedHours: surveyData.estimatedHours || 3,
+          suggestedStaffCount: staffCount,
+          estimatedHours: surveyData.estimatedHours || computedHours,
           notes: surveyData.notes,
           items: restoredPrimary.length > 0 ? restoredPrimary : [{}]
         });
@@ -401,12 +417,15 @@ const SurveyInput = () => {
 
         setTimeout(() => {
           // Giá trị mặc định cho form mới
+          const defaultStaff = 2;
+          const defaultHours = computeEstimatedHours({ distanceKm: estimatedKm, floors: 0, suggestedStaffCount: defaultStaff });
           form.setFieldsValue({
             floors: 0,
             carryMeter: 0,
             distanceKm: estimatedKm,
             items: [{}],
-            suggestedStaffCount: 2
+            suggestedStaffCount: defaultStaff,
+            estimatedHours: defaultHours
           });
         }, 50);
       }
@@ -420,11 +439,15 @@ const SurveyInput = () => {
       }
 
       setTimeout(() => {
+        const defaultStaff = 2;
+        const defaultHours = computeEstimatedHours({ distanceKm: estimatedKm, floors: 0, suggestedStaffCount: defaultStaff });
         form.setFieldsValue({
           floors: 0,
           carryMeter: 0,
           distanceKm: estimatedKm,
-          items: [{}]
+          items: [{}],
+          suggestedStaffCount: defaultStaff,
+          estimatedHours: defaultHours
         });
       }, 50);
     }
@@ -432,37 +455,90 @@ const SurveyInput = () => {
     setIsModalOpen(true);
   };
 
+  // ── Keyword → SECONDARY_CATALOG key matcher (Vietnamese) ──────────────────
+  const SECONDARY_KEY_RULES = [
+    { key: 'bowl',        patterns: ['chén', 'bát', 'đũa', 'ấm', 'nồi', 'bình', 'ca', 'cốc', 'tô'] },
+    { key: 'lamp',        patterns: ['đèn bàn', 'đèn ngủ', 'đèn', 'bóng đèn'] },
+    { key: 'clock',       patterns: ['đồng hồ'] },
+    { key: 'plant',       patterns: ['cây cảnh', 'chậu hoa', 'cây', 'hoa'] },
+    { key: 'fan',         patterns: ['quạt'] },
+    { key: 'book',        patterns: ['sách', 'tài liệu', 'vở', 'hồ sơ'] },
+    { key: 'mirror',      patterns: ['gương'] },
+    { key: 'curtain',     patterns: ['rèm', 'màn cửa'] },
+    { key: 'toy',         patterns: ['đồ chơi', 'thú bông', 'lego'] },
+    { key: 'shoes',       patterns: ['giày', 'dép', 'sandal'] },
+    { key: 'clothes',     patterns: ['quần áo', 'áo', 'quần', 'túi quần', 'thùng quần', 'chăn', 'gối', 'ga trải'] },
+    { key: 'kitchen',     patterns: ['dụng cụ bếp', 'chảo', 'xoong', 'dao', 'thớt', 'bếp gas'] },
+    { key: 'toiletry',    patterns: ['mỹ phẩm', 'đồ vệ sinh', 'dầu gội', 'kem', 'nước hoa', 'son'] },
+    { key: 'electronics', patterns: ['thiết bị điện nhỏ', 'máy sấy', 'máy pha cà phê', 'bàn là', 'máy xay', 'nồi cơm điện'] },
+    { key: 'box',         patterns: ['thùng carton', 'thùng hàng', 'thùng', 'hộp'] },
+  ];
+
+  const matchSecondaryKey = (name = '') => {
+    const lower = name.toLowerCase();
+    for (const { key, patterns } of SECONDARY_KEY_RULES) {
+      if (patterns.some(p => lower.includes(p))) return key;
+    }
+    return null;
+  };
+
   // 2A. Xử lý sau khi AI phân tích xong
   const handleAIAnalyzeComplete = (result) => {
-    // Append new items to existing form items
     const currentItems = form.getFieldsValue().items || [];
-    const validItems = currentItems.filter(item => item && item.name); // Filter out empty placeholder lines
-    
-    // Convert AI outputs to form inputs
-    const mappedAIExtractedItems = result.items?.map(aiItem => ({
-      name: `🤖 [AI] ${aiItem.name}`,
-      actualWeight: aiItem.actualWeight || 0,
-      actualVolume: aiItem.actualVolume || 0,
-      condition: aiItem.condition || 'GOOD',
-      notes: aiItem.notes || ''
-    })) || [];
+    const validItems = currentItems.filter(item => item && item.name);
 
-    // Safely update form while preserving current details
-    form.setFieldsValue({ 
-      items: [...validItems, ...mappedAIExtractedItems],
+    const primaryAIItems = [];
+    const newSecondaryItems = [];
+    const unmatchedSecondaryItems = [];
+
+    (result.items || []).forEach(aiItem => {
+      if (aiItem.category === 'secondary') {
+        const catalogKey = matchSecondaryKey(aiItem.name);
+        if (catalogKey) {
+          const alreadyIn = [...secondaryItems, ...newSecondaryItems].some(s => s.key === catalogKey);
+          if (!alreadyIn) newSecondaryItems.push({ key: catalogKey, tierIdx: 0 });
+        } else {
+          unmatchedSecondaryItems.push({
+            name: `🤖 [AI-Phụ] ${aiItem.name}`,
+            actualWeight: aiItem.actualWeight || 0,
+            actualVolume: aiItem.actualVolume || 0,
+            condition: aiItem.condition || 'GOOD',
+            notes: aiItem.notes || ''
+          });
+        }
+      } else {
+        primaryAIItems.push({
+          name: `🤖 [AI] ${aiItem.name}`,
+          actualWeight: aiItem.actualWeight || 0,
+          actualVolume: aiItem.actualVolume || 0,
+          condition: aiItem.condition || 'GOOD',
+          notes: aiItem.notes || ''
+        });
+      }
     });
 
-    // Update Suggested Resources if provided by AI and currently empty/default
-    if (result.suggestedVehicle) {
-      form.setFieldsValue({ suggestedVehicle: result.suggestedVehicle });
+    form.setFieldsValue({ items: [...validItems, ...primaryAIItems, ...unmatchedSecondaryItems] });
+    if (newSecondaryItems.length > 0) setSecondaryItems(prev => [...prev, ...newSecondaryItems]);
+
+    // Only override logistics if dispatcher explicitly toggled them in the modal
+    const overrides = {};
+    if (result._applyVehicle && result.suggestedVehicle) {
+      overrides.suggestedVehicle = result.suggestedVehicle;
     }
-    if (result.suggestedStaffCount) {
-      form.setFieldsValue({ suggestedStaffCount: result.suggestedStaffCount });
+    if (result._applyStaff && result.suggestedStaffCount) {
+      overrides.suggestedStaffCount = result.suggestedStaffCount;
+    }
+    if (Object.keys(overrides).length > 0) {
+      form.setFieldsValue(overrides);
     }
 
+    const overrideNote = Object.keys(overrides).length > 0
+      ? ' Điều phối viên đã chọn áp dụng gợi ý logistics từ AI.'
+      : ' — kiểm tra lại trong mục Đề xuất Tài nguyên.';
+
     message.warning({
-      content: 'Đã áp dụng kết quả từ AI! Vui lòng kiểm điểm lại số lượng thực tế do đo lường tự động qua hình ảnh có thể có sai số so với thực tế.',
-      duration: 6,
+      content: `Đã áp dụng danh sách đồ đạc từ AI!${overrideNote} Vui lòng kiểm tra lại số liệu thực tế.`,
+      duration: 7,
     });
   };
 
@@ -521,7 +597,7 @@ const SurveyInput = () => {
         distanceKm: values.distanceKm,
 
         // Ước tính số giờ (dùng cho tính phí nhân công)
-        estimatedHours: values.estimatedHours || 3,
+        estimatedHours: values.estimatedHours || computeEstimatedHours({ distanceKm: values.distanceKm, floors: values.floors, suggestedStaffCount: values.suggestedStaffCount }),
 
         // Các trường tùy chọn
         carryMeter: values.carryMeter || 0,
@@ -662,7 +738,7 @@ const SurveyInput = () => {
       <Modal
         open={isModalOpen}
         onCancel={() => setIsModalOpen(false)}
-        width={1100}
+        width={1500}
         footer={null}
         centered
         forceRender
@@ -673,7 +749,7 @@ const SurveyInput = () => {
           <Row gutter={24}>
 
             {/* --- CỘT TRÁI: THÔNG TIN CHI TIẾT --- */}
-            <Col span={10}>
+            <Col span={7}>
               {/* 1. Địa hình & Vận chuyển */}
               <Card size="small" title="1. Địa hình & Vận chuyển" className="dispatcher-card mb-3" bordered={false}>
                 <Row gutter={12}>
@@ -772,7 +848,6 @@ const SurveyInput = () => {
                   label="Ước tính số giờ thực hiện"
                   tooltip="Dùng để tính phí nhân công: nhân viên × giờ/giờ × số giờ"
                   rules={[{ required: true, message: 'Nhập số giờ ước tính' }]}
-                  initialValue={3}
                 >
                   <InputNumber min={1} max={24} step={0.5} style={{ width: '100%' }} addonAfter="giờ" />
                 </Form.Item>
@@ -784,20 +859,20 @@ const SurveyInput = () => {
             </Col>
 
             {/* --- CỘT PHẢI: DANH MỤC ĐỒ ĐẠC (2 PHẦN) --- */}
-            <Col span={14} style={{ borderLeft: '1px solid #f0f0f0', paddingLeft: '20px', maxHeight: '72vh', overflowY: 'auto' }}>
+            <Col span={17} style={{ borderLeft: '1px solid #f0f0f0', paddingLeft: '20px', maxHeight: '72vh', overflowY: 'auto' }}>
 
               {/* ── 4A. ĐỒ ĐẠC CHÍNH ──────────────────────────────────── */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
                 <Title level={5} style={{ margin: 0 }}>4A. Đồ đạc chính</Title>
                 <Space>
                   {!isReadOnly && (
-                    <Button 
-                      type="primary" 
+                    <Button
+                      type="primary"
                       className="survey-primary-btn"
-                      icon={<RobotOutlined />} 
+                      icon={<RobotOutlined />}
                       onClick={() => setIsAIVisionModalOpen(true)}
                     >
-                      AI Bóc Tách Media
+                      AI phân tính hình ảnh & video
                     </Button>
                   )}
                   <Tag color="blue">Chọn từ danh mục hoặc tự nhập</Tag>
@@ -861,10 +936,10 @@ const SurveyInput = () => {
               <div className="survey-items-container">
                 <Row gutter={6} style={{ fontWeight: 'bold', fontSize: 12, marginBottom: 6, color: '#555' }}>
                   <Col span={9}>Tên đồ đạc</Col>
-                  <Col span={4} style={{ textAlign: 'center' }}>ÐT (m³)</Col>
-                  <Col span={4} style={{ textAlign: 'center' }}>KL (kg)</Col>
-                  <Col span={5} style={{ textAlign: 'center' }}>Tình trạng</Col>
-                  <Col span={2} />
+                  <Col span={4} style={{ textAlign: 'center' }}>Thể tích (m³)</Col>
+                  <Col span={4} style={{ textAlign: 'center' }}>Khối lượng (kg)</Col>
+                  <Col span={4} style={{ textAlign: 'center' }}>Tình trạng</Col>
+                  <Col span={3} style={{ textAlign: 'center' }}>Thao tác</Col>
                 </Row>
                 <div className="survey-items-scrollable">
                   <Form.List name="items">
@@ -1068,10 +1143,12 @@ const SurveyInput = () => {
         </Form>
       </Modal>
 
-      <AIVisionAnalyzer 
-        open={isAIVisionModalOpen} 
-        onCancel={() => setIsAIVisionModalOpen(false)} 
-        onAnalyzeComplete={handleAIAnalyzeComplete} 
+      <AIVisionAnalyzer
+        open={isAIVisionModalOpen}
+        onCancel={() => setIsAIVisionModalOpen(false)}
+        onAnalyzeComplete={handleAIAnalyzeComplete}
+        currentVehicle={form.getFieldValue('suggestedVehicle')}
+        currentStaffCount={form.getFieldValue('suggestedStaffCount')}
       />
     </Card>
   );
