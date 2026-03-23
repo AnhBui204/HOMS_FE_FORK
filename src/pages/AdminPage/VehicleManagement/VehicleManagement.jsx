@@ -40,7 +40,7 @@ const VehicleManagement = () => {
             setVehicles(list);
         } catch (err) {
             console.error('Failed to load vehicles', err);
-            notification.error({ message: 'Failed to load vehicles.' });
+            notification.error({ message: 'Không tải được danh sách phương tiện.' });
         } finally {
             setLoading(false);
         }
@@ -106,24 +106,24 @@ const VehicleManagement = () => {
             // License plate uniqueness check
             const exists = vehicles.some(v => v.licensePlate && v.licensePlate.toLowerCase() === (values.licensePlate || '').toLowerCase());
             if (exists) {
-                form.setFields([{ name: 'licensePlate', errors: ['License plate number already exists.'] }]);
+                form.setFields([{ name: 'licensePlate', errors: ['Biển số đã tồn tại.'] }]);
                 return;
             }
 
-            if (!values.type) {
-                form.setFields([{ name: 'type', errors: ['Please select vehicle type.'] }]);
+                if (!values.type) {
+                form.setFields([{ name: 'type', errors: ['Vui lòng chọn loại xe.'] }]);
                 return;
             }
 
             if (Number(values.capacity) <= 0) {
-                form.setFields([{ name: 'capacity', errors: ['Capacity must be a positive number.'] }]);
+                form.setFields([{ name: 'capacity', errors: ['Sức chứa phải là số dương.'] }]);
                 return;
             }
 
             // Call backend to create
             setCreateModalVisible(false);
             setLoading(true);
-            try {
+                try {
                 const payload = {
                     licensePlate: values.licensePlate || '',
                     type: values.type,
@@ -131,12 +131,12 @@ const VehicleManagement = () => {
                 };
                 await adminVehicleService.createVehicle(payload);
                 await loadData();
-                notification.success({ message: 'Vehicle created successfully.' });
-            } catch (err) {
+                notification.success({ message: 'Tạo phương tiện thành công.' });
+                    } catch (err) {
                 if (err.response && err.response.data && err.response.data.message) {
                     notification.error({ message: err.response.data.message });
                 } else {
-                    notification.error({ message: 'Failed to create vehicle.' });
+                    notification.error({ message: 'Tạo phương tiện thất bại.' });
                 }
             } finally {
                 setLoading(false);
@@ -154,17 +154,17 @@ const VehicleManagement = () => {
             // uniqueness excluding current edit
             const exists = vehicles.some(v => v.licensePlate && v.id !== editVehicle.id && v.licensePlate.toLowerCase() === (values.licensePlate || '').toLowerCase());
             if (exists) {
-                form.setFields([{ name: 'licensePlate', errors: ['License plate number already exists.'] }]);
+                form.setFields([{ name: 'licensePlate', errors: ['Biển số đã tồn tại.'] }]);
                 return;
             }
 
             if (!values.type) {
-                form.setFields([{ name: 'type', errors: ['Please select vehicle type.'] }]);
+                form.setFields([{ name: 'type', errors: ['Vui lòng chọn loại xe.'] }]);
                 return;
             }
 
-            if (Number(values.capacity) <= 0) {
-                form.setFields([{ name: 'capacity', errors: ['Capacity must be a positive number.'] }]);
+                if (Number(values.capacity) <= 0) {
+                form.setFields([{ name: 'capacity', errors: ['Sức chứa phải là số dương.'] }]);
                 return;
             }
 
@@ -181,18 +181,18 @@ const VehicleManagement = () => {
                 };
                 await adminVehicleService.updateVehicle(editVehicle.vehicleId, payload);
                 await loadData();
-                notification.success({ message: 'Vehicle updated successfully.' });
-            } catch (err) {
+                notification.success({ message: 'Cập nhật phương tiện thành công.' });
+                    } catch (err) {
                 if (err.response && err.response.data && err.response.data.message) {
                     notification.error({ message: err.response.data.message });
                 } else {
-                    notification.error({ message: 'Failed to update vehicle.' });
+                    notification.error({ message: 'Cập nhật phương tiện thất bại.' });
                 }
             } finally {
                 setLoading(false);
             }
 
-        } catch (err) {
+            } catch (err) {
             // handled by form
         }
     };
@@ -200,11 +200,11 @@ const VehicleManagement = () => {
     const confirmDelete = (vehicle) => {
         setVehicleToDelete(vehicle);
         Modal.confirm({
-            title: 'Delete Vehicle',
-            content: `Are you sure you want to delete ${vehicle.vehicleId} (${vehicle.licensePlate})? This action is permanent.`,
-            okText: 'Delete',
+            title: 'Xóa phương tiện',
+            content: `Bạn có chắc chắn muốn xóa ${vehicle.vehicleId} (${vehicle.licensePlate})? Hành động này không thể hoàn tác.`,
+            okText: 'Xóa',
             okType: 'danger',
-            cancelText: 'Cancel',
+            cancelText: 'Hủy',
             onOk: () => handleDelete(vehicle),
         });
     };
@@ -212,19 +212,19 @@ const VehicleManagement = () => {
     const handleDelete = async (vehicle) => {
         // check assigned business rule
         if (vehicle.assigned) {
-            notification.error({ message: 'Vehicle is currently assigned and cannot be deleted.' });
+            notification.error({ message: 'Phương tiện đang được phân công, không thể xóa.' });
             return;
         }
         setIsDeleting(true);
         try {
             await adminVehicleService.deleteVehicle(vehicle.vehicleId);
             await loadData();
-            notification.success({ message: 'Vehicle deleted successfully.' });
+            notification.success({ message: 'Xóa phương tiện thành công.' });
         } catch (err) {
             if (err.response && err.response.data && err.response.data.message) {
                 notification.error({ message: err.response.data.message });
             } else {
-                notification.error({ message: 'Failed to delete vehicle.' });
+                notification.error({ message: 'Xóa phương tiện thất bại.' });
             }
         } finally {
             setIsDeleting(false);
@@ -233,25 +233,25 @@ const VehicleManagement = () => {
 
     const columns = [
         {
-            title: 'Vehicle ID',
+            title: 'Mã phương tiện',
             dataIndex: 'vehicleId',
             key: 'vehicleId',
             render: text => <strong>{text}</strong>
         },
         {
-            title: 'Type',
+            title: 'Loại',
             dataIndex: 'type',
             key: 'type',
             render: (t) => TYPE_LABELS[t] || t,
         },
         {
-            title: 'Capacity',
+            title: 'Sức chứa',
             dataIndex: 'capacity',
             key: 'capacity',
             render: (c) => c ? `${c} kg` : '-',
         },
         {
-            title: 'Status',
+            title: 'Trạng thái',
             dataIndex: 'status',
             key: 'status',
             render: (status) => {
@@ -266,30 +266,30 @@ const VehicleManagement = () => {
             }
         },
         {
-            title: 'License Plate',
+            title: 'Biển số',
             dataIndex: 'licensePlate',
             key: 'licensePlate',
         },
         {
-            title: 'Current Driver',
+            title: 'Tài xế hiện tại',
             dataIndex: 'currentDriver',
             key: 'currentDriver',
         },
         {
-            title: 'Last Maintenance',
+            title: 'Bảo trì gần nhất',
             dataIndex: 'lastMaintenance',
             key: 'lastMaintenance',
             render: (d) => d ? String(d) : '-',
         },
         {
-            title: 'Action',
+            title: 'Hành động',
             key: 'action',
             render: (_, record) => (
                 <Space size="middle">
-                    <Tooltip title="Edit">
+                    <Tooltip title="Chỉnh sửa">
                         <Button type="text" icon={<EditOutlined />} style={{ color: '#1890ff' }} onClick={() => openEditModal(record)} />
                     </Tooltip>
-                    <Tooltip title="Delete">
+                    <Tooltip title="Xóa">
                         <Button type="text" danger icon={<DeleteOutlined />} onClick={() => confirmDelete(record)} />
                     </Tooltip>
                 </Space>
@@ -301,8 +301,8 @@ const VehicleManagement = () => {
         <div style={{ textAlign: 'left', backgroundColor: '#fafafa', minHeight: '100vh', padding: '0 0 24px 0' }}>
             {/* Header: title + actions */}
             <div style={{ padding: '16px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
-                <div>
-                    <Title level={3} style={{ margin: 0 }}>Vehicle Fleet Information</Title>
+                    <div>
+                    <Title level={3} style={{ margin: 0 }}>Thông tin đội xe</Title>
                 </div>
 
                 <div style={{ display: 'flex', gap: 12 }}>
@@ -310,7 +310,7 @@ const VehicleManagement = () => {
                         icon={<DownloadOutlined />}
                         style={{ borderRadius: 6 }}
                     >
-                        Export
+                        Xuất
                     </Button>
                     <Button
                         type="primary"
@@ -318,7 +318,7 @@ const VehicleManagement = () => {
                         style={{ backgroundColor: '#44624A', borderColor: '#44624A', borderRadius: 6, fontWeight: '600' }}
                         onClick={openCreateModal}
                     >
-                        Add Vehicle
+                        Thêm phương tiện
                     </Button>
                 </div>
             </div>
@@ -329,7 +329,7 @@ const VehicleManagement = () => {
                     <Row gutter={[16, 16]} style={{ marginBottom: 16, alignItems: 'center' }}>
                         <Col xs={24} sm={12} md={8} lg={6}>
                             <Input
-                                placeholder="Search by Vehicle ID or License Plate"
+                                placeholder="Tìm theo mã phương tiện hoặc biển số"
                                 prefix={<SearchOutlined />}
                                 value={searchText}
                                 onChange={(e) => setSearchText(e.target.value)}
@@ -338,7 +338,7 @@ const VehicleManagement = () => {
                         </Col>
                         <Col xs={24} sm={12} md={6} lg={5}>
                             <Select
-                                placeholder="Filter by Status"
+                                placeholder="Lọc theo trạng thái"
                                 style={{ width: '100%' }}
                                 allowClear
                                 value={filterStatus}
@@ -351,8 +351,8 @@ const VehicleManagement = () => {
                         </Col>
                         <Col xs={24} sm={24} md={10} lg={13} style={{ textAlign: 'right' }}>
                             <Space>
-                                <Button onClick={resetFilters}>Reset</Button>
-                                <Button type="primary" style={{ backgroundColor: '#1f4f29', borderRadius: '6px' }} onClick={handleSearch}>Search</Button>
+                                <Button onClick={resetFilters}>Đặt lại</Button>
+                                <Button type="primary" style={{ backgroundColor: '#1f4f29', borderRadius: '6px' }} onClick={handleSearch}>Tìm</Button>
                             </Space>
                         </Col>
                     </Row>
@@ -368,7 +368,7 @@ const VehicleManagement = () => {
                         />
                     ) : (
                         <div style={{ padding: 48 }}>
-                            <Empty description="No vehicles found" />
+                            <Empty description="Không tìm thấy phương tiện" />
                         </div>
                     )}
                 </Card>
@@ -376,67 +376,67 @@ const VehicleManagement = () => {
 
             {/* Create Vehicle Modal */}
             <Modal
-                title="Create Vehicle"
+                title="Tạo phương tiện"
                 visible={isCreateModalVisible}
                 onOk={handleCreate}
                 onCancel={() => setCreateModalVisible(false)}
                 okButtonProps={{ style: { backgroundColor: '#44624A', borderColor: '#44624A', color: '#fff' } }}
             >
                 <Form form={form} layout="vertical">
-                    <Form.Item label="Vehicle Type" name="type" rules={[{ required: true, message: 'Please select vehicle type' }]}>
-                        <Select placeholder="Select type">
+                    <Form.Item label="Loại xe" name="type" rules={[{ required: true, message: 'Vui lòng chọn loại xe' }]}>
+                        <Select placeholder="Chọn loại">
                             {Object.entries(TYPE_LABELS).map(([val, label]) => (
                                 <Option key={val} value={val}>{label}</Option>
                             ))}
                         </Select>
                     </Form.Item>
-                    <Form.Item label="License Plate" name="licensePlate" rules={[{ required: true, message: 'Please input license plate' }]}>
-                        <Input placeholder="e.g., 51F-123.45" />
+                    <Form.Item label="Biển số" name="licensePlate" rules={[{ required: true, message: 'Vui lòng nhập biển số' }]}>
+                        <Input placeholder="ví dụ: 51F-123.45" />
                     </Form.Item>
-                    <Form.Item label="Capacity (kg)" name="capacity" rules={[{ required: true, message: 'Please input capacity' }]}>
+                    <Form.Item label="Sức chứa (kg)" name="capacity" rules={[{ required: true, message: 'Vui lòng nhập sức chứa' }]}>
                         <InputNumber style={{ width: '100%' }} min={1} />
                     </Form.Item>
                     {/* Current driver is assigned by Dispatcher; admin does not input this */}
-                    <Form.Item label="Last Maintenance" name="lastMaintenance">
+                    <Form.Item label="Bảo trì gần nhất" name="lastMaintenance">
                         <DatePicker style={{ width: '100%' }} />
                     </Form.Item>
                 </Form>
-                <div style={{ marginTop: 8, fontSize: 12, color: '#666' }}>Only administrators may create new vehicles. License plates must be unique.</div>
+                <div style={{ marginTop: 8, fontSize: 12, color: '#666' }}>Chỉ quản trị viên mới có thể tạo phương tiện mới. Biển số phải là duy nhất.</div>
             </Modal>
 
             {/* Edit Vehicle Modal */}
             <Modal
-                title="Edit Vehicle"
+                title="Chỉnh sửa phương tiện"
                 visible={isEditModalVisible}
                 onOk={handleUpdate}
                 onCancel={() => setEditModalVisible(false)}
                 okButtonProps={{ style: { backgroundColor: '#44624A', borderColor: '#44624A', color: '#fff' } }}
             >
                 <Form form={form} layout="vertical">
-                    <Form.Item label="Vehicle ID" name="vehicleId">
-                        <Input disabled />
-                    </Form.Item>
-                    <Form.Item label="Vehicle Type" name="type" rules={[{ required: true, message: 'Please select vehicle type' }]}>
-                        <Select placeholder="Select type">
+                        <Form.Item label="Mã phương tiện" name="vehicleId">
+                            <Input disabled />
+                        </Form.Item>
+                        <Form.Item label="Loại xe" name="type" rules={[{ required: true, message: 'Vui lòng chọn loại xe' }]}>
+                            <Select placeholder="Chọn loại">
                             {Object.entries(TYPE_LABELS).map(([val, label]) => (
                                 <Option key={val} value={val}>{label}</Option>
                             ))}
                         </Select>
                     </Form.Item>
-                    <Form.Item label="License Plate" name="licensePlate" rules={[{ required: true, message: 'Please input license plate' }]}>
-                        <Input placeholder="e.g., 51F-123.45" />
-                    </Form.Item>
-                    <Form.Item label="Capacity (kg)" name="capacity" rules={[{ required: true, message: 'Please input capacity' }]}>
-                        <InputNumber style={{ width: '100%' }} min={1} />
-                    </Form.Item>
-                    <Form.Item label="Status" name="status">
+                        <Form.Item label="Biển số" name="licensePlate" rules={[{ required: true, message: 'Vui lòng nhập biển số' }]}>
+                            <Input placeholder="ví dụ: 51F-123.45" />
+                        </Form.Item>
+                        <Form.Item label="Sức chứa (kg)" name="capacity" rules={[{ required: true, message: 'Vui lòng nhập sức chứa' }]}>
+                            <InputNumber style={{ width: '100%' }} min={1} />
+                        </Form.Item>
+                        <Form.Item label="Trạng thái" name="status">
                         <Select>
                             {Object.entries(STATUS_LABELS).map(([val, label]) => (
                                 <Option key={val} value={val}>{label}</Option>
                             ))}
                         </Select>
                     </Form.Item>
-                    <Form.Item label="Assigned" name="assigned" valuePropName="checked">
+                        <Form.Item label="Đã phân công" name="assigned" valuePropName="checked">
                         <Switch />
                     </Form.Item>
                     {/* Current driver is assigned by Dispatcher; admin does not input this */}

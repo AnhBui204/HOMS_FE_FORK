@@ -298,7 +298,7 @@ const RatingManagement = () => {
             sorter: (a, b) => a.rating - b.rating
         },
         {
-            title: 'Quick Tags',
+            title: 'Nhãn nhanh',
             width: 160,
             align: 'center',
             dataIndex: 'quickTags',
@@ -354,13 +354,13 @@ const RatingManagement = () => {
         }
 
         const rows = filteredRatings.map(r => ({
-            Invoice: r.invoice?.code || r.invoice?._id || '',
-            Customer: r.customer?.fullName || r.customer?.email || '',
-            Email: r.customer?.email || '',
-            Rating: r.rating ?? '',
-            Tags: (r.quickTags || []).join(', '),
-            Comment: r.comment || '',
-            CreatedAt: r.createdAt ? new Date(r.createdAt).toLocaleString() : ''
+            'Hóa đơn': r.invoice?.code || r.invoice?._id || '',
+            'Khách hàng': r.customer?.fullName || r.customer?.email || '',
+            'Email': r.customer?.email || '',
+            'Đánh giá': r.rating ?? '',
+            'Nhãn': (r.quickTags || []).join(', '),
+            'Bình luận': r.comment || '',
+            'Ngày tạo': r.createdAt ? new Date(r.createdAt).toLocaleString() : ''
         }));
 
         try {

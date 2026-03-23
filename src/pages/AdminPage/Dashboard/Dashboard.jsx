@@ -5,10 +5,13 @@ import { DollarCircleOutlined, CreditCardOutlined, ShopOutlined, TeamOutlined } 
 import adminStatisticService from '../../../services/adminStatisticService';
 import dayjs from 'dayjs';
 
+import { useNavigate } from 'react-router-dom';
 const { Title, Text } = Typography;
+const primaryColor = '#44624A';
 
 const Dashboard = () => {
     const [loading, setLoading] = useState(true);
+    const navigate = useNavigate();
     const [overview, setOverview] = useState({ totalIncome: 0, perDayIncome: 0, perDayOrders: 0, customers: 0 });
         const [revenueData, setRevenueData] = useState([]);
         const [orderData, setOrderData] = useState([]);
@@ -370,13 +373,18 @@ const Dashboard = () => {
 
     return (
         <div style={{ textAlign: 'left' }}>
+            <style>{`
+                .btn-outline-primary { background: #fff !important; color: ${primaryColor} !important; border: 1px solid ${primaryColor} !important; padding: 6px 12px; border-radius: 6px; box-shadow: none !important; transition: all .18s ease; }
+                .btn-outline-primary:hover, .btn-outline-primary:focus { background: ${primaryColor} !important; color: #fff !important; border-color: ${primaryColor} !important; box-shadow: none !important; }
+                .btn-outline-primary:focus { outline: none !important; box-shadow: 0 0 0 4px rgba(68,98,74,0.12) !important; }
+            `}</style>
             {/* Top Stat Cards (compact Figma style) */}
             <Row gutter={[12, 12]}>
                 <Col xs={24} sm={12} md={6}>
                     <Card style={{ borderRadius: 12, background: '#f3faf3', border: 'none', padding: 12, minHeight: 84 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <div>
-                                <div style={{ color: '#8c978e', fontSize: 13, marginBottom: 6 }}>Total Income</div>
+                                <div style={{ color: '#8c978e', fontSize: 13, marginBottom: 6 }}>Tổng doanh thu</div>
                                 <div style={{ fontSize: 18, fontWeight: 700 }}>{formatCurrency(overview.totalIncome)}</div>
                             </div>
                             <div style={{ width: 56, height: 56, borderRadius: 12, background: '#e6f3e8', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -389,7 +397,7 @@ const Dashboard = () => {
                     <Card style={{ borderRadius: 12, background: '#f7fff6', border: 'none', padding: 12, minHeight: 84 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <div>
-                                <div style={{ color: '#8c978e', fontSize: 13, marginBottom: 6 }}>Per Day Income</div>
+                                <div style={{ color: '#8c978e', fontSize: 13, marginBottom: 6 }}>Doanh thu/ngày</div>
                                 <div style={{ fontSize: 18, fontWeight: 700 }}>{formatCurrency(overview.perDayIncome)}</div>
                             </div>
                             <div style={{ width: 56, height: 56, borderRadius: 12, background: '#e6f3e8', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -402,7 +410,7 @@ const Dashboard = () => {
                     <Card style={{ borderRadius: 12, background: '#fffaf5', border: 'none', padding: 12, minHeight: 84 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <div>
-                                <div style={{ color: '#8c978e', fontSize: 13, marginBottom: 6 }}>Per Day Orders</div>
+                                <div style={{ color: '#8c978e', fontSize: 13, marginBottom: 6 }}>Số đơn/ngày</div>
                                 <div style={{ fontSize: 18, fontWeight: 700 }}>{formatNumberFixed(overview.perDayOrders, 2)}</div>
                             </div>
                             <div style={{ width: 56, height: 56, borderRadius: 12, background: '#f3efe6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -415,7 +423,7 @@ const Dashboard = () => {
                     <Card style={{ borderRadius: 12, background: '#f6f7ff', border: 'none', padding: 12, minHeight: 84 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <div>
-                                <div style={{ color: '#8c978e', fontSize: 13, marginBottom: 6 }}>Customers</div>
+                                <div style={{ color: '#8c978e', fontSize: 13, marginBottom: 6 }}>Khách hàng</div>
                                 <div style={{ fontSize: 18, fontWeight: 700 }}>{Number(overview.customers || 0).toLocaleString()}</div>
                             </div>
                             <div style={{ width: 56, height: 56, borderRadius: 12, background: '#eef2f9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -429,20 +437,20 @@ const Dashboard = () => {
             {/* Middle Section: Chart and Top Cars */}
             <Row gutter={[16, 16]} style={{ marginTop: '24px' }}>
                 <Col xs={24} lg={18}>
-                    <Card title="Total Income" style={{ borderRadius: '12px' }} extra={
+                    <Card title="Tổng doanh thu" style={{ borderRadius: '12px' }} extra={
                         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                             <Select value={period} onChange={(v) => setPeriod(v)} style={{ width: 140 }}>
-                                <Select.Option value="monthly">Monthly</Select.Option>
-                                <Select.Option value="weekly">Weekly</Select.Option>
-                                <Select.Option value="daily">Daily</Select.Option>
+                                <Select.Option value="monthly">Hàng tháng</Select.Option>
+                                <Select.Option value="weekly">Hàng tuần</Select.Option>
+                                <Select.Option value="daily">Hàng ngày</Select.Option>
                             </Select>
                             {period === 'weekly' && (
                                 <Space>
-                                    <Button size="small" onClick={handlePrevWeek}>Prev</Button>
+                                    <Button size="small" onClick={handlePrevWeek}>Trước</Button>
                                     <div style={{ minWidth: 140, textAlign: 'center', fontSize: 12 }}>
                                         {weekStart.format('DD MMM')} - {weekStart.add(6, 'day').format('DD MMM')}
                                     </div>
-                                    <Button size="small" onClick={handleNextWeek}>Next</Button>
+                                    <Button size="small" onClick={handleNextWeek}>Tiếp</Button>
                                 </Space>
                             )}
                         </div>
@@ -467,8 +475,8 @@ const Dashboard = () => {
                     </Card>
                 </Col>
                 <Col xs={24} lg={6}>
-                    <Card title="Top Moving Car" style={{ borderRadius: '12px', height: '100%' }}>
-                        <Text type="secondary">The top choosen vehicle</Text>
+                    <Card title="Xe được sử dụng nhiều" style={{ borderRadius: '12px', height: '100%' }}>
+                        <Text type="secondary">Xe được chọn nhiều nhất</Text>
                         <div style={{ marginTop: '20px' }}>
                             {topMovingCars.map(car => (
                                 <div key={car.id} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', alignItems: 'center' }}>
@@ -486,16 +494,16 @@ const Dashboard = () => {
             <Row gutter={[16, 16]} style={{ marginTop: '24px' }}>
                 <Col xs={24} lg={10}>
                     <Card
-                        title="Number of Tickets"
+                        title="Số yêu cầu"
                         style={{ borderRadius: '12px' }}
                         extra={
                                     <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                                         <Space>
-                                            <Button size="small" onClick={handleOrdersPrevWeek}>Prev</Button>
+                                            <Button size="small" onClick={handleOrdersPrevWeek}>Trước</Button>
                                             <div style={{ minWidth: 140, textAlign: 'center', fontSize: 12 }}>
                                                 {ordersWeekStart.format('DD MMM')} - {ordersWeekStart.add(6, 'day').format('DD MMM')}
                                             </div>
-                                            <Button size="small" onClick={handleOrdersNextWeek}>Next</Button>
+                                            <Button size="small" onClick={handleOrdersNextWeek}>Tiếp</Button>
                                         </Space>
                                     </div>
                         }
@@ -514,9 +522,9 @@ const Dashboard = () => {
                 </Col>
                 <Col xs={24} lg={14}>
                     <Card
-                        title="Last Invoice"
+                        title="Hóa đơn gần đây"
                         style={{ borderRadius: '12px' }}
-                        extra={<a href="#!">View All</a>}
+                        extra={<Button size="small" className="btn-outline-primary" onClick={() => navigate('/admin/invoices')}>Xem tất cả</Button>}
                     >
                         <Table
                             columns={orderColumns}

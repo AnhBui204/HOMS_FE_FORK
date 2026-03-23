@@ -66,30 +66,30 @@ const ContractManagement = () => {
 
     const contractColumns = [
         {
-            title: 'Code',
+            title: 'Mã',
             dataIndex: 'contractCode',
             key: 'contractCode',
             render: text => <strong>{text}</strong>
         },
         {
-            title: 'Customer',
+            title: 'Khách hàng',
             dataIndex: ['customerId', 'fullName'],
             key: 'customer',
         },
         {
-            title: 'Effective Date',
+            title: 'Ngày hiệu lực',
             dataIndex: 'effectiveDate',
             key: 'effectiveDate',
             render: date => dayjs(date).format('DD/MM/YYYY')
         },
         {
-            title: 'Total Value',
+            title: 'Tổng giá trị',
             dataIndex: 'totalValue',
             key: 'totalValue',
             render: val => <span style={{ color: '#1890ff' }}>{formatCurrency(val)}</span>
         },
         {
-            title: 'Status',
+            title: 'Trạng thái',
             dataIndex: 'status',
             key: 'status',
             render: status => {
@@ -98,12 +98,12 @@ const ContractManagement = () => {
             }
         },
         {
-            title: 'Action',
+            title: 'Hành động',
             key: 'action',
             render: (_, record) => (
                 <Space>
                     <Button type="primary" size="small" icon={<EyeOutlined />} onClick={() => viewContractDetails(record)}>
-                        View
+                        Xem
                     </Button>
                     <Button size="small" icon={<DownloadOutlined />} />
                 </Space>
@@ -112,20 +112,20 @@ const ContractManagement = () => {
     ];
 
     const templateColumns = [
-        { title: 'Title', dataIndex: 'title', key: 'title' },
-        { title: 'Version', dataIndex: 'version', key: 'version', render: v => <Tag color="blue">v{v}</Tag> },
+        { title: 'Tiêu đề', dataIndex: 'title', key: 'title' },
+        { title: 'Phiên bản', dataIndex: 'version', key: 'version', render: v => <Tag color="blue">v{v}</Tag> },
         {
-            title: 'Status',
+            title: 'Trạng thái',
             dataIndex: 'isActive',
             key: 'isActive',
-            render: isActive => <Tag color={isActive ? 'success' : 'default'}>{isActive ? 'Active' : 'Archived'}</Tag>
+            render: isActive => <Tag color={isActive ? 'success' : 'default'}>{isActive ? 'Hoạt động' : 'Lưu trữ'}</Tag>
         },
-        { title: 'Created At', dataIndex: 'createdAt', key: 'createdAt', render: d => dayjs(d).format('DD/MM/YYYY') },
+        { title: 'Ngày tạo', dataIndex: 'createdAt', key: 'createdAt', render: d => dayjs(d).format('DD/MM/YYYY') },
         {
-            title: 'Action',
+            title: 'Hành động',
             key: 'action',
             render: () => (
-                <Button type="link" size="small">Edit Template</Button>
+                <Button type="link" size="small">Chỉnh sửa mẫu</Button>
             )
         }
     ];
@@ -133,12 +133,12 @@ const ContractManagement = () => {
     const items = [
         {
             key: '1',
-            label: 'Generated Contracts',
+            label: 'Hợp đồng',
             children: <Table columns={contractColumns} dataSource={contracts} rowKey="_id" loading={loading} />
         },
         {
             key: '2',
-            label: 'Contract Templates',
+            label: 'Mẫu hợp đồng',
             children: <Table columns={templateColumns} dataSource={templates} rowKey="_id" loading={loading} />
         }
     ];
@@ -146,7 +146,7 @@ const ContractManagement = () => {
     return (
         <div style={{ textAlign: 'left' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-                <Title level={4} style={{ margin: 0 }}>Contracts Management</Title>
+                <Title level={4} style={{ margin: 0 }}>Quản lý hợp đồng</Title>
             </div>
 
             <Card style={{ borderRadius: '12px', border: 'none' }}>
@@ -154,7 +154,7 @@ const ContractManagement = () => {
             </Card>
 
             <Drawer
-                title={`Contract Details: ${selectedContract?.contractCode || ''}`}
+                title={`Chi tiết hợp đồng: ${selectedContract?.contractCode || ''}`}
                 placement="right"
                 width={600}
                 onClose={() => setDrawerVisible(false)}
@@ -162,37 +162,37 @@ const ContractManagement = () => {
             >
                 {selectedContract && (
                     <div>
-                        <Descriptions title="General Info" bordered column={1}>
-                            <Descriptions.Item label="Customer">{selectedContract.customerId?.fullName || 'N/A'}</Descriptions.Item>
-                            <Descriptions.Item label="Effective Date">{dayjs(selectedContract.effectiveDate).format('DD/MM/YYYY')}</Descriptions.Item>
-                            <Descriptions.Item label="End Date">{selectedContract.endDate ? dayjs(selectedContract.endDate).format('DD/MM/YYYY') : 'N/A'}</Descriptions.Item>
-                            <Descriptions.Item label="Total Value">{formatCurrency(selectedContract.totalValue)}</Descriptions.Item>
-                            <Descriptions.Item label="Status">
+                        <Descriptions title="Thông tin chung" bordered column={1}>
+                            <Descriptions.Item label="Khách hàng">{selectedContract.customerId?.fullName || 'N/A'}</Descriptions.Item>
+                            <Descriptions.Item label="Ngày hiệu lực">{dayjs(selectedContract.effectiveDate).format('DD/MM/YYYY')}</Descriptions.Item>
+                            <Descriptions.Item label="Ngày kết thúc">{selectedContract.endDate ? dayjs(selectedContract.endDate).format('DD/MM/YYYY') : 'N/A'}</Descriptions.Item>
+                            <Descriptions.Item label="Tổng giá trị">{formatCurrency(selectedContract.totalValue)}</Descriptions.Item>
+                            <Descriptions.Item label="Trạng thái">
                                 <Tag color={selectedContract.status === 'Signed' ? 'success' : 'warning'}>{selectedContract.status}</Tag>
                             </Descriptions.Item>
                         </Descriptions>
 
                         <Divider />
 
-                        <Title level={5}>Signatures</Title>
+                        <Title level={5}>Chữ ký</Title>
                         <div style={{ display: 'flex', gap: '20px', marginTop: 16 }}>
-                            <Card size="small" title="Customer Signature" style={{ width: '50%' }}>
+                            <Card size="small" title="Chữ ký khách hàng" style={{ width: '50%' }}>
                                 {selectedContract.signatureCustomer ? (
                                     <div style={{ color: 'green', display: 'flex', alignItems: 'center', gap: 8 }}>
-                                        <CheckCircleOutlined /> Signed
+                                        <CheckCircleOutlined /> Đã ký
                                     </div>
                                     // In a real app we'd render the image: <img src={selectedContract.signatureCustomer} alt="signature" style={{width: '100%'}}/>
                                 ) : (
-                                    <Text type="secondary">Pending</Text>
+                                    <Text type="secondary">Đang chờ</Text>
                                 )}
                             </Card>
-                            <Card size="small" title="Admin Signature" style={{ width: '50%' }}>
+                            <Card size="small" title="Chữ ký quản trị" style={{ width: '50%' }}>
                                 {selectedContract.signatureAdmin ? (
                                     <div style={{ color: 'green', display: 'flex', alignItems: 'center', gap: 8 }}>
-                                        <CheckCircleOutlined /> Signed
+                                        <CheckCircleOutlined /> Đã ký
                                     </div>
                                 ) : (
-                                    <Button type="primary" size="small" style={{ width: '100%' }}>Sign Now</Button>
+                                    <Button type="primary" size="small" style={{ width: '100%' }}>Ký ngay</Button>
                                 )}
                             </Card>
                         </div>

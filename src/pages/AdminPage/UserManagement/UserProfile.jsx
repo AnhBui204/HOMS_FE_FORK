@@ -52,14 +52,14 @@ const UserProfile = () => {
         fetchUser();
     }, [id]);
 
-    if (!user && loading) return <div style={{ padding: 24 }}>Loading...</div>;
-    if (!user) return <div style={{ padding: 24 }}>User not found.</div>;
+    if (!user && loading) return <div style={{ padding: 24 }}>Đang tải...</div>;
+    if (!user) return <div style={{ padding: 24 }}>Không tìm thấy người dùng.</div>;
 
     return (
         <div style={{ textAlign: 'left', maxWidth: '800px', margin: '0 auto' }}>
             <div style={{ marginBottom: 24 }}>
-                <Text type="secondary" style={{ fontSize: 16 }}>{user.role} profile</Text>
-                <Title level={3} style={{ margin: 0 }}>{user.role === 'staff' ? 'Delivery Staff' : user.role === 'customer' ? 'Customer Profile' : user.role}</Title>
+                <Text type="secondary" style={{ fontSize: 16 }}>Hồ sơ</Text>
+                <Title level={3} style={{ margin: 0 }}>{user.role === 'staff' ? 'Nhân viên vận chuyển' : user.role === 'customer' ? 'Khách hàng' : user.role}</Title>
             </div>
 
             <Card style={{ borderRadius: '16px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
@@ -67,40 +67,40 @@ const UserProfile = () => {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '24px', marginBottom: '40px' }}>
                     <Avatar size={80} icon={<UserOutlined />} src={user.avatar} style={{ backgroundColor: PRIMARY_GREEN }} />
                     <div>
-                        <Title level={4} style={{ margin: 0 }}>{user.fullName || 'No Name'}</Title>
-                        <Text type="secondary">{user.email || 'No Email'}</Text>
+                        <Title level={4} style={{ margin: 0 }}>{user.fullName || 'Không có tên'}</Title>
+                        <Text type="secondary">{user.email || 'Không có email'}</Text>
                     </div>
                 </div>
 
                 {/* Form Data Display */}
                 <Row gutter={[32, 24]}>
                     <Col span={12}>
-                        <div style={{ marginBottom: 8 }}><Text strong>Full Name</Text></div>
+                        <div style={{ marginBottom: 8 }}><Text strong>Họ và tên</Text></div>
                         <Input value={user.fullName} readOnly style={{ backgroundColor: '#f9f9f9', border: 'none', borderRadius: '8px' }} size="large" />
                     </Col>
                     <Col span={12}>
-                        <div style={{ marginBottom: 8 }}><Text strong>Nick Name</Text></div>
-                        <Input placeholder="Your Nick Name" readOnly style={{ backgroundColor: '#f9f9f9', border: 'none', borderRadius: '8px' }} size="large" />
+                        <div style={{ marginBottom: 8 }}><Text strong>Tên gọi</Text></div>
+                        <Input placeholder="Tên gọi" readOnly style={{ backgroundColor: '#f9f9f9', border: 'none', borderRadius: '8px' }} size="large" />
                     </Col>
 
                     <Col span={12}>
-                        <div style={{ marginBottom: 8 }}><Text strong>Gender</Text></div>
+                        <div style={{ marginBottom: 8 }}><Text strong>Giới tính</Text></div>
                         <Select value={user.gender || 'Select'} style={{ width: '100%' }} size="large" disabled>
-                            <Option value="Male">Male</Option>
-                            <Option value="Female">Female</Option>
+                            <Option value="Male">Nam</Option>
+                            <Option value="Female">Nữ</Option>
                         </Select>
                     </Col>
                     <Col span={12}>
-                        <div style={{ marginBottom: 8 }}><Text strong>Country</Text></div>
+                        <div style={{ marginBottom: 8 }}><Text strong>Quốc gia</Text></div>
                         <Input placeholder="Vietnam" value={user.country || 'Vietnam'} readOnly style={{ backgroundColor: '#f9f9f9', border: 'none', borderRadius: '8px' }} size="large" />
                     </Col>
 
                     <Col span={12}>
-                        <div style={{ marginBottom: 8 }}><Text strong>Phone Number</Text></div>
+                        <div style={{ marginBottom: 8 }}><Text strong>Số điện thoại</Text></div>
                         <Input value={user.phoneNumber || ''} readOnly style={{ backgroundColor: '#f9f9f9', border: 'none', borderRadius: '8px' }} size="large" />
                     </Col>
                     <Col span={12}>
-                        <div style={{ marginBottom: 8 }}><Text strong>Time Zone</Text></div>
+                        <div style={{ marginBottom: 8 }}><Text strong>Múi giờ</Text></div>
                         <Input placeholder="GMT+7" value={user.timeZone || 'GMT+7'} readOnly style={{ backgroundColor: '#f9f9f9', border: 'none', borderRadius: '8px' }} size="large" />
                     </Col>
                 </Row>
@@ -112,7 +112,7 @@ const UserProfile = () => {
                         style={{ backgroundColor: PRIMARY_GREEN, color: '#333', border: 'none', borderRadius: '24px', fontWeight: 'bold', padding: '0 32px' }}
                         onClick={() => navigate('/admin/users')}
                     >
-                        Back
+                        Quay lại
                     </Button>
                 </div>
             </Card>

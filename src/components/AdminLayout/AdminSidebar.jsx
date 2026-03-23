@@ -14,42 +14,42 @@ const AdminSidebar = () => {
         {
             key: '/admin/dashboard',
             icon: <AreaChartOutlined />,
-            label: 'Dashboard',
+            label: 'Bảng điều khiển',
         },
         {
             key: '/admin/users',
             icon: <UserOutlined />,
-            label: 'User Management',
+            label: 'Quản lý người dùng',
         },
         {
             key: '/admin/vehicles',
             icon: <CarOutlined />,
-            label: 'Vehicle Management',
+            label: 'Quản lý phương tiện',
         },
         {
             key: '/admin/reports',
             icon: <AreaChartOutlined />,
-            label: 'Incident Reports',
+            label: 'Báo cáo sự cố',
         },
         {
             key: '/admin/contracts',
             icon: <FileDoneOutlined />,
-            label: 'Contract Management',
+            label: 'Quản lý hợp đồng',
         },
         {
             key: '/admin/pricing',
             icon: <DollarOutlined />,
-            label: 'Pricing & Compensation',
+            label: 'Giá & Bồi thường',
         },
         {
             key: '/admin/ratings',
             icon: <StarOutlined />, 
-            label: 'Ratings',
+            label: 'Đánh giá & Phản hồi',
         },
         {
             key: '/admin/invoices',
             icon: <FileTextOutlined />,
-            label: 'Invoice & Revenue',
+            label: 'Hóa đơn & Doanh thu',
         },
     ];
 
