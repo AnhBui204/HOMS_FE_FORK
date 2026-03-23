@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Typography, Tag, message, Button, Modal, Space } from 'antd';
+import { Table, Typography, Tag, message, Button, Modal, Space, Empty } from 'antd';
 import { EyeOutlined } from '@ant-design/icons';
 import api from '../../services/api';
 
@@ -123,6 +123,20 @@ const DispatchedOrders = () => {
                 rowKey="_id"
                 loading={loading}
                 pagination={{ pageSize: 10 }}
+                locale={{
+                    emptyText: (
+                        <Empty
+                            image={Empty.PRESENTED_IMAGE_ILLUSTRATION}
+                            description={
+                                <span>
+                                    Hiện không có đơn hàng nào
+                                </span>
+                            }
+                        >
+                            <Button type="primary" onClick={fetchInvoices}>Tải lại dữ liệu</Button>
+                        </Empty>
+                    )
+                }}
             />
 
             <Modal

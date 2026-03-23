@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
     Table, Button, Input, Select, Modal, Row, Col,
-    Upload, message, Descriptions, Image, Typography, Tooltip,
+    Upload, message, Descriptions, Image, Typography, Tooltip, Empty
 } from 'antd';
 import {
     SearchOutlined, FilterOutlined, ExportOutlined,
@@ -14,23 +14,23 @@ const { Option } = Select;
 
 /* ── MOCK DATA ──────────────────────────────────────── */
 const INITIAL_ORDERS = [
-    { id: 'HOMS-2024-05165', detail: 'Sofa',              location: 'Hai Chau',     customer: 'Quang',        phone: '+84 0951223119', service: 'Full House Relocation', status: 'CONFIRMED',  pickup: '05 Ha Huy Tap, Hai Chau',    dropoff: '12 Le Duan, Ngu Hanh Son',   date: '2024-12-28', items: [] },
-    { id: 'HOMS-2024-00126', detail: 'TV',                location: 'Thanh Khe',    customer: 'Phi',          phone: '+84 0951223119', service: 'Truck Rental',          status: 'CONFIRMED',  pickup: '14 Tran Cao Van, Thanh Khe', dropoff: '33 Nguyen Trai, Hai Chau',   date: '2024-12-29', items: [] },
-    { id: 'HOMS-2024-00163', detail: 'TV',                location: 'Son Tra',      customer: 'Phuc',         phone: '+84 0951223119', service: 'Truck Rental',          status: 'CANCELLED',  pickup: '08 Vo Nguyen Giap, Son Tra', dropoff: '67 Thanh Thuy, Lien Chieu',  date: '2024-12-30', items: [] },
-    { id: 'HOMS-2024-07723', detail: 'TV',                location: 'Hai Chau',     customer: 'Viet Anh',     phone: '+84 0198592832', service: 'Full House Relocation', status: 'CANCELLED',  pickup: '21 Phan Chau Trinh, Hai Chau',dropoff: '09 Lien Chieu, Lien Chieu',  date: '2024-12-31', items: [] },
-    { id: 'HOMS-2024-41612', detail: 'Refrigerator',      location: 'Thanh Khe',    customer: 'Hieu',         phone: '+84 037752812',  service: 'Full House Relocation', status: 'CONFIRMED',  pickup: '03 Dien Bien Phu, Thanh Khe',dropoff: '55 Ngo Quyen, Son Tra',      date: '2025-01-02', items: [] },
-    { id: 'HOMS-2024-52717', detail: 'Washing Machine',   location: 'Cam Le',       customer: 'Hoang',        phone: '+84 0777252392', service: 'Truck Rental',          status: 'CONFIRMED',  pickup: '11 Ton Duc Thang, Cam Le',   dropoff: '02 Hoang Dieu, Hai Chau',    date: '2025-01-03', items: [] },
-    { id: 'HOMS-2024-51235', detail: 'Air Conditioner',   location: 'Thanh Khe',    customer: 'Vy',           phone: '+84 0862858292', service: 'Full House Relocation', status: 'IN_TRANSIT', pickup: '07 Thac Gian, Thanh Khe',    dropoff: '15 Hung Vuong, Hai Chau',    date: '2025-01-04', items: [] },
-    { id: 'HOMS-2024-00123', detail: 'TV',                location: 'Ngu Hanh Son', customer: 'Phuong Anh',   phone: '+84 0374859123', service: 'Truck Rental',          status: 'CONFIRMED',  pickup: '05 Ha Huy Tap, Ngu Hanh Son', dropoff: '18 Dong Da, Hai Chau',      date: '2025-01-05', items: [] },
-    { id: 'HOMS-2024-00421', detail: 'Vacuum Cleaner',    location: 'Thanh Khe',    customer: 'Quan Pham',    phone: '+84 0931552293', service: 'Full House Relocation', status: 'CONFIRMED',  pickup: '22 Le Loi, Thanh Khe',       dropoff: '11 Bach Dang, Hai Chau',     date: '2025-01-06', items: [] },
-    { id: 'HOMS-2024-01542', detail: 'Bed',               location: 'Lien Chieu',   customer: 'Khanh Luan',   phone: '+84 0951247439', service: 'Truck Rental',          status: 'CANCELLED',  pickup: '34 Ton That Tung, Lien Chieu',dropoff: '88 Nguyen Van Linh, Cam Le', date: '2025-01-07', items: [] },
+    { id: 'HOMS-2024-05165', detail: 'Sofa', location: 'Hai Chau', customer: 'Quang', phone: '+84 0951223119', service: 'Full House Relocation', status: 'CONFIRMED', pickup: '05 Ha Huy Tap, Hai Chau', dropoff: '12 Le Duan, Ngu Hanh Son', date: '2024-12-28', items: [] },
+    { id: 'HOMS-2024-00126', detail: 'TV', location: 'Thanh Khe', customer: 'Phi', phone: '+84 0951223119', service: 'Truck Rental', status: 'CONFIRMED', pickup: '14 Tran Cao Van, Thanh Khe', dropoff: '33 Nguyen Trai, Hai Chau', date: '2024-12-29', items: [] },
+    { id: 'HOMS-2024-00163', detail: 'TV', location: 'Son Tra', customer: 'Phuc', phone: '+84 0951223119', service: 'Truck Rental', status: 'CANCELLED', pickup: '08 Vo Nguyen Giap, Son Tra', dropoff: '67 Thanh Thuy, Lien Chieu', date: '2024-12-30', items: [] },
+    { id: 'HOMS-2024-07723', detail: 'TV', location: 'Hai Chau', customer: 'Viet Anh', phone: '+84 0198592832', service: 'Full House Relocation', status: 'CANCELLED', pickup: '21 Phan Chau Trinh, Hai Chau', dropoff: '09 Lien Chieu, Lien Chieu', date: '2024-12-31', items: [] },
+    { id: 'HOMS-2024-41612', detail: 'Refrigerator', location: 'Thanh Khe', customer: 'Hieu', phone: '+84 037752812', service: 'Full House Relocation', status: 'CONFIRMED', pickup: '03 Dien Bien Phu, Thanh Khe', dropoff: '55 Ngo Quyen, Son Tra', date: '2025-01-02', items: [] },
+    { id: 'HOMS-2024-52717', detail: 'Washing Machine', location: 'Cam Le', customer: 'Hoang', phone: '+84 0777252392', service: 'Truck Rental', status: 'CONFIRMED', pickup: '11 Ton Duc Thang, Cam Le', dropoff: '02 Hoang Dieu, Hai Chau', date: '2025-01-03', items: [] },
+    { id: 'HOMS-2024-51235', detail: 'Air Conditioner', location: 'Thanh Khe', customer: 'Vy', phone: '+84 0862858292', service: 'Full House Relocation', status: 'IN_TRANSIT', pickup: '07 Thac Gian, Thanh Khe', dropoff: '15 Hung Vuong, Hai Chau', date: '2025-01-04', items: [] },
+    { id: 'HOMS-2024-00123', detail: 'TV', location: 'Ngu Hanh Son', customer: 'Phuong Anh', phone: '+84 0374859123', service: 'Truck Rental', status: 'CONFIRMED', pickup: '05 Ha Huy Tap, Ngu Hanh Son', dropoff: '18 Dong Da, Hai Chau', date: '2025-01-05', items: [] },
+    { id: 'HOMS-2024-00421', detail: 'Vacuum Cleaner', location: 'Thanh Khe', customer: 'Quan Pham', phone: '+84 0931552293', service: 'Full House Relocation', status: 'CONFIRMED', pickup: '22 Le Loi, Thanh Khe', dropoff: '11 Bach Dang, Hai Chau', date: '2025-01-06', items: [] },
+    { id: 'HOMS-2024-01542', detail: 'Bed', location: 'Lien Chieu', customer: 'Khanh Luan', phone: '+84 0951247439', service: 'Truck Rental', status: 'CANCELLED', pickup: '34 Ton That Tung, Lien Chieu', dropoff: '88 Nguyen Van Linh, Cam Le', date: '2025-01-07', items: [] },
 ];
 
 const STATUS_CONFIG = {
-    CONFIRMED:  { color: '#52c41a', bg: '#f6ffed', label: 'Confirmed'  },
-    CANCELLED:  { color: '#ff4d4f', bg: '#fff2f0', label: 'Canceled'   },
+    CONFIRMED: { color: '#52c41a', bg: '#f6ffed', label: 'Confirmed' },
+    CANCELLED: { color: '#ff4d4f', bg: '#fff2f0', label: 'Canceled' },
     IN_TRANSIT: { color: '#faad14', bg: '#fffbe6', label: 'In Transit' },
-    COMPLETED:  { color: '#1890ff', bg: '#e6f7ff', label: 'Completed'  },
+    COMPLETED: { color: '#1890ff', bg: '#e6f7ff', label: 'Completed' },
 };
 
 /* ── STATUS BADGE ───────────────────────────────────── */
@@ -203,6 +203,18 @@ const StaffOrderList = () => {
                 dataSource={filtered}
                 rowKey="id"
                 className="orders-table"
+                locale={{
+                    emptyText: (
+                        <Empty
+                            image={Empty.PRESENTED_IMAGE_ILLUSTRATION}
+                            description="Không tìm thấy đơn hàng nào phù hợp"
+                        >
+                            <Button type="primary" onClick={() => { setSearchText(''); setStatusFilter(null); }}>
+                                Xóa bộ lọc
+                            </Button>
+                        </Empty>
+                    )
+                }}
                 onRow={(record) => ({
                     onClick: () => openDetail(record),
                     style: { cursor: 'pointer' },
@@ -318,7 +330,12 @@ const StaffOrderList = () => {
 
                             {/* Item list */}
                             {editItems.length === 0 ? (
-                                <div className="empty-items">No items added yet</div>
+                                <div style={{ padding: '20px 0' }}>
+                                    <Empty
+                                        image={Empty.PRESENTED_IMAGE_SIMPLE}
+                                        description="Chưa có đồ đạc nào được thêm"
+                                    />
+                                </div>
                             ) : (
                                 <div className="item-list">
                                     {editItems.map((item, idx) => (
