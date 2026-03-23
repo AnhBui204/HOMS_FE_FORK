@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Typography, Tag, message, Button, Modal, Space, Empty } from 'antd';
+import { Table, Typography, Tag, message, Button, Modal, Space, Empty, Select } from 'antd';
 import { EyeOutlined } from '@ant-design/icons';
 import api from '../../services/api';
 
@@ -8,6 +8,8 @@ const { Title, Text } = Typography;
 const DispatchedOrders = () => {
     const [invoices, setInvoices] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [statusFilter, setStatusFilter] = useState('');
+    const [pagination, setPagination] = useState({ current: 1, pageSize: 10 });
 
     // Modal state for viewing details
     const [isModalVisible, setIsModalVisible] = useState(false);
@@ -16,13 +18,9 @@ const DispatchedOrders = () => {
     const fetchInvoices = async (silent = false) => {
         if (!silent) setLoading(true);
         try {
-            // Fetch ASSIGNED and IN_PROGRESS invoices. (Multiple API calls or manual filter if needed)
-            // For now let's just fetch all and filter locally, or rely on API. 
-            // The listInvoices API accepts `status=ASSIGNED`
             const response = await api.get('/invoices');
             if (response.data && response.data.success) {
-                // Filter locally for ASSIGNED, IN_DISPATCH, IN_PROGRESS, COMPLETED
-                const targetStatuses = ['ASSIGNED', 'IN_DISPATCH', 'IN_PROGRESS', 'COMPLETED'];
+                const targetStatuses = statusFilter ? [statusFilter] : ['ASSIGNED', 'IN_DISPATCH', 'IN_PROGRESS', 'COMPLETED'];
                 const filtered = response.data.data.filter(inv => targetStatuses.includes(inv.status));
                 setInvoices(filtered);
             }
@@ -42,7 +40,7 @@ const DispatchedOrders = () => {
         }, 10000);
         
         return () => clearInterval(intervalId);
-    }, []);
+    }, [statusFilter]); // trigger re-fetch/filter when filter changes
 
     const showDetails = async (record) => {
         try {
@@ -124,12 +122,35 @@ const DispatchedOrders = () => {
     return (
         <div style={{ padding: '24px', background: '#fff', borderRadius: '8px' }}>
             <Title level={4}>Theo dõi đơn hàng đã điều phối</Title>
+            
+            <div style={{ marginBottom: 16, display: 'flex', gap: '10px', alignItems: 'center' }}>
+                <Text strong>Lọc trạng thái:</Text>
+                <Select
+                    style={{ width: 200 }}
+                    allowClear
+                    placeholder="Tất cả trạng thái"
+                    value={statusFilter || undefined}
+                    onChange={(val) => setStatusFilter(val || '')}
+                >
+                    <Select.Option value="ASSIGNED">Đã phân công</Select.Option>
+                    <Select.Option value="IN_DISPATCH">Đang điều phối</Select.Option>
+                    <Select.Option value="IN_PROGRESS">Đang thực hiện</Select.Option>
+                    <Select.Option value="COMPLETED">Đã hoàn thành</Select.Option>
+                </Select>
+                <Button icon={<EyeOutlined />} onClick={() => fetchInvoices()}>Làm mới</Button>
+            </div>
+
             <Table
                 columns={columns}
                 dataSource={invoices}
                 rowKey="_id"
                 loading={loading}
-                pagination={{ pageSize: 10 }}
+                pagination={{
+                    ...pagination,
+                    showSizeChanger: true,
+                    showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} đơn hàng`,
+                    onChange: (page, pageSize) => setPagination({ current: page, pageSize })
+                }}
                 locale={{
                     emptyText: (
                         <Empty

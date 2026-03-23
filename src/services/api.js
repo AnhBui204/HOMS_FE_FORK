@@ -6,6 +6,7 @@ import { getValidAccessToken } from './authService';
 const api = axios.create({
   baseURL: process.env.REACT_APP_API_URL,
   withCredentials: true,
+  timeout: 15000, // 15 seconds timeout
   headers: {
     "ngrok-skip-browser-warning": "69420",
   },
@@ -55,7 +56,32 @@ export const setupInterceptors = (contextLogout) => {
       // Any status code that lies within the range of 2xx causes this function to trigger
       return response;
     },
-    (error) => {
+    async (error) => {
+      const config = error.config;
+      
+      // Mất kết nối mạng / Timeout handling
+      if (!error.response || error.code === 'ECONNABORTED' || error.message === 'Network Error') {
+        if (!config._retryNotificationShown) {
+          notification.error({
+            message: 'Mất kết nối mạng hoặc server không phản hồi',
+            description: 'Đang thử kết nối lại để không gián đoạn trải nghiệm...',
+            placement: 'topRight',
+            duration: 5,
+          });
+          config._retryNotificationShown = true;
+        }
+
+        // Auto-retry for GET requests up to 2 times
+        if (config && config.method === 'get') {
+          config._retryCount = config._retryCount || 0;
+          if (config._retryCount < 2) {
+            config._retryCount += 1;
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            return api(config);
+          }
+        }
+      }
+
       // Any status codes that falls outside the range of 2xx causes this function to trigger
       const errorMessage = error.response?.data?.message || error.message || "An unexpected error occurred.";
       
