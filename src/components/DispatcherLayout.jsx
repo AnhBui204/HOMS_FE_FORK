@@ -78,7 +78,7 @@ const DispatcherLayout = () => {
     if (item.generalOnly && !isGeneral) return false;
     if (item.regionalOnly && isGeneral) return false;
     return true;
-  });
+  }).map(({ generalOnly, regionalOnly, ...rest }) => rest);
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
