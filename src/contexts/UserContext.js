@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { setupInterceptors } from "../services/api";
 import { getUserInfo } from "../services/userService";
-import { clearAccessToken } from "../services/authService";
+import { clearAccessToken,logoutApi } from "../services/authService";
 
 const UserContext = createContext();
 
@@ -10,12 +10,20 @@ export const UserProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  const logout = useCallback(() => {
-    console.log('👋 [Auth] Logging out - clearing all tokens');
-    setUser(null);
-    setIsAuthenticated(false);
-    clearAccessToken(); // Clear token from memory AND localStorage
-  }, []);
+  const logout = useCallback(async () => {
+  console.log("👋 [Auth] Logging out - calling server");
+
+  try {
+    await logoutApi();
+  } catch (error) {
+    console.warn("Logout API failed:", error?.response?.data || error.message);
+  }
+  setUser(null);
+  setIsAuthenticated(false);
+  clearAccessToken();
+  localStorage.removeItem("hasSession");
+
+}, []);
   // Khởi tạo user từ token khi app mount
   useEffect(() => {
     const initializeUser = async () => {

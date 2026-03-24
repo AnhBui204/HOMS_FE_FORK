@@ -10,6 +10,9 @@ export const verifyRegistrationOTP = (data) => api.post('/auth/verify-registrati
 export const forgotPassword = (email) => api.post("/auth/forgot-password", { email });
 export const verifyOTP = (data) => api.post("/auth/verify-otp", data);
 export const resetPassword = (data) => api.post("/auth/reset-password", data);
+export const logoutApi = async () => {
+  return await api.post("/auth/logout");
+};
 let isRefreshing = false;
 let refreshSubscribers = [];
 let refreshTimeout = null;
