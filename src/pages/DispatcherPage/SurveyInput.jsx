@@ -7,7 +7,8 @@ import {
 import './SurveyInput.css';
 import {
   EditOutlined, PlusOutlined, DeleteOutlined, SaveOutlined,
-  WarningOutlined, LockOutlined, ExclamationCircleFilled, RobotOutlined
+  WarningOutlined, LockOutlined, ExclamationCircleFilled, RobotOutlined,
+  EyeOutlined
 } from '@ant-design/icons';
 import {
   FaBed, FaTv, FaCouch, FaMotorcycle, FaSnowflake,
@@ -29,6 +30,7 @@ import { PiScrollDuotone } from 'react-icons/pi';
 import dayjs from 'dayjs';
 import { requestTicketService, surveyService } from '../../services/surveysService';
 import AIVisionAnalyzer from '../../components/AIVisionAnalyzer/AIVisionAnalyzer';
+import { normalizeAIItems, SECONDARY_KEY_RULES, matchSecondaryKey } from '../../services/ai/catalogMappingService';
 
 // ─── Icon badge helper ────────────────────────────────────────────────────────
 const CatIcon = ({ icon: Icon, color = '#44624A', size = 18 }) => (
@@ -208,6 +210,10 @@ const SurveyInput = () => {
   const [secPickerKey, setSecPickerKey] = useState(null);
   const [secPickerTier, setSecPickerTier] = useState(null);
 
+  // AI images and item-location viewer state
+  const [aiImages, setAiImages] = useState([]); // [{ index, name, url }]
+  const [highlightConfig, setHighlightConfig] = useState(null); // { imageUrl, box, label }
+
   // 1. Tải danh sách Ticket
   const fetchTickets = async () => {
     setLoading(true);
@@ -328,6 +334,8 @@ const SurveyInput = () => {
     setPrimaryPickerPreset(null);
     setSecPickerKey(null);
     setSecPickerTier(null);
+    setAiImages([]);
+    setHighlightConfig(null);
 
     try {
       const res = await surveyService.getSurveyByTicket(ticket._id);
@@ -455,70 +463,35 @@ const SurveyInput = () => {
     setIsModalOpen(true);
   };
 
-  // ── Keyword → SECONDARY_CATALOG key matcher (Vietnamese) ──────────────────
-  const SECONDARY_KEY_RULES = [
-    { key: 'bowl',        patterns: ['chén', 'bát', 'đũa', 'ấm', 'nồi', 'bình', 'ca', 'cốc', 'tô'] },
-    { key: 'lamp',        patterns: ['đèn bàn', 'đèn ngủ', 'đèn', 'bóng đèn'] },
-    { key: 'clock',       patterns: ['đồng hồ'] },
-    { key: 'plant',       patterns: ['cây cảnh', 'chậu hoa', 'cây', 'hoa'] },
-    { key: 'fan',         patterns: ['quạt'] },
-    { key: 'book',        patterns: ['sách', 'tài liệu', 'vở', 'hồ sơ'] },
-    { key: 'mirror',      patterns: ['gương'] },
-    { key: 'curtain',     patterns: ['rèm', 'màn cửa'] },
-    { key: 'toy',         patterns: ['đồ chơi', 'thú bông', 'lego'] },
-    { key: 'shoes',       patterns: ['giày', 'dép', 'sandal'] },
-    { key: 'clothes',     patterns: ['quần áo', 'áo', 'quần', 'túi quần', 'thùng quần', 'chăn', 'gối', 'ga trải'] },
-    { key: 'kitchen',     patterns: ['dụng cụ bếp', 'chảo', 'xoong', 'dao', 'thớt', 'bếp gas'] },
-    { key: 'toiletry',    patterns: ['mỹ phẩm', 'đồ vệ sinh', 'dầu gội', 'kem', 'nước hoa', 'son'] },
-    { key: 'electronics', patterns: ['thiết bị điện nhỏ', 'máy sấy', 'máy pha cà phê', 'bàn là', 'máy xay', 'nồi cơm điện'] },
-    { key: 'box',         patterns: ['thùng carton', 'thùng hàng', 'thùng', 'hộp'] },
-  ];
 
-  const matchSecondaryKey = (name = '') => {
-    const lower = name.toLowerCase();
-    for (const { key, patterns } of SECONDARY_KEY_RULES) {
-      if (patterns.some(p => lower.includes(p))) return key;
-    }
-    return null;
-  };
 
   // 2A. Xử lý sau khi AI phân tích xong
   const handleAIAnalyzeComplete = (result) => {
     const currentItems = form.getFieldsValue().items || [];
     const validItems = currentItems.filter(item => item && item.name);
 
-    const primaryAIItems = [];
-    const newSecondaryItems = [];
-    const unmatchedSecondaryItems = [];
+    // Persist AI image thumbnails for later item-location viewing
+    setAiImages(Array.isArray(result._images) ? result._images : []);
 
-    (result.items || []).forEach(aiItem => {
-      if (aiItem.category === 'secondary') {
-        const catalogKey = matchSecondaryKey(aiItem.name);
-        if (catalogKey) {
-          const alreadyIn = [...secondaryItems, ...newSecondaryItems].some(s => s.key === catalogKey);
-          if (!alreadyIn) newSecondaryItems.push({ key: catalogKey, tierIdx: 0 });
-        } else {
-          unmatchedSecondaryItems.push({
-            name: `🤖 [AI-Phụ] ${aiItem.name}`,
-            actualWeight: aiItem.actualWeight || 0,
-            actualVolume: aiItem.actualVolume || 0,
-            condition: aiItem.condition || 'GOOD',
-            notes: aiItem.notes || ''
-          });
-        }
-      } else {
-        primaryAIItems.push({
-          name: `🤖 [AI] ${aiItem.name}`,
-          actualWeight: aiItem.actualWeight || 0,
-          actualVolume: aiItem.actualVolume || 0,
-          condition: aiItem.condition || 'GOOD',
-          notes: aiItem.notes || ''
-        });
-      }
-    });
+    // ── Mapping Layer: normalize AI items into business catalog format ────────
+    const { mappedPrimary, unmatchedPrimary, newSecondary } = normalizeAIItems(
+      result.items,
+      PRIMARY_CATALOG,
+      SECONDARY_CATALOG,
+      SECONDARY_KEY_RULES,
+      matchSecondaryKey,
+    );
 
-    form.setFieldsValue({ items: [...validItems, ...primaryAIItems, ...unmatchedSecondaryItems] });
-    if (newSecondaryItems.length > 0) setSecondaryItems(prev => [...prev, ...newSecondaryItems]);
+    // Merge new secondary keys (skip duplicates already in state)
+    const deduped = newSecondary.filter(
+      ns => !secondaryItems.some(s => s.key === ns.key)
+    ).map(ns => ({ ...ns, tierIdx: 0 }));
+
+    // All primary items for the form: catalog-mapped first, then unmatched fallbacks
+    const allPrimaryItems = [...mappedPrimary, ...unmatchedPrimary];
+
+    form.setFieldsValue({ items: [...validItems, ...allPrimaryItems] });
+    if (deduped.length > 0) setSecondaryItems(prev => [...prev, ...deduped]);
 
     // Only override logistics if dispatcher explicitly toggled them in the modal
     const overrides = {};
@@ -536,8 +509,14 @@ const SurveyInput = () => {
       ? ' Điều phối viên đã chọn áp dụng gợi ý logistics từ AI.'
       : ' — kiểm tra lại trong mục Đề xuất Tài nguyên.';
 
+    const mappedCount = mappedPrimary.length;
+    const unmatchedCount = unmatchedPrimary.length;
+    const detail = mappedCount > 0
+      ? ` (${mappedCount} đồ đạc đã khớp danh mục${unmatchedCount > 0 ? `, ${unmatchedCount} chưa khớp` : ''}).`
+      : '';
+
     message.warning({
-      content: `Đã áp dụng danh sách đồ đạc từ AI!${overrideNote} Vui lòng kiểm tra lại số liệu thực tế.`,
+      content: `Đã áp dụng danh sách đồ đạc từ AI!${detail}${overrideNote} Vui lòng kiểm tra lại số liệu thực tế.`,
       duration: 7,
     });
   };
@@ -725,6 +704,35 @@ const SurveyInput = () => {
   ];
 
   const isReadOnly = selectedTicket && ['QUOTED', 'ACCEPTED', 'CONVERTED'].includes(selectedTicket.status);
+
+  // Open a small modal that shows the item's location on the AI image
+  const handleShowItemOnImage = (itemVal) => {
+    if (!itemVal || !itemVal._aiRaw || !Array.isArray(itemVal._aiRaw.imageIndices) || aiImages.length === 0) {
+      message.info('Không tìm thấy vị trí hình ảnh cho mục này.');
+      return;
+    }
+
+    // pick first image index that we actually have a thumbnail for
+    const availableImage = aiImages.find(img => itemVal._aiRaw.imageIndices.includes(img.index));
+    if (!availableImage) {
+      message.info('Mục này thuộc về media không phải hình ảnh nên không thể hiển thị vị trí.');
+      return;
+    }
+
+    const boxes = Array.isArray(itemVal._aiRaw.boundingBoxes) ? itemVal._aiRaw.boundingBoxes : [];
+    const boxForImage = boxes.find(b => b.imageIndex === availableImage.index) || boxes[0] || null;
+
+    if (!boxForImage) {
+      message.info('AI chưa cung cấp toạ độ chi tiết cho mục này.');
+      return;
+    }
+
+    setHighlightConfig({
+      imageUrl: availableImage.url,
+      box: boxForImage,
+      label: itemVal.name,
+    });
+  };
 
   return (
     <Card bordered={false} className="shadow-sm">
@@ -935,49 +943,119 @@ const SurveyInput = () => {
               {/* Primary items list */}
               <div className="survey-items-container">
                 <Row gutter={6} style={{ fontWeight: 'bold', fontSize: 12, marginBottom: 6, color: '#555' }}>
-                  <Col span={9}>Tên đồ đạc</Col>
-                  <Col span={4} style={{ textAlign: 'center' }}>Thể tích (m³)</Col>
-                  <Col span={4} style={{ textAlign: 'center' }}>Khối lượng (kg)</Col>
+                  <Col span={8}>Tên đồ đạc</Col>
+                  <Col span={4} style={{ textAlign: 'center' }}>Loại / kích cỡ</Col>
+                  <Col span={3} style={{ textAlign: 'center' }}>Thể tích (m³)</Col>
+                  <Col span={3} style={{ textAlign: 'center' }}>Khối lượng (kg)</Col>
                   <Col span={4} style={{ textAlign: 'center' }}>Tình trạng</Col>
-                  <Col span={3} style={{ textAlign: 'center' }}>Thao tác</Col>
+                  <Col span={2} style={{ textAlign: 'center' }}>Xóa</Col>
                 </Row>
                 <div className="survey-items-scrollable">
                   <Form.List name="items">
                     {(fields, { add, remove }) => (
                       <>
                         {fields.map(({ key, name, ...restField }) => (
-                          <Row gutter={6} key={key} align="middle" className="survey-list-item">
-                            <Col span={9}>
-                              <Form.Item {...restField} name={[name, 'name']} rules={[{ required: true, message: 'Nhập tên đồ' }]} style={{ marginBottom: 0 }}>
-                                <Input size="small" placeholder="Tên đồ vật" />
-                              </Form.Item>
-                            </Col>
-                            <Col span={4}>
-                              <Form.Item {...restField} name={[name, 'actualVolume']} style={{ marginBottom: 0 }}>
-                                <InputNumber size="small" min={0} step={0.1} style={{ width: '100%' }} placeholder="m³" />
-                              </Form.Item>
-                            </Col>
-                            <Col span={4}>
-                              <Form.Item {...restField} name={[name, 'actualWeight']} style={{ marginBottom: 0 }}>
-                                <InputNumber size="small" min={0} style={{ width: '100%' }} placeholder="kg" />
-                              </Form.Item>
-                            </Col>
-                            <Col span={5}>
-                              <Form.Item {...restField} name={[name, 'condition']} style={{ marginBottom: 0 }}>
-                                <Select size="small" defaultValue="GOOD">
-                                  <Option value="GOOD">Tốt</Option>
-                                  <Option value="FRAGILE">Dễ vỡ</Option>
-                                  <Option value="DAMAGED">Hư hỏng</Option>
-                                </Select>
-                              </Form.Item>
-                            </Col>
-                            <Col span={2} style={{ textAlign: 'center' }}>
-                              {!isReadOnly && (
-                                <DeleteOutlined style={{ color: '#ff4d4f', cursor: 'pointer', fontSize: 14 }} onClick={() => remove(name)} />
-                              )}
-                            </Col>
-                          </Row>
+                          <Form.Item
+                            key={key}
+                            noStyle
+                            shouldUpdate
+                          >
+                            {() => {
+                              const itemVal = form.getFieldValue(['items', name]) || {};
+                              const isAIMapped = itemVal._source === 'AI_MAPPED';
+                              const confidence = itemVal._confidence;
+                              const catalogName = itemVal._catalogName;
+                              const presetIndex = itemVal._presetIndex;
+                              const catalogEntry = isAIMapped
+                                ? PRIMARY_CATALOG.find(c => c.name === catalogName)
+                                : null;
+
+                              return (
+                                <Row
+                                  gutter={6}
+                                  align="middle"
+                                  className={`survey-list-item${isAIMapped ? ' survey-list-item--ai' : ''}`}
+                                >
+                                  <Col span={8}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                                      <Form.Item {...restField} name={[name, 'name']} rules={[{ required: true, message: 'Nhập tên đồ' }]} style={{ marginBottom: 0, flex: 1 }}>
+                                        <Input size="small" placeholder="Tên đồ vật" />
+                                      </Form.Item>
+                                      {itemVal._aiRaw && Array.isArray(itemVal._aiRaw.imageIndices) && itemVal._aiRaw.imageIndices.length > 0 && aiImages.length > 0 && (
+                                        <Tooltip title="Xem vị trí trong ảnh AI">
+                                          <Button
+                                            type="text"
+                                            size="small"
+                                            icon={<EyeOutlined />}
+                                            onClick={() => handleShowItemOnImage(itemVal)}
+                                          />
+                                        </Tooltip>
+                                      )}
+                                    </div>
+                                    {isAIMapped && typeof confidence === 'number' && (
+                                      <div className="ai-confidence-badge">
+                                        AI · {Math.round(confidence * 100)}% phù hợp
+                                      </div>
+                                    )}
+                                  </Col>
+                                  <Col span={4}>
+                                    {isAIMapped && catalogEntry ? (
+                                      <Select
+                                        size="small"
+                                        style={{ width: '100%' }}
+                                        value={presetIndex}
+                                        onChange={(idx) => {
+                                          const preset = catalogEntry.presets[idx];
+                                          const items = form.getFieldValue('items');
+                                          items[name] = {
+                                            ...items[name],
+                                            name: `${catalogName} (${preset.label})`,
+                                            actualVolume: preset.volume,
+                                            actualWeight: preset.weight,
+                                            _presetIndex: idx,
+                                          };
+                                          form.setFieldsValue({ items: [...items] });
+                                        }}
+                                        disabled={isReadOnly}
+                                      >
+                                        {catalogEntry.presets.map((p, i) => (
+                                          <Option key={i} value={i}>{p.label}</Option>
+                                        ))}
+                                      </Select>
+                                    ) : (
+                                      <span style={{ fontSize: 11, color: '#aaa', paddingLeft: 4 }}>—</span>
+                                    )}
+                                  </Col>
+                                  <Col span={3}>
+                                    <Form.Item {...restField} name={[name, 'actualVolume']} style={{ marginBottom: 0 }}>
+                                      <InputNumber size="small" min={0} step={0.1} style={{ width: '100%' }} placeholder="m³" />
+                                    </Form.Item>
+                                  </Col>
+                                  <Col span={3}>
+                                    <Form.Item {...restField} name={[name, 'actualWeight']} style={{ marginBottom: 0 }}>
+                                      <InputNumber size="small" min={0} style={{ width: '100%' }} placeholder="kg" />
+                                    </Form.Item>
+                                  </Col>
+                                  <Col span={4}>
+                                    <Form.Item {...restField} name={[name, 'condition']} style={{ marginBottom: 0 }}>
+                                      <Select size="small" defaultValue="GOOD">
+                                        <Option value="GOOD">Tốt</Option>
+                                        <Option value="FRAGILE">Dễ vỡ</Option>
+                                        <Option value="DAMAGED">Hư hỏng</Option>
+                                      </Select>
+                                    </Form.Item>
+                                  </Col>
+                                  <Col span={2} style={{ textAlign: 'center' }}>
+                                    {!isReadOnly && (
+                                      <DeleteOutlined style={{ color: '#ff4d4f', cursor: 'pointer', fontSize: 14 }} onClick={() => remove(name)} />
+                                    )}
+                                  </Col>
+                                </Row>
+                              );
+                            }}
+                          </Form.Item>
                         ))}
+
                         {!isReadOnly && (
                           <Button size="small" type="dashed" onClick={() => add()} block icon={<PlusOutlined />} style={{ marginTop: 4 }}>
                             Thêm thủ công
@@ -1149,7 +1227,71 @@ const SurveyInput = () => {
         onAnalyzeComplete={handleAIAnalyzeComplete}
         currentVehicle={form.getFieldValue('suggestedVehicle')}
         currentStaffCount={form.getFieldValue('suggestedStaffCount')}
+        primaryCatalog={PRIMARY_CATALOG}
       />
+
+      {/* Modal hiển thị vị trí đồ vật trong ảnh AI */}
+      <Modal
+        open={!!highlightConfig}
+        onCancel={() => setHighlightConfig(null)}
+        footer={null}
+        width={720}
+        centered
+        title={highlightConfig?.label ? `Vị trí: ${highlightConfig.label}` : 'Vị trí trong ảnh AI'}
+      >
+        {highlightConfig && (
+          <div style={{ textAlign: 'center' }}>
+            <div
+              style={{
+                position: 'relative',
+                display: 'inline-block',
+                maxWidth: '100%',
+              }}
+            >
+              <img
+                src={highlightConfig.imageUrl}
+                alt={highlightConfig.label || 'AI snapshot'}
+                style={{ maxWidth: '100%', borderRadius: 8 }}
+              />
+              {(() => {
+                const { centerX, centerY, width, height } = highlightConfig.box;
+                if (
+                  typeof centerX !== 'number' || typeof centerY !== 'number' ||
+                  typeof width !== 'number' || typeof height !== 'number'
+                ) {
+                  return null;
+                }
+
+                const left = Math.max(0, (centerX - width / 2) * 100);
+                const top = Math.max(0, (centerY - height / 2) * 100);
+                const w = Math.min(100, width * 100);
+                const h = Math.min(100, height * 100);
+
+                return (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      left: `${left}%`,
+                      top: `${top}%`,
+                      width: `${w}%`,
+                      height: `${h}%`,
+                      borderRadius: '50%',
+                      border: '3px solid #ff4d4f',
+                      boxShadow: '0 0 0 2px rgba(255,77,79,0.4)',
+                      pointerEvents: 'none',
+                    }}
+                  />
+                );
+              })()}
+            </div>
+            <div style={{ marginTop: 12 }}>
+              <Text type="secondary" style={{ fontSize: 12 }}>
+                Vòng tròn đỏ thể hiện vị trí ước lượng của món đồ trong ảnh được AI xác định.
+              </Text>
+            </div>
+          </div>
+        )}
+      </Modal>
     </Card>
   );
 };
