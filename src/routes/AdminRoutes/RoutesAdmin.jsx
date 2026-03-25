@@ -10,6 +10,7 @@ import ReportManagement from '../../pages/AdminPage/Report/ReportManagement';
 import ContractManagement from '../../pages/AdminPage/Contract/ContractManagement';
 import RatingManagement from '../../pages/AdminPage/Rating/RatingManagement';
 import InvoiceManagement from '../../pages/AdminPage/Invoice/InvoiceManagement';
+import RouteManagement from '../../pages/AdminPage/RouteManagement/RouteManagement';
 import ProtectedRoute from "../../components/ProtectRoute/ProtectedRoute";
 
 const RoutesAdmin = () => {
@@ -27,6 +28,7 @@ const RoutesAdmin = () => {
           <Route path="ratings" element={<RatingManagement />} />
           <Route path="reports" element={<ReportManagement />} />
           <Route path="contracts" element={<ContractManagement />} />
+          <Route path="routes" element={<RouteManagement />} />
           <Route path="*" element={<Navigate to="dashboard" />} />
         </Routes>
       </AdminLayout>

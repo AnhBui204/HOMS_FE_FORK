@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Table, Button, Typography, Tag, message, Modal, Select, Form, Space } from 'antd';
 import { CarOutlined } from '@ant-design/icons';
 import api from '../../services/api';
+import adminRouteService from '../../services/adminRouteService';
 import dayjs from 'dayjs';
 
 const { Title, Text } = Typography;
@@ -20,6 +21,7 @@ const ResourceAllocation = () => {
     const [form] = Form.useForm();
     const [drivers, setDrivers] = useState([]);
     const [staff, setStaff] = useState([]);
+    const [routesList, setRoutesList] = useState([]);
 
     const fetchInvoices = async () => {
         setLoading(true);
@@ -46,6 +48,9 @@ const ResourceAllocation = () => {
             if (driverRes.data?.success) setDrivers(driverRes.data.data);
             if (staffRes.data?.success) setStaff(staffRes.data.data);
 
+            const routeRes = await adminRouteService.getAllRoutes();
+            if (routeRes.success) setRoutesList(routeRes.data || []);
+            
         } catch (error) {
             message.error('Lỗi khi tải danh sách nhân sự.');
         }
@@ -78,6 +83,7 @@ const ResourceAllocation = () => {
                 staffIds: values.staffIds || [],
                 vehicleType: values.vehicleType,
                 vehicleCount: values.vehicleCount || 1,
+                routeId: values.routeId,
                 totalWeight: selectedInvoice.requestTicketId?.surveyDataId?.totalWeight || 1000,
                 totalVolume: selectedInvoice.requestTicketId?.surveyDataId?.totalVolume || 10,
                 estimatedDuration: 480 // Mặc định 8 tiếng
@@ -215,6 +221,23 @@ const ResourceAllocation = () => {
                         >
                             {staff.map(s => (
                                 <Option key={s._id} value={s._id}>{s.fullName} - {s.phone}</Option>
+                            ))}
+                        </Select>
+                    </Form.Item>
+
+                    <Form.Item
+                        name="routeId"
+                        label="Lộ trình di chuyển (Để trống nếu tự do đi lại)"
+                    >
+                        <Select
+                            placeholder="Chọn tuyến đường / lộ trình"
+                            style={{ width: '100%' }}
+                            allowClear
+                        >
+                            {routesList.map(r => (
+                                <Option key={r._id} value={r._id}>
+                                    {r.code} ({r.fromDistrict} ➝ {r.toDistrict}) - {r.estimatedDistanceKm} km
+                                </Option>
                             ))}
                         </Select>
                     </Form.Item>

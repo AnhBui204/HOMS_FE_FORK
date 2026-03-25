@@ -51,6 +51,11 @@ const AdminSidebar = () => {
             icon: <FileTextOutlined />,
             label: 'Hóa đơn & Doanh thu',
         },
+        {
+            key: '/admin/routes',
+            icon: <AreaChartOutlined />,
+            label: 'Quản lý lộ trình',
+        },
     ];
 
     return (
