@@ -666,7 +666,7 @@ const InvoiceManagement = () => {
     },
     {
       key: '2',
-      label: (<span><DollarCircleOutlined style={{ marginRight: 8 }} />Thanh toán</span>),
+      label: (<span><DollarCircleOutlined style={{ marginRight: 8 }} />Doanh Thu</span>),
       children: (() => {
         // local helper: filter recentPayments by search and time range
         const getFilteredRecent = () => {
