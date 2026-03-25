@@ -138,21 +138,21 @@ const PRIMARY_CATALOG = [
 
 // ─── SECONDARY / MISC CATALOG ─────────────────────────────────────────────────
 const SECONDARY_CATALOG = [
-  { key: 'bowl', IconComp: GiCookingPot, color: '#d97706', label: 'Chén bát / đũa' },
+  { key: 'bowl', IconComp: GiCookingPot, color: '#d97706', label: 'Chén bát / Ly tách' },
   { key: 'lamp', IconComp: MdLightbulbOutline, color: '#ca8a04', label: 'Đèn bàn / đèn ngủ' },
   { key: 'clock', IconComp: MdAccessTime, color: '#0369a1', label: 'Đồng hồ' },
   { key: 'plant', IconComp: MdLocalFlorist, color: '#16a34a', label: 'Cây cảnh / chậu hoa' },
   { key: 'fan', IconComp: GiHandheldFan, color: '#0891b2', label: 'Quạt điện' },
   { key: 'book', IconComp: FaBook, color: '#7c3aed', label: 'Sách vở / tài liệu' },
-  { key: 'mirror', IconComp: GiMirrorMirror, color: '#6b7280', label: 'Gương' },
+  { key: 'mirror', IconComp: GiMirrorMirror, color: '#6b7280', label: 'Gương / Tranh ảnh' },
   { key: 'curtain', IconComp: MdCurtains, color: '#9d174d', label: 'Rèm cửa' },
   { key: 'toy', IconComp: MdToys, color: '#f59e0b', label: 'Đồ chơi trẻ em' },
   { key: 'shoes', IconComp: TbShoe, color: '#78350f', label: 'Giày dép / hộp' },
-  { key: 'clothes', IconComp: FaTshirt, color: '#4f46e5', label: 'Quần áo (túi / thùng)' },
+  { key: 'clothes', IconComp: FaTshirt, color: '#4f46e5', label: 'Quần áo' },
   { key: 'kitchen', IconComp: MdOutdoorGrill, color: '#dc2626', label: 'Dụng cụ bếp' },
   { key: 'toiletry', IconComp: MdSoap, color: '#0ea5e9', label: 'Đồ vệ sinh / mỹ phẩm' },
   { key: 'electronics', IconComp: MdComputer, color: '#374151', label: 'Thiết bị điện nhỏ' },
-  { key: 'box', IconComp: FaBoxOpen, color: '#92400e', label: 'Thùng carton chung' },
+  { key: 'box', IconComp: FaBoxOpen, color: '#92400e', label: 'Thùng / Vali / Túi' },
 ];
 
 // Quantity tiers for secondary items
@@ -757,7 +757,7 @@ const SurveyInput = () => {
           <Row gutter={24}>
 
             {/* --- CỘT TRÁI: THÔNG TIN CHI TIẾT --- */}
-            <Col span={7}>
+            <Col span={7} style={{ maxHeight: '78vh', overflowY: 'auto', paddingRight: '12px' }}>
               {/* 1. Địa hình & Vận chuyển */}
               <Card size="small" title="1. Địa hình & Vận chuyển" className="dispatcher-card mb-3" bordered={false}>
                 <Row gutter={12}>
@@ -867,120 +867,187 @@ const SurveyInput = () => {
             </Col>
 
             {/* --- CỘT PHẢI: DANH MỤC ĐỒ ĐẠC (2 PHẦN) --- */}
-            <Col span={17} style={{ borderLeft: '1px solid #f0f0f0', paddingLeft: '20px', maxHeight: '72vh', overflowY: 'auto' }}>
+            <Col span={17} style={{ borderLeft: '1px solid #f0f0f0', paddingLeft: '20px', maxHeight: '78vh', overflowY: 'auto' }}>
 
               {/* ── 4A. ĐỒ ĐẠC CHÍNH ──────────────────────────────────── */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                <Title level={5} style={{ margin: 0 }}>4A. Đồ đạc chính</Title>
-                <Space>
-                  {!isReadOnly && (
-                    <Button
-                      type="primary"
-                      className="survey-primary-btn"
-                      icon={<RobotOutlined />}
-                      onClick={() => setIsAIVisionModalOpen(true)}
-                    >
-                      AI phân tính hình ảnh & video
-                    </Button>
-                  )}
-                  <Tag color="blue">Chọn từ danh mục hoặc tự nhập</Tag>
-                </Space>
-              </div>
-
-              {/* Quick-add picker: category → preset → add */}
-              {!isReadOnly && (
-                <div className="survey-secondary-picker" style={{ background: '#f8fdf8', borderColor: '#d9f7be' }}>
-                  <Select
-                    placeholder="Ðồ vật..."
-                    style={{ flex: '1 1 150px', minWidth: 150 }}
-                    value={primaryPickerCat}
-                    onChange={v => { setPrimaryPickerCat(v); setPrimaryPickerPreset(null); }}
-                    showSearch
-                    optionFilterProp="children"
-                  >
-                    {PRIMARY_CATALOG.map(cat => (
-                      <Option key={cat.name} value={cat.name}>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <CatIcon icon={cat.IconComp} color={cat.color} size={14} />
-                          {cat.name}
-                        </span>
-                      </Option>
-                    ))}
-                  </Select>
-                  <Select
-                    placeholder="Kích thước / loại"
-                    style={{ flex: '1 1 140px', minWidth: 140 }}
-                    value={primaryPickerPreset}
-                    onChange={v => setPrimaryPickerPreset(v)}
-                    disabled={!primaryPickerCat}
-                  >
-                    {PRIMARY_CATALOG.find(c => c.name === primaryPickerCat)?.presets.map((p, i) => (
-                      <Option key={i} value={i}>{p.label} ({p.volume}m³ / {p.weight}kg)</Option>
-                    ))}
-                  </Select>
-                  <Form.List name="items">
-                    {(_, { add }) => (
+              <div className="survey-section-container">
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <Title level={5} style={{ margin: 0 }}>4A. Đồ đạc chính</Title>
+                  <Space>
+                    {!isReadOnly && (
                       <Button
                         type="primary"
-                        icon={<PlusOutlined />}
-                        disabled={!primaryPickerCat || primaryPickerPreset === null}
-                        onClick={() => {
-                          const cat = PRIMARY_CATALOG.find(c => c.name === primaryPickerCat);
-                          const preset = cat.presets[primaryPickerPreset];
-                          add({ name: `${cat.name} (${preset.label})`, actualVolume: preset.volume, actualWeight: preset.weight, condition: 'GOOD' });
-                          setPrimaryPickerCat(null);
-                          setPrimaryPickerPreset(null);
-                        }}
                         className="survey-primary-btn"
+                        icon={<RobotOutlined />}
+                        onClick={() => setIsAIVisionModalOpen(true)}
                       >
-                        Thêm
+                        AI phân tính hình ảnh & video
                       </Button>
                     )}
-                  </Form.List>
+                    <Tag color="blue">Chọn từ danh mục hoặc tự nhập</Tag>
+                  </Space>
                 </div>
-              )}
 
-              {/* Primary items list */}
-              <div className="survey-items-container">
-                <Row gutter={6} style={{ fontWeight: 'bold', fontSize: 12, marginBottom: 6, color: '#555' }}>
-                  <Col span={8}>Tên đồ đạc</Col>
-                  <Col span={4} style={{ textAlign: 'center' }}>Loại / kích cỡ</Col>
-                  <Col span={3} style={{ textAlign: 'center' }}>Thể tích (m³)</Col>
-                  <Col span={3} style={{ textAlign: 'center' }}>Khối lượng (kg)</Col>
-                  <Col span={4} style={{ textAlign: 'center' }}>Tình trạng</Col>
-                  <Col span={2} style={{ textAlign: 'center' }}>Xóa</Col>
-                </Row>
-                <div className="survey-items-scrollable">
-                  <Form.List name="items">
-                    {(fields, { add, remove }) => (
-                      <>
-                        {fields.map(({ key, name, ...restField }) => (
-                          <Form.Item
-                            key={key}
-                            noStyle
-                            shouldUpdate
-                          >
-                            {() => {
-                              const itemVal = form.getFieldValue(['items', name]) || {};
-                              const isAIMapped = itemVal._source === 'AI_MAPPED';
-                              const confidence = itemVal._confidence;
-                              const catalogName = itemVal._catalogName;
-                              const presetIndex = itemVal._presetIndex;
-                              const catalogEntry = isAIMapped
-                                ? PRIMARY_CATALOG.find(c => c.name === catalogName)
-                                : null;
+                {/* Quick-add picker: category → preset → add */}
+                {!isReadOnly && (
+                  <div className="survey-secondary-picker" style={{ background: '#f8fdf8', borderColor: '#d9f7be' }}>
+                    <Select
+                      placeholder="Ðồ vật..."
+                      style={{ flex: '1 1 150px', minWidth: 150 }}
+                      value={primaryPickerCat}
+                      onChange={v => { setPrimaryPickerCat(v); setPrimaryPickerPreset(null); }}
+                      showSearch
+                      optionFilterProp="children"
+                    >
+                      {PRIMARY_CATALOG.map(cat => (
+                        <Option key={cat.name} value={cat.name}>
+                          <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <CatIcon icon={cat.IconComp} color={cat.color} size={14} />
+                            {cat.name}
+                          </span>
+                        </Option>
+                      ))}
+                    </Select>
+                    <Select
+                      placeholder="Kích thước / loại"
+                      style={{ flex: '1 1 140px', minWidth: 140 }}
+                      value={primaryPickerPreset}
+                      onChange={v => setPrimaryPickerPreset(v)}
+                      disabled={!primaryPickerCat}
+                    >
+                      {PRIMARY_CATALOG.find(c => c.name === primaryPickerCat)?.presets.map((p, i) => (
+                        <Option key={i} value={i}>{p.label} ({p.volume}m³ / {p.weight}kg)</Option>
+                      ))}
+                    </Select>
+                    <Form.List name="items">
+                      {(_, { add }) => (
+                        <Button
+                          type="primary"
+                          icon={<PlusOutlined />}
+                          disabled={!primaryPickerCat || primaryPickerPreset === null}
+                          onClick={() => {
+                            const cat = PRIMARY_CATALOG.find(c => c.name === primaryPickerCat);
+                            const preset = cat.presets[primaryPickerPreset];
+                            add({ name: `${cat.name} (${preset.label})`, actualVolume: preset.volume, actualWeight: preset.weight, condition: 'GOOD' });
+                            setPrimaryPickerCat(null);
+                            setPrimaryPickerPreset(null);
+                          }}
+                          className="survey-primary-btn"
+                        >
+                          Thêm
+                        </Button>
+                      )}
+                    </Form.List>
+                  </div>
+                )}
 
-                              return (
-                                <Row
-                                  gutter={6}
-                                  align="middle"
-                                  className={`survey-list-item${isAIMapped ? ' survey-list-item--ai' : ''}`}
-                                >
-                                  <Col span={8}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                                      <Form.Item {...restField} name={[name, 'name']} rules={[{ required: true, message: 'Nhập tên đồ' }]} style={{ marginBottom: 0, flex: 1 }}>
-                                        <Input size="small" placeholder="Tên đồ vật" />
+                {/* Primary items list */}
+                <div className="survey-items-container">
+                <div className="survey-items-header">
+                  <Row gutter={6}>
+                    <Col span={8}>Tên đồ đạc</Col>
+                    <Col span={4} style={{ textAlign: 'center' }}>Loại / kích cỡ</Col>
+                    <Col span={3} style={{ textAlign: 'center' }}>Thể tích (m³)</Col>
+                    <Col span={3} style={{ textAlign: 'center' }}>Khối lượng (kg)</Col>
+                    <Col span={3} style={{ textAlign: 'center' }}>Tình trạng</Col>
+                    <Col span={3} style={{ textAlign: 'center' }}>Thao tác</Col>
+                  </Row>
+                </div>
+                  <div className="survey-items-scrollable">
+                    <Form.List name="items">
+                      {(fields, { add, remove }) => (
+                        <>
+                          {fields.map(({ key, name, ...restField }) => (
+                            <Form.Item
+                              key={key}
+                              noStyle
+                              shouldUpdate
+                            >
+                              {() => {
+                                const itemVal = form.getFieldValue(['items', name]) || {};
+                                const isAIMapped = itemVal._source === 'AI_MAPPED';
+                                const confidence = itemVal._confidence;
+                                const catalogName = itemVal._catalogName;
+                                const presetIndex = itemVal._presetIndex;
+                                const catalogEntry = isAIMapped
+                                  ? PRIMARY_CATALOG.find(c => c.name === catalogName)
+                                  : null;
+
+                                return (
+                                  <Row
+                                    gutter={6}
+                                    align="middle"
+                                    className={`survey-list-item${isAIMapped ? ' survey-list-item--ai' : ''}`}
+                                  >
+                                    <Col span={8}>
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                                        <Form.Item {...restField} name={[name, 'name']} rules={[{ required: true, message: 'Nhập tên đồ' }]} style={{ marginBottom: 0, flex: 1 }}>
+                                          <Input
+                                            size="small"
+                                            placeholder="Tên đồ vật"
+                                            suffix={isAIMapped && typeof confidence === 'number' && (
+                                              <Tooltip title={`AI tự động nhận diện (${Math.round(confidence * 100)}% phù hợp)`}>
+                                                <span className={`ai-confidence-input-suffix ${confidence < 0.75 ? 'ai-confidence-input-suffix--low' : ''}`}>
+                                                  <RobotOutlined style={{ fontSize: 11 }} />
+                                                  <span>{Math.round(confidence * 100)}%</span>
+                                                </span>
+                                              </Tooltip>
+                                            )}
+                                          />
+                                        </Form.Item>
+                                      </div>
+                                    </Col>
+                                    <Col span={4}>
+                                      {isAIMapped && catalogEntry ? (
+                                        <Select
+                                          size="small"
+                                          style={{ width: '100%' }}
+                                          value={presetIndex}
+                                          onChange={(idx) => {
+                                            const preset = catalogEntry.presets[idx];
+                                            const items = form.getFieldValue('items');
+                                            items[name] = {
+                                              ...items[name],
+                                              name: `${catalogName} (${preset.label})`,
+                                              actualVolume: preset.volume,
+                                              actualWeight: preset.weight,
+                                              _presetIndex: idx,
+                                            };
+                                            form.setFieldsValue({ items: [...items] });
+                                          }}
+                                          disabled={isReadOnly}
+                                        >
+                                          {catalogEntry.presets.map((p, i) => (
+                                            <Option key={i} value={i}>{p.label}</Option>
+                                          ))}
+                                        </Select>
+                                      ) : (
+                                        <span style={{ fontSize: 11, color: '#aaa', paddingLeft: 4 }}>—</span>
+                                      )}
+                                    </Col>
+                                    <Col span={3}>
+                                      <Form.Item {...restField} name={[name, 'actualVolume']} style={{ marginBottom: 0 }}>
+                                        <InputNumber size="small" min={0} step={0.1} style={{ width: '100%' }} placeholder="m³" />
                                       </Form.Item>
+                                    </Col>
+                                    <Col span={3}>
+                                      <Form.Item {...restField} name={[name, 'actualWeight']} style={{ marginBottom: 0 }}>
+                                        <InputNumber size="small" min={0} style={{ width: '100%' }} placeholder="kg" />
+                                      </Form.Item>
+                                    </Col>
+                                    <Col span={3}>
+                                      <Form.Item {...restField} name={[name, 'condition']} style={{ marginBottom: 0 }}>
+                                        <Select size="small" defaultValue="GOOD">
+                                          <Option value="GOOD">Tốt</Option>
+                                          <Option value="FRAGILE">Dễ vỡ</Option>
+                                          <Option value="DAMAGED">Hư hỏng</Option>
+                                        </Select>
+                                      </Form.Item>
+                                    </Col>
+                                    <Col span={3} style={{ textAlign: 'center' }}>
+                                      {!isReadOnly && (
+                                        <DeleteOutlined style={{ color: '#ff4d4f', cursor: 'pointer', fontSize: 14 }} onClick={() => remove(name)} />
+                                      )}
                                       {itemVal._aiRaw && Array.isArray(itemVal._aiRaw.imageIndices) && itemVal._aiRaw.imageIndices.length > 0 && aiImages.length > 0 && (
                                         <Tooltip title="Xem vị trí trong ảnh AI">
                                           <Button
@@ -991,226 +1058,168 @@ const SurveyInput = () => {
                                           />
                                         </Tooltip>
                                       )}
-                                    </div>
-                                    {isAIMapped && typeof confidence === 'number' && (
-                                      <div className="ai-confidence-badge">
-                                        AI · {Math.round(confidence * 100)}% phù hợp
-                                      </div>
-                                    )}
-                                  </Col>
-                                  <Col span={4}>
-                                    {isAIMapped && catalogEntry ? (
-                                      <Select
-                                        size="small"
-                                        style={{ width: '100%' }}
-                                        value={presetIndex}
-                                        onChange={(idx) => {
-                                          const preset = catalogEntry.presets[idx];
-                                          const items = form.getFieldValue('items');
-                                          items[name] = {
-                                            ...items[name],
-                                            name: `${catalogName} (${preset.label})`,
-                                            actualVolume: preset.volume,
-                                            actualWeight: preset.weight,
-                                            _presetIndex: idx,
-                                          };
-                                          form.setFieldsValue({ items: [...items] });
-                                        }}
-                                        disabled={isReadOnly}
-                                      >
-                                        {catalogEntry.presets.map((p, i) => (
-                                          <Option key={i} value={i}>{p.label}</Option>
-                                        ))}
-                                      </Select>
-                                    ) : (
-                                      <span style={{ fontSize: 11, color: '#aaa', paddingLeft: 4 }}>—</span>
-                                    )}
-                                  </Col>
-                                  <Col span={3}>
-                                    <Form.Item {...restField} name={[name, 'actualVolume']} style={{ marginBottom: 0 }}>
-                                      <InputNumber size="small" min={0} step={0.1} style={{ width: '100%' }} placeholder="m³" />
-                                    </Form.Item>
-                                  </Col>
-                                  <Col span={3}>
-                                    <Form.Item {...restField} name={[name, 'actualWeight']} style={{ marginBottom: 0 }}>
-                                      <InputNumber size="small" min={0} style={{ width: '100%' }} placeholder="kg" />
-                                    </Form.Item>
-                                  </Col>
-                                  <Col span={4}>
-                                    <Form.Item {...restField} name={[name, 'condition']} style={{ marginBottom: 0 }}>
-                                      <Select size="small" defaultValue="GOOD">
-                                        <Option value="GOOD">Tốt</Option>
-                                        <Option value="FRAGILE">Dễ vỡ</Option>
-                                        <Option value="DAMAGED">Hư hỏng</Option>
-                                      </Select>
-                                    </Form.Item>
-                                  </Col>
-                                  <Col span={2} style={{ textAlign: 'center' }}>
-                                    {!isReadOnly && (
-                                      <DeleteOutlined style={{ color: '#ff4d4f', cursor: 'pointer', fontSize: 14 }} onClick={() => remove(name)} />
-                                    )}
-                                  </Col>
-                                </Row>
-                              );
-                            }}
-                          </Form.Item>
-                        ))}
+                                    </Col>
+                                  </Row>
+                                );
+                              }}
+                            </Form.Item>
+                          ))}
 
-                        {!isReadOnly && (
+                          {/* {!isReadOnly && (
                           <Button size="small" type="dashed" onClick={() => add()} block icon={<PlusOutlined />} style={{ marginTop: 4 }}>
                             Thêm thủ công
                           </Button>
-                        )}
-                      </>
-                    )}
-                  </Form.List>
-                </div>
-              </div>
-
-              {/* ── 4B. ĐỒ ĐẠC PHỤ ─────────────────────────── */}
-              <Divider style={{ margin: '14px 0 10px' }} />
-              <Title level={5} style={{ margin: '0 0 8px' }}>4B. Ðồ đạc phụ</Title>
-
-              {/* Picker row */}
-              {!isReadOnly && (
-                <div className="survey-secondary-picker">
-                  <Select
-                    showSearch
-                    placeholder="Loại đồ phụ..."
-                    style={{ flex: '1 1 180px', minWidth: 180 }}
-                    value={secPickerKey}
-                    onChange={v => setSecPickerKey(v)}
-                    optionFilterProp="children"
-                  >
-                    {SECONDARY_CATALOG.map(item => (
-                      <Option key={item.key} value={item.key}>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <CatIcon icon={item.IconComp} color={item.color} size={13} />
-                          {item.label}
-                        </span>
-                      </Option>
-                    ))}
-                  </Select>
-                  <div style={{ display: 'flex', gap: 4 }}>
-                    {QTY_TIERS.map((tier, idx) => (
-                      <button
-                        key={idx}
-                        type="button"
-                        onClick={() => setSecPickerTier(secPickerTier === idx ? null : idx)}
-                        style={{
-                          padding: '3px 10px',
-                          borderRadius: 4,
-                          border: `1.5px solid ${secPickerTier === idx ? '#faad14' : '#d9d9d9'}`,
-                          background: secPickerTier === idx ? '#faad14' : '#fff',
-                          color: secPickerTier === idx ? '#fff' : '#555',
-                          cursor: 'pointer',
-                          fontSize: 12
-                        }}
-                      >
-                        {tier.label}
-                      </button>
-                    ))}
+                        )} */}
+                        </>
+                      )}
+                    </Form.List>
                   </div>
-                  <Button
-                    type="primary"
-                    icon={<PlusOutlined />}
-                    disabled={!secPickerKey || secPickerTier === null}
-                    onClick={() => {
-                      // Remove existing entry for same key if any, then add new one
-                      setSecondaryItems(prev => [
-                        ...prev.filter(x => x.key !== secPickerKey),
-                        { key: secPickerKey, tierIdx: secPickerTier }
-                      ]);
-                      setSecPickerKey(null);
-                      setSecPickerTier(null);
-                    }}
-                    className="survey-primary-btn"
-                  >
-                    Thêm
-                  </Button>
                 </div>
-              )}
 
-              {/* Selected secondary items chips */}
-              <div className="survey-items-container" style={{ display: 'flex', flexWrap: 'wrap', gap: 6, minHeight: 32 }}>
-                {secondaryItems.length === 0 && (
-                  <Text type="secondary" style={{ fontSize: 12, padding: '4px 0' }}>Chưa chọn đồ đạc phụ nào</Text>
-                )}
-                {secondaryItems.map(({ key, tierIdx }) => {
-                  const cat = SECONDARY_CATALOG.find(c => c.key === key);
-                  const tier = QTY_TIERS[tierIdx];
-                  return (
-                    <Tag
-                      key={key}
-                      closable={!isReadOnly}
-                      onClose={() => setSecondaryItems(prev => prev.filter(x => x.key !== key))}
-                      color="orange"
-                      style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, padding: '2px 8px' }}
+              </div>
+              <div className="survey-section-container">
+                <Title level={5} style={{ margin: '0 0 12px' }}>4B. Ðồ đạc phụ</Title>
+
+                {/* Picker row */}
+                {!isReadOnly && (
+                  <div className="survey-secondary-picker">
+                    <Select
+                      showSearch
+                      placeholder="Loại đồ phụ..."
+                      style={{ flex: '1 1 180px', minWidth: 180 }}
+                      value={secPickerKey}
+                      onChange={v => setSecPickerKey(v)}
+                      optionFilterProp="children"
                     >
-                      {cat && <CatIcon icon={cat.IconComp} color="#92400e" size={11} />}
-                      {cat?.label} <strong>({tier?.label})</strong>
-                    </Tag>
-                  );
-                })}
+                      {SECONDARY_CATALOG.map(item => (
+                        <Option key={item.key} value={item.key}>
+                          <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <CatIcon icon={item.IconComp} color={item.color} size={13} />
+                            {item.label}
+                          </span>
+                        </Option>
+                      ))}
+                    </Select>
+                    <div style={{ display: 'flex', gap: 4 }}>
+                      {QTY_TIERS.map((tier, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => setSecPickerTier(secPickerTier === idx ? null : idx)}
+                          style={{
+                            padding: '3px 10px',
+                            borderRadius: 4,
+                            border: `1.5px solid ${secPickerTier === idx ? '#faad14' : '#d9d9d9'}`,
+                            background: secPickerTier === idx ? '#faad14' : '#fff',
+                            color: secPickerTier === idx ? '#fff' : '#555',
+                            cursor: 'pointer',
+                            fontSize: 12
+                          }}
+                        >
+                          {tier.label}
+                        </button>
+                      ))}
+                    </div>
+                    <Button
+                      type="primary"
+                      icon={<PlusOutlined />}
+                      disabled={!secPickerKey || secPickerTier === null}
+                      onClick={() => {
+                        // Remove existing entry for same key if any, then add new one
+                        setSecondaryItems(prev => [
+                          ...prev.filter(x => x.key !== secPickerKey),
+                          { key: secPickerKey, tierIdx: secPickerTier }
+                        ]);
+                        setSecPickerKey(null);
+                        setSecPickerTier(null);
+                      }}
+                      className="survey-primary-btn"
+                    >
+                      Thêm
+                    </Button>
+                  </div>
+                )}
+
+                {/* Selected secondary items chips */}
+                <div className="survey-items-container" style={{ display: 'flex', flexWrap: 'wrap', gap: 6, minHeight: 32 }}>
+                  {secondaryItems.length === 0 && (
+                    <Text type="secondary" style={{ fontSize: 12, padding: '4px 0' }}>Chưa chọn đồ đạc phụ nào</Text>
+                  )}
+                  {secondaryItems.map(({ key, tierIdx }) => {
+                    const cat = SECONDARY_CATALOG.find(c => c.key === key);
+                    const tier = QTY_TIERS[tierIdx];
+                    return (
+                      <Tag
+                        key={key}
+                        closable={!isReadOnly}
+                        onClose={() => setSecondaryItems(prev => prev.filter(x => x.key !== key))}
+                        color="orange"
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, padding: '2px 8px' }}
+                      >
+                        {cat && <CatIcon icon={cat.IconComp} color="#92400e" size={11} />}
+                        {cat?.label} <strong>({tier?.label})</strong>
+                      </Tag>
+                    );
+                  })}
+                </div>
               </div>
 
               {/* ── 4C. ĐỒ VẬT QUAN TRỌNG ──────────────────────────────── */}
-              <Divider style={{ margin: '14px 0 10px' }} />
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                <WarningOutlined style={{ color: '#faad14', fontSize: 16 }} />
-                <Title level={5} style={{ margin: 0, color: '#d4380d' }}>4C. Đồ vật quan trọng / đặc biệt</Title>
+              <div className="survey-section-container" style={{ borderColor: '#ffd591', background: '#fffcf5' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                  <WarningOutlined style={{ color: '#faad14', fontSize: 16 }} />
+                  <Title level={5} style={{ margin: 0, color: '#d4380d' }}>4C. Đồ vật quan trọng / đặc biệt</Title>
+                </div>
+                <div style={{ background: '#fff7e6', border: '1px solid #ffd591', borderRadius: 8, padding: '10px 12px' }}>
+                  <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 8 }}>
+                    ⚠️ Đánh dấu các đồ vật cần xử lý đặc biệt. Sẽ được ghi chú vào hồ sơ vận chuyển.
+                  </Text>
+                  <Row gutter={[8, 6]}>
+                    {CRITICAL_ITEMS.map(item => (
+                      <Col span={12} key={item.key}>
+                        <div
+                          onClick={() => {
+                            if (isReadOnly) return;
+                            setCriticalItems(prev => {
+                              const next = new Set(prev);
+                              next.has(item.key) ? next.delete(item.key) : next.add(item.key);
+                              return next;
+                            });
+                          }}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 6,
+                            padding: '5px 8px',
+                            borderRadius: 6,
+                            border: `1.5px solid ${criticalItems.has(item.key) ? '#ff4d4f' : '#ffd591'}`,
+                            background: criticalItems.has(item.key) ? '#fff1f0' : '#fffbe6',
+                            cursor: isReadOnly ? 'default' : 'pointer',
+                            transition: 'all 0.15s'
+                          }}
+                        >
+                          <CatIcon icon={item.IconComp} color={criticalItems.has(item.key) ? '#dc2626' : item.color} size={16} />
+                          <span style={{ fontSize: 12, fontWeight: criticalItems.has(item.key) ? 600 : 400, color: criticalItems.has(item.key) ? '#cf1322' : '#555' }}>
+                            {item.label}
+                          </span>
+                          {criticalItems.has(item.key) && <LockOutlined style={{ marginLeft: 'auto', color: '#cf1322', fontSize: 12 }} />}
+                        </div>
+                      </Col>
+                    ))}
+                  </Row>
+                </div>
               </div>
-              <div style={{ background: '#fff7e6', border: '1px solid #ffd591', borderRadius: 8, padding: '10px 12px' }}>
-                <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 8 }}>
-                  ⚠️ Đánh dấu các đồ vật cần xử lý đặc biệt. Sẽ được ghi chú vào hồ sơ vận chuyển.
-                </Text>
-                <Row gutter={[8, 6]}>
-                  {CRITICAL_ITEMS.map(item => (
-                    <Col span={12} key={item.key}>
-                      <div
-                        onClick={() => {
-                          if (isReadOnly) return;
-                          setCriticalItems(prev => {
-                            const next = new Set(prev);
-                            next.has(item.key) ? next.delete(item.key) : next.add(item.key);
-                            return next;
-                          });
-                        }}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 6,
-                          padding: '5px 8px',
-                          borderRadius: 6,
-                          border: `1.5px solid ${criticalItems.has(item.key) ? '#ff4d4f' : '#ffd591'}`,
-                          background: criticalItems.has(item.key) ? '#fff1f0' : '#fffbe6',
-                          cursor: isReadOnly ? 'default' : 'pointer',
-                          transition: 'all 0.15s'
-                        }}
-                      >
-                        <CatIcon icon={item.IconComp} color={criticalItems.has(item.key) ? '#dc2626' : item.color} size={16} />
-                        <span style={{ fontSize: 12, fontWeight: criticalItems.has(item.key) ? 600 : 400, color: criticalItems.has(item.key) ? '#cf1322' : '#555' }}>
-                          {item.label}
-                        </span>
-                        {criticalItems.has(item.key) && <LockOutlined style={{ marginLeft: 'auto', color: '#cf1322', fontSize: 12 }} />}
-                      </div>
-                    </Col>
-                  ))}
-                </Row>
-              </div>
-
             </Col>
           </Row>
 
-          {/* FOOTER ACTIONS */}
-          <div style={{ textAlign: 'right', marginTop: '20px', borderTop: '1px solid #eee', paddingTop: '20px' }}>
+          <div className="survey-footer-actions">
             <Space>
               <Button onClick={() => setIsModalOpen(false)}>Đóng</Button>
               {!isReadOnly && (
                 <Button
                   type="primary"
                   htmlType="submit"
-                  style={{ background: '#2D4F36', borderColor: '#2D4F36', minWidth: '150px' }}
+                  style={{ background: '#44624a', borderColor: '#44624a', minWidth: '150px' }}
                   icon={<SaveOutlined />}
                 >
                   Hoàn Tất & Tính Giá
