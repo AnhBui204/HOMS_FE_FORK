@@ -40,6 +40,30 @@ const adminInvoiceService = {
     }
   }
   
+  ,
+  // Get structured e-invoice data (for printable view)
+  getEinvoice: async (id) => {
+    try {
+      const response = await api.get(`/admin/invoices/${id}/einvoice`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching e-invoice data', error);
+      throw error;
+    }
+  }
+  ,
+  /*
+  // Download e-invoice PDF as blob
+  getEinvoicePdf: async (id) => {
+    try {
+      const response = await api.get(`/admin/invoices/${id}/einvoice/pdf`, { responseType: 'blob' });
+      return response;
+    } catch (error) {
+      console.error('Error fetching e-invoice PDF', error);
+      throw error;
+    }
+  }
+  */
 };
 
 export default adminInvoiceService;

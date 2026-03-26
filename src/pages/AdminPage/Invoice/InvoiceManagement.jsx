@@ -18,6 +18,7 @@ import {
 import adminInvoiceService from '../../../services/adminInvoiceService';
 import adminStatisticService from '../../../services/adminStatisticService';
 import LocationPicker from '../../../components/LocationPicker';
+import EinvoiceModal from './EinvoiceModal';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -27,13 +28,14 @@ const primaryColor = '#44624A';
 const InvoiceManagement = () => {
   const [loading, setLoading] = useState(false);
   const [invoices, setInvoices] = useState([]);
-  const [pagination, setPagination] = useState({ current: 1, pageSize: 5, total: 0 });
-  // status is a single selected status value for filtering (keep simple like time order)
-  const [filters, setFilters] = useState({ search: '', status: '' });
-  const [timeOrder, setTimeOrder] = useState('nearest'); // 'nearest' = gần nhất (most recent first), 'reverse' = ngược lại (oldest first)
-
-  const [detailVisible, setDetailVisible] = useState(false);
+  // UI state for selected invoice detail modal
   const [selectedInvoice, setSelectedInvoice] = useState(null);
+  const [detailVisible, setDetailVisible] = useState(false);
+  // List filters and pagination for the main invoices table
+  const [filters, setFilters] = useState({ search: '', status: '' });
+  const [pagination, setPagination] = useState({ current: 1, pageSize: 5, total: 0 });
+  const [timeOrder, setTimeOrder] = useState('nearest');
+  
   const [detailLoading, setDetailLoading] = useState(false);
   const [mapLoading, setMapLoading] = useState(false);
   const [mapMarkers, setMapMarkers] = useState(null); // { pickup:{lat,lng}, delivery:{lat,lng} }
@@ -48,6 +50,8 @@ const InvoiceManagement = () => {
   const [paymentSearch, setPaymentSearch] = useState('');
   const [paymentsViewTimeRange, setPaymentsViewTimeRange] = useState('30d');
   const [paymentStatusFilter, setPaymentStatusFilter] = useState('all');
+  const [einvoiceVisible, setEinvoiceVisible] = useState(false);
+  const [einvoiceInvoiceId, setEinvoiceInvoiceId] = useState(null);
 
   // derived stats (revenue logic removed as requested)
   /*
@@ -562,10 +566,11 @@ const InvoiceManagement = () => {
       const info = map[s] || ['default', s || '—'];
       return <Tag color={info[0]}>{info[1]}</Tag>;
     } },
-    { title: 'Hành động', key: 'action', width: 120, render: (_, record) => (
-      <Space>
-        <Button className="btn-outline-primary" icon={<FolderOpenOutlined />} onClick={() => openDetail(record)}>Xem</Button>
-      </Space>
+    { title: 'Hành động', key: 'action', width: 140, render: (_, record) => (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-end' }}>
+        <Button className="btn-outline-primary" icon={<FolderOpenOutlined />} size="small" onClick={() => openDetail(record)}>Chi tiết</Button>
+  <Button className="btn-outline-primary" icon={<FileTextOutlined />} size="small" onClick={() => { setEinvoiceInvoiceId(record._id); setEinvoiceVisible(true); }}>Hóa đơn điện tử</Button>
+      </div>
     ) }
   ];
   const tabItems = [
@@ -1168,7 +1173,7 @@ const InvoiceManagement = () => {
                   </Card>
 
                   <Card size="small" style={{ marginBottom: 12 }}>
-                    <div className="invoice-label">Tài xế</div>
+                    <div className="invoice-label">Nhân Công</div>
                     {(selectedInvoice.assignedDrivers || []).length ? (
                       (selectedInvoice.assignedDrivers || []).map(d => (
                         <div key={d._id || d.phone || d.fullName} className="meta-row">
@@ -1217,6 +1222,12 @@ const InvoiceManagement = () => {
           )}
         </div>
       </Modal>
+      {/* E-invoice modal mounted here so it can be opened from the actions column */}
+      <EinvoiceModal
+        visible={einvoiceVisible}
+        invoiceId={einvoiceInvoiceId}
+        onClose={() => { setEinvoiceVisible(false); setEinvoiceInvoiceId(null); }}
+      />
     </div>
   );
 };
