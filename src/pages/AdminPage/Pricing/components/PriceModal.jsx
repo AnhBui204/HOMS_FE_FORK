@@ -79,12 +79,13 @@ const PriceModal = ({ visible, onClose, onSuccess, priceList }) => {
     const handleSubmit = async () => {
         try {
             const values = await form.validateFields();
+            const payload = { ...values };
             setLoading(true);
             if (priceList) {
-                await adminPriceService.updatePriceList(priceList._id, values);
+                await adminPriceService.updatePriceList(priceList._id, payload);
                 message.success('Bảng giá đã được cập nhật');
             } else {
-                await adminPriceService.createPriceList(values);
+                await adminPriceService.createPriceList(payload);
                 message.success('Bảng giá đã được tạo');
             }
             onSuccess();
@@ -118,16 +119,14 @@ const PriceModal = ({ visible, onClose, onSuccess, priceList }) => {
                             <InputNumber min={0} max={1} step={0.01} style={{ width: '100%' }} />
                         </Form.Item>
                     </Col>
-                    <Col span={3}>
-                        <Form.Item name="isActive" label="Kích hoạt" valuePropName="checked">
-                            <Switch />
-                        </Form.Item>
-                    </Col>
+                    {/* isActive switch moved to table actions column */}
                     <Col span={24}>
                         <Form.Item name="description" label="Mô tả">
                             <Input.TextArea rows={2} />
                         </Form.Item>
                     </Col>
+
+                    {/* effectiveFrom/effectiveTo removed */}
 
                     <Col span={24}><Divider orientation="left">Giá sàn tối thiểu</Divider></Col>
                     <Col span={8}>
@@ -293,35 +292,7 @@ const PriceModal = ({ visible, onClose, onSuccess, priceList }) => {
                 </Row>
             )
         },
-        {
-            key: 'itemRates',
-            label: 'Phí đồ vật',
-            children: (
-                <>
-                    <Text type="secondary" style={{ display: 'block', marginBottom: 12 }}>
-                        Phí dịch vụ tính theo từng đơn vị đồ vật (VNĐ / món)
-                    </Text>
-                    <Row gutter={16}>
-                        {[
-                            ['TV', 'TV / Màn hình'],
-                            ['FRIDGE', 'Tủ lạnh'],
-                            ['BED', 'Giường'],
-                            ['SOFA', 'Sofa'],
-                            ['WARDROBE', 'Tủ quần áo'],
-                            ['AC', 'Điều hòa'],
-                            ['WASHING_MACHINE', 'Máy giặt'],
-                            ['OTHER', 'Khác'],
-                        ].map(([field, label]) => (
-                            <Col span={6} key={field}>
-                                <Form.Item name={['itemServiceRates', field]} label={`${label} (đ)`}>
-                                    <VndInput />
-                                </Form.Item>
-                            </Col>
-                        ))}
-                    </Row>
-                </>
-            )
-        },
+        // 'Phí đồ vật' tab removed as requested
     ];
 
     return (

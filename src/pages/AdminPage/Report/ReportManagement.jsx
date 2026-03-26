@@ -199,7 +199,7 @@ const ReportManagement = () => {
     return (
         <div style={{ textAlign: 'left' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
-                <Title level={4} style={{ margin: 0, color: PRIMARY }}>Báo cáo sự cố</Title>
+                <Title level={4} style={{ margin: 0, color: PRIMARY }}>Báo cáo sự cố & Bồi thường</Title>
             </div>
 
             <Card style={{ borderRadius: '12px', border: 'none', marginBottom: 18, padding: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>

@@ -41,6 +41,16 @@ const adminPriceService = {
         }
     },
 
+    toggleActive: async (id, isActive) => {
+        try {
+            const response = await api.patch(`/admin/price-lists/${id}/toggle-active`, { isActive });
+            return response.data;
+        } catch (error) {
+            console.error('Error toggling active state', error);
+            throw error;
+        }
+    },
+
     deletePriceList: async (id) => {
         try {
             const response = await api.delete(`/admin/price-lists/${id}`);
