@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Modal, Button, Row, Col, Tag, Divider, Typography, Tooltip, Empty, message, Input, Space, Select } from "antd";
+import { Modal, Button, Row, Col, Tag, Divider, Typography, Tooltip, Empty, message, Input, Space } from "antd";
 import {
     EyeOutlined, CheckCircleOutlined, FileTextOutlined, EnvironmentOutlined,
     AppstoreOutlined, ArrowRightOutlined, InboxOutlined, ToolOutlined,
@@ -21,6 +21,7 @@ const SurveyPricingModal = ({ visible, onClose, ticket, survey, pricing, tourRef
     const [applying, setApplying] = useState(false);
     const [localPricing, setLocalPricing] = useState(pricing || {});
     const [promotions, setPromotions] = useState([]);
+    const [promoLocked, setPromoLocked] = useState(false);
 
     // Initialize local pricing when the modal opens or when the ticket changes.
     // Avoid re-writing localPricing on every `pricing` prop change so that
@@ -28,7 +29,46 @@ const SurveyPricingModal = ({ visible, onClose, ticket, survey, pricing, tourRef
     // overwritten by a parent re-render.
     useEffect(() => {
         if (visible) setLocalPricing(pricing || {});
-    }, [visible, ticket?._id]);
+        // When modal opens for a ticket, prefer the server-backed pricing snapshot to
+        // determine whether a promo was applied (this survives server restarts).
+        if (visible && ticket?._id) {
+            try {
+                const key = `appliedPromo_${ticket._id}`;
+                // If the incoming pricing prop already contains a promotion or discount,
+                // use that to lock the promo input (this covers server restarts where
+                // sessionStorage may be missing).
+                if (pricing && (pricing.promotion || pricing.discountAmount || pricing.totalAfterPromotion)) {
+                    const code = pricing.promotion?.code || '';
+                    const discountAmt = pricing.discountAmount || pricing.promotion?.discountAmount || 0;
+                    const totalAfter = pricing.totalAfterPromotion || pricing.totalAfter || null;
+                    setPromoLocked(true);
+                    setPromoCode(code);
+                    // ensure sessionStorage reflects the applied promo for quicker client-side checks
+                    try {
+                        sessionStorage.setItem(key, JSON.stringify({ code, discountAmount: discountAmt, totalAfter }));
+                    } catch (e) {
+                        console.warn('Failed to persist promo lock to sessionStorage', e);
+                    }
+                    // also seed localPricing.promotion if parent didn't include it
+                    setLocalPricing(prev => ({ ...(prev || {}), promotion: prev?.promotion || { code, discountAmount: discountAmt }, discountAmount: prev?.discountAmount || discountAmt, totalAfterPromotion: prev?.totalAfterPromotion || totalAfter }));
+                } else {
+                    // fallback to sessionStorage (if pricing didn't include promotion)
+                    const raw = sessionStorage.getItem(key);
+                    if (raw) {
+                        const obj = JSON.parse(raw);
+                        setPromoLocked(true);
+                        setPromoCode(obj.code || '');
+                        // also seed localPricing.promotion if parent didn't include it
+                        setLocalPricing(prev => ({ ...(prev || {}), promotion: prev?.promotion || { code: obj.code, discountAmount: obj.discountAmount || 0 }, discountAmount: prev?.discountAmount || obj.discountAmount || 0, totalAfterPromotion: prev?.totalAfterPromotion || obj.totalAfter || prev?.totalAfterPromotion }));
+                    } else {
+                        setPromoLocked(false);
+                    }
+                }
+            } catch (e) {
+                console.warn('Failed to read promo lock', e);
+            }
+        }
+    }, [visible, ticket?._id, pricing]);
 
     useEffect(() => {
         let mounted = true;
@@ -55,6 +95,8 @@ const SurveyPricingModal = ({ visible, onClose, ticket, survey, pricing, tourRef
     }, [ticket]);
 
     const handleApplyPromotion = async () => {
+        // Prevent applying again when we already locked a promo for this ticket
+        if (promoLocked) return;
         if (!promoCode || !promoCode.trim()) {
             message.warning('Vui lòng nhập mã khuyến mãi');
             return;
@@ -68,26 +110,58 @@ const SurveyPricingModal = ({ visible, onClose, ticket, survey, pricing, tourRef
             const res = await api.post('/promotions/apply', { code: promoCode.trim(), requestTicketId: ticket._id });
             if (res.data && res.data.success) {
                 const returned = res.data.data || {};
-                // returned.pricing contains updated pricing snapshot
+                // Merge returned.pricing with existing localPricing so we don't lose breakdown/line items
+                // when the backend returns only totals/discounts.
                 if (returned.pricing) {
-                    // ensure discountAmount and totalAfterPromotion are present
-                    const updated = {
-                        ...returned.pricing,
-                        discountAmount: returned.pricing.discountAmount || returned.discountAmount || 0,
-                        totalAfterPromotion: returned.pricing.totalAfterPromotion || returned.totalAfter
-                    };
-                    setLocalPricing(updated);
+                    const rp = returned.pricing || {};
+                    setLocalPricing(prev => {
+                        const base = prev || {};
+                        const merged = {
+                            ...base,
+                            ...rp,
+                            // ensure promotion/discount fields exist
+                            promotion: rp.promotion || { code: promoCode.trim(), discountAmount: rp.discountAmount || returned.discountAmount || 0 },
+                            discountAmount: rp.discountAmount || returned.discountAmount || 0,
+                            totalAfterPromotion: rp.totalAfterPromotion || returned.totalAfter || base.totalAfterPromotion
+                        };
+                        return merged;
+                    });
+                    // persist lock so reopening modal doesn't allow editing
+                    try {
+                        if (ticket?._id) {
+                            const key = `appliedPromo_${ticket._id}`;
+                            const discountAmt = rp.discountAmount || returned.discountAmount || 0;
+                            const totalAfter = rp.totalAfterPromotion || returned.totalAfter || null;
+                            sessionStorage.setItem(key, JSON.stringify({ code: promoCode.trim(), discountAmount: discountAmt, totalAfter }));
+                        }
+                    } catch (e) {
+                        console.warn('Failed to persist promo lock', e);
+                    }
+                    setPromoLocked(true);
+                    message.success('Áp dụng khuyến mãi thành công');
+                    if (typeof onPromotionApplied === 'function') onPromotionApplied(ticket._id, returned.pricing);
                 } else {
-                    // fallback: set promotion object and discount info
+                    // fallback: only discount numbers provided
                     setLocalPricing(prev => ({
                         ...(prev || {}),
                         promotion: { code: promoCode.trim(), discountAmount: returned.discountAmount || 0 },
                         discountAmount: returned.discountAmount || 0,
                         totalAfterPromotion: returned.totalAfter
                     }));
+                    // ensure the input reflects applied code and persist lock
+                    setPromoCode(promoCode.trim());
+                    try {
+                        if (ticket?._id) {
+                            const key = `appliedPromo_${ticket._id}`;
+                            sessionStorage.setItem(key, JSON.stringify({ code: promoCode.trim(), discountAmount: returned.discountAmount || 0, totalAfter: returned.totalAfter }));
+                        }
+                    } catch (e) {
+                        console.warn('Failed to persist promo lock', e);
+                    }
+                    setPromoLocked(true);
+                    message.success('Áp dụng khuyến mãi thành công');
+                    if (typeof onPromotionApplied === 'function') onPromotionApplied(ticket._id, { promotion: { code: promoCode.trim(), discountAmount: returned.discountAmount || 0 }, totalAfterPromotion: returned.totalAfter });
                 }
-                message.success('Áp dụng khuyến mãi thành công');
-                if (typeof onPromotionApplied === 'function') onPromotionApplied(ticket._id, (returned.pricing || { promotion: { code: promoCode.trim(), discountAmount: returned.discountAmount || 0 }, totalAfterPromotion: returned.totalAfter }));
             }
         } catch (err) {
             message.error(err.response?.data?.message || err.message || 'Áp dụng khuyến mãi thất bại');
@@ -309,24 +383,21 @@ const SurveyPricingModal = ({ visible, onClose, ticket, survey, pricing, tourRef
                                     {/* Promotion input */}
                                     {(!ticket?.invoice?.paymentStatus || ticket.invoice.paymentStatus === 'UNPAID') && (
                                         <div style={{ display: 'flex', gap: 10, marginTop: 12, alignItems: 'center' }}>
-                                            <Select
-                                                placeholder="Chọn mã khuyến mãi"
+                                            <Input
+                                                placeholder="Nhập mã khuyến mãi"
                                                 style={{ width: 320 }}
-                                                value={promoCode || undefined}
-                                                onChange={(val) => setPromoCode(val)}
-                                                allowClear
-                                            >
-                                                {promotions.map((p) => (
-                                                    <Select.Option key={p.code} value={p.code}>
-                                                        {p.code} — {p.description || (p.discountType === 'Percentage' ? `${p.discountValue}%` : `${p.discountValue.toLocaleString()}₫`)}
-                                                    </Select.Option>
-                                                ))}
-                                            </Select>
+                                                value={promoCode || ''}
+                                                onChange={(e) => setPromoCode(e.target.value)}
+                                                allowClear={!promoLocked}
+                                                onPressEnter={handleApplyPromotion}
+                                                disabled={promoLocked}
+                                            />
                                             <Button
                                                 onClick={handleApplyPromotion}
                                                 loading={applying}
                                                 type="default"
                                                 style={{ background: '#fff', color: '#2D4F36', borderColor: '#2D4F36' }}
+                                                disabled={promoLocked}
                                             >
                                                 Áp dụng
                                             </Button>
