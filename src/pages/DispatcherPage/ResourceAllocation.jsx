@@ -21,6 +21,9 @@ const ResourceAllocation = () => {
 
     // Form and Resource Data
     const [form] = Form.useForm();
+    const vehicleType = Form.useWatch('vehicleType', form);
+    const dispatchTime = Form.useWatch('dispatchTime', form);
+
     const [drivers, setDrivers] = useState([]);
     const [staff, setStaff] = useState([]);
     const [routesList, setRoutesList] = useState([]);
@@ -224,7 +227,7 @@ const ResourceAllocation = () => {
                 footer={null}
                 width={1500}
                 style={{ top: 10 }}
-                destroyOnClose
+                destroyOnClose={true}
             >
                 <Row gutter={[24, 24]}>
                     <Col span={10}>
@@ -233,8 +236,7 @@ const ResourceAllocation = () => {
                             <Card
                                 size="small"
                                 title="Thông tin đơn hàng"
-                                bodyStyle={{ padding: '8px 16px' }}
-                                headStyle={{ minHeight: '36px', background: '#f8f9fa' }}
+                                styles={{ body: { padding: '8px 16px' }, header: { minHeight: '36px', background: '#f8f9fa' } }}
                             >
                                 <Descriptions column={1} size="small" layout="horizontal">
                                     <Descriptions.Item label="Khách hàng">
@@ -261,7 +263,7 @@ const ResourceAllocation = () => {
                             <Card
                                 size="small"
                                 title="Cấu hình Nhân sự & Phương tiện"
-                                headStyle={{ minHeight: '36px', background: '#f8f9fa' }}
+                                styles={{ header: { minHeight: '36px', background: '#f8f9fa' } }}
                             >
                                 <Form form={form} layout="vertical" onFinish={handleSubmit} initialValues={{ vehicleCount: 1 }}>
                                     <Divider orientation="left" style={{ margin: '8px 0', fontSize: '13px' }}>Đội ngũ nhân sự</Divider>
@@ -353,7 +355,9 @@ const ResourceAllocation = () => {
                                 <ResourceMap
                                     pickup={mapCoords.pickup}
                                     delivery={mapCoords.delivery}
-                                    allRestrictions={allAdminRoutes.flatMap(r => r.roadRestrictions || [])}
+                                    allRoutes={allAdminRoutes}
+                                    vehicleType={vehicleType}
+                                    dispatchTime={dispatchTime}
                                 />
                             ) : (
                                 <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>

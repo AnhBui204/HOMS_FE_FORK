@@ -2,12 +2,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { Spin as AntdSpin, Alert, Badge, Space, Typography, List, Card, Tooltip, Button, Tag } from 'antd';
+import { Spin as AntdSpin, Alert, Badge, Space, Typography, List, Tooltip, Button, Tag } from 'antd';
 import { InfoCircleOutlined, CarOutlined, WarningOutlined, CompassOutlined } from '@ant-design/icons';
+import dayjs from 'dayjs';
 
 const { Text } = Typography;
 
-// Fix Leaflet default icon issues
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
     iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
@@ -21,7 +21,6 @@ const pickupIcon = new L.Icon({
     iconSize: [25, 41],
     iconAnchor: [12, 41],
     popupAnchor: [1, -34],
-    shadowSize: [41, 41]
 });
 
 const deliveryIcon = new L.Icon({
@@ -30,95 +29,185 @@ const deliveryIcon = new L.Icon({
     iconSize: [25, 41],
     iconAnchor: [12, 41],
     popupAnchor: [1, -34],
-    shadowSize: [41, 41]
 });
 
-// Helper component to center map
 function ChangeView({ bounds }) {
     const map = useMap();
     useEffect(() => {
         if (bounds) {
             map.fitBounds(bounds, { padding: [50, 50] });
         }
-        // Force Leaflet to recalculate dimensions (fixes issues inside Modals)
-        // We run it multiple times to catch the end of animations
         map.invalidateSize();
-        const timers = [
-            setTimeout(() => map.invalidateSize(), 300),
-            setTimeout(() => map.invalidateSize(), 800),
-            setTimeout(() => map.invalidateSize(), 1500),
-        ];
+        const timers = [setTimeout(() => map.invalidateSize(), 500)];
         return () => timers.forEach(t => clearTimeout(t));
     }, [map, bounds]);
     return null;
 }
 
-/**
- * Utility: Calculate distance between two coordinates in meters
- */
+// Tính khoảng cách 2 điểm
 function getDistance(p1, p2) {
-    const R = 6371e3; // metres
+    const R = 6371e3;
+    const dLat = (p2.lat - p1.lat) * Math.PI / 180;
+    const dLng = (p2.lng - p1.lng) * Math.PI / 180;
     const φ1 = p1.lat * Math.PI / 180;
     const φ2 = p2.lat * Math.PI / 180;
-    const Δφ = (p2.lat - p1.lat) * Math.PI / 180;
-    const Δλ = (p2.lng - p1.lng) * Math.PI / 180;
 
-    const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
         Math.cos(φ1) * Math.cos(φ2) *
-        Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+        Math.sin(dLng / 2) * Math.sin(dLng / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
     return R * c;
 }
 
-/**
- * Utility: Check if a point is near a restricted line or point
- */
-function isPointRestricted(point, restrictions) {
-    for (const res of restrictions) {
-        if (!res.isActive) continue;
-        const geom = res.geometry;
-        if (!geom || !geom.coordinates) continue;
+// Chuẩn hóa toạ độ tránh lỗi DB lưu ngược
+const normalizeCoord = (coord) => {
+    let resPoint = { lat: 0, lng: 0 };
+    if (Array.isArray(coord)) {
+        resPoint.lng = coord[0] > coord[1] ? coord[0] : coord[1];
+        resPoint.lat = coord[0] > coord[1] ? coord[1] : coord[0];
+    } else if (coord.lat && coord.lng) {
+        resPoint = { lat: coord.lat, lng: coord.lng };
+    }
+    return resPoint;
+};
 
-        if (geom.type === 'Point') {
-            const resPoint = { lng: geom.coordinates[0], lat: geom.coordinates[1] };
-            if (getDistance(point, resPoint) < 50) return res;
-        } else if (geom.type === 'LineString') {
-            // Check proximity to any point in the restriction line
-            for (const coord of geom.coordinates) {
-                const resPoint = { lng: coord[0], lat: coord[1] };
-                if (getDistance(point, resPoint) < 40) return res;
+function isRuleActive(rule, vehicleType, time) {
+    if (!rule) return false;
+
+    let vehicleMatch = false;
+    if (vehicleType && rule.restrictedVehicles?.length > 0) {
+        const vehicleNum = vehicleType.match(/(\d+(\.\d+)?)/)?.[0];
+        const normalizedInput = vehicleType.replace('ON', '').replace(' ', '').replace('XE', '').toUpperCase();
+
+        vehicleMatch = rule.restrictedVehicles.some(v => {
+            const vUpper = v.toUpperCase();
+            const vNum = v.match(/(\d+(\.\d+)?)/)?.[0];
+            return vUpper === normalizedInput ||
+                normalizedInput.includes(vUpper) ||
+                vUpper.includes(normalizedInput) ||
+                (vehicleNum && vNum && vehicleNum === vNum);
+        });
+    } else {
+        vehicleMatch = true;
+    }
+
+    let timeMatch = false;
+    if (time && rule.startTime && rule.endTime) {
+        const checkTime = dayjs(time);
+        const currentMinutes = checkTime.hour() * 60 + checkTime.minute();
+
+        const [startH, startM] = rule.startTime.split(':').map(Number);
+        const [endH, endM] = rule.endTime.split(':').map(Number);
+        const startMinutes = startH * 60 + startM;
+        const endMinutes = endH * 60 + endM;
+
+        if (endMinutes < startMinutes) {
+            timeMatch = currentMinutes >= startMinutes || currentMinutes <= endMinutes;
+        } else {
+            timeMatch = currentMinutes >= startMinutes && currentMinutes <= endMinutes;
+        }
+    } else {
+        timeMatch = true;
+    }
+
+    return vehicleMatch && timeMatch;
+}
+
+function isPointRestricted(point, allRoutes, vehicleType, dispatchTime) {
+    for (const route of allRoutes) {
+        if (!route.isActive) continue;
+
+        let isCurrentlyRestricted = false;
+        let activeNote = "";
+
+        if (route.trafficRules && route.trafficRules.length > 0) {
+            const activeRules = route.trafficRules.filter(rule => isRuleActive(rule, vehicleType, dispatchTime));
+            if (activeRules.length > 0) {
+                isCurrentlyRestricted = true;
+                activeNote = activeRules[0].note || "Giờ cao điểm / Cấm tải";
+            }
+        } else {
+            isCurrentlyRestricted = true;
+        }
+
+        if (!isCurrentlyRestricted) continue;
+
+        for (const res of (route.roadRestrictions || [])) {
+            if (!res.isActive || !res.geometry || !res.geometry.coordinates) continue;
+            const geom = res.geometry;
+            let isNear = false;
+
+            const checkDistLine = (coordArray) => {
+                if (coordArray.length < 2) return false;
+                for (let i = 0; i < coordArray.length - 1; i++) {
+                    const p1 = normalizeCoord(coordArray[i]);
+                    const p2 = normalizeCoord(coordArray[i + 1]);
+
+                    // THUẬT TOÁN NỘI SUY: Băm đoạn thẳng thành các điểm cách nhau 50m
+                    const distTotal = getDistance(p1, p2);
+                    const steps = Math.max(1, Math.ceil(distTotal / 50));
+
+                    for (let j = 0; j <= steps; j++) {
+                        const fraction = j / steps;
+                        const interpLat = p1.lat + (p2.lat - p1.lat) * fraction;
+                        const interpLng = p1.lng + (p2.lng - p1.lng) * fraction;
+
+                        if (getDistance(point, { lat: interpLat, lng: interpLng }) < 250) {
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            };
+
+            const checkDistPoint = (coordArray) => {
+                for (const coord of coordArray) {
+                    const p = normalizeCoord(coord);
+                    if (getDistance(point, p) < 250) return true;
+                }
+                return false;
+            };
+
+            if (geom.type === 'Point') {
+                isNear = checkDistPoint([geom.coordinates]);
+            } else if (geom.type === 'LineString') {
+                isNear = checkDistLine(geom.coordinates);
+            }
+
+            if (isNear) {
+                return {
+                    ...res,
+                    severity: 'AVOID',
+                    description: activeNote || res.description || "Tuyến đường hạn chế"
+                };
             }
         }
     }
     return null;
 }
 
-const ResourceMap = ({ pickup, delivery, allRestrictions = [] }) => {
+const ResourceMap = ({ pickup, delivery, allRoutes = [], vehicleType, dispatchTime }) => {
     const [routes, setRoutes] = useState([]);
     const [selectedRouteIdx, setSelectedRouteIdx] = useState(0);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
-    const [segments, setSegments] = useState([]); // [{ positions: [], isRestricted: bool, data: {} }]
+    const [segments, setSegments] = useState([]);
 
     const fetchRoute = useCallback(async () => {
         if (!pickup || !delivery) return;
         setLoading(true);
-        setError(null);
 
         try {
             const url = `https://router.project-osrm.org/route/v1/driving/${pickup.lng},${pickup.lat};${delivery.lng},${delivery.lat}?overview=full&geometries=geojson&alternatives=true`;
             const response = await fetch(url);
             const data = await response.json();
 
-            if (data.code !== 'Ok') {
-                throw new Error('Không thể tìm thấy tuyến đường phù hợp.');
+            if (data.code === 'Ok') {
+                setRoutes(data.routes);
+                setSelectedRouteIdx(0);
             }
-
-            setRoutes(data.routes);
-            setSelectedRouteIdx(0);
         } catch (err) {
-            setError(err.message);
+            console.error(err);
         } finally {
             setLoading(false);
         }
@@ -128,7 +217,6 @@ const ResourceMap = ({ pickup, delivery, allRestrictions = [] }) => {
         fetchRoute();
     }, [fetchRoute]);
 
-    // Process the selected route to detect restricted segments
     useEffect(() => {
         if (routes.length === 0) {
             setSegments([]);
@@ -139,20 +227,20 @@ const ResourceMap = ({ pickup, delivery, allRestrictions = [] }) => {
         const coordinates = route.geometry.coordinates.map(c => ({ lat: c[1], lng: c[0] }));
 
         const newSegments = [];
-        let currentSegment = { positions: [coordinates[0]], isRestricted: false, restriction: null };
+        const firstRestriction = isPointRestricted(coordinates[0], allRoutes, vehicleType, dispatchTime);
+        let currentSegment = { positions: [coordinates[0]], isRestricted: !!firstRestriction, restriction: firstRestriction };
 
         for (let i = 1; i < coordinates.length; i++) {
             const p = coordinates[i];
-            const restriction = isPointRestricted(p, allRestrictions);
+            const restriction = isPointRestricted(p, allRoutes, vehicleType, dispatchTime);
             const isRestricted = !!restriction;
 
             if (isRestricted === currentSegment.isRestricted) {
                 currentSegment.positions.push(p);
             } else {
-                // End current segment and start new one
                 newSegments.push(currentSegment);
                 currentSegment = {
-                    positions: [coordinates[i - 1], p], // Overlap one point to maintain continuity
+                    positions: [coordinates[i - 1], p],
                     isRestricted,
                     restriction
                 };
@@ -161,7 +249,7 @@ const ResourceMap = ({ pickup, delivery, allRestrictions = [] }) => {
         newSegments.push(currentSegment);
         setSegments(newSegments);
 
-    }, [routes, selectedRouteIdx, allRestrictions]);
+    }, [routes, selectedRouteIdx, allRoutes, vehicleType, dispatchTime]);
 
     if (!pickup || !delivery) {
         return (
@@ -172,17 +260,14 @@ const ResourceMap = ({ pickup, delivery, allRestrictions = [] }) => {
     }
 
     const bounds = L.latLngBounds([pickup.lat, pickup.lng], [delivery.lat, delivery.lng]);
-    const activeRoute = routes[selectedRouteIdx];
 
-    // Calculate restrictions for each route
     const routesWithInfo = routes.map((r, idx) => {
         const coords = r.geometry.coordinates.map(c => ({ lat: c[1], lng: c[0] }));
-        const restrictedPoints = coords.filter(p => !!isPointRestricted(p, allRestrictions));
         const uniqueResIds = new Set();
         const encounterRestrictions = [];
 
         coords.forEach(p => {
-            const res = isPointRestricted(p, allRestrictions);
+            const res = isPointRestricted(p, allRoutes, vehicleType, dispatchTime);
             if (res && !uniqueResIds.has(res._id)) {
                 uniqueResIds.add(res._id);
                 encounterRestrictions.push(res);
@@ -201,15 +286,7 @@ const ResourceMap = ({ pickup, delivery, allRestrictions = [] }) => {
 
     return (
         <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-            {/* Header Info */}
-            <div style={{
-                padding: '8px 16px',
-                background: '#fff',
-                borderBottom: '1px solid #f0f0f0',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
-            }}>
+            <div style={{ padding: '8px 16px', background: '#fff', borderBottom: '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Space>
                     <CompassOutlined style={{ color: '#1890ff' }} />
                     <Text strong>Lựa chọn lộ trình tối ưu</Text>
@@ -217,22 +294,14 @@ const ResourceMap = ({ pickup, delivery, allRestrictions = [] }) => {
                 <div style={{ fontSize: '12px' }}>
                     <Badge color="#1890ff" text="Bình thường" style={{ marginRight: 16 }} />
                     <Badge color="#ff4d4f" text="Đoạn đường hạn chế" />
+                    <Badge color="purple" text="Dữ liệu DB" style={{ marginLeft: 16 }} />
                 </div>
             </div>
 
             <div style={{ flex: 1, display: 'flex', position: 'relative', overflow: 'hidden' }}>
-                {/* Map Area */}
                 <div style={{ flex: 1, position: 'relative' }}>
-                    <MapContainer
-                        bounds={bounds}
-                        style={{ height: '100%', width: '100%' }}
-                        scrollWheelZoom={true}
-                    >
-                        <TileLayer
-                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                        />
-
+                    <MapContainer bounds={bounds} style={{ height: '100%', width: '100%' }} scrollWheelZoom={true}>
+                        <TileLayer attribution='&copy; OpenStreetMap' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                         <ChangeView bounds={bounds} />
 
                         <Marker position={[pickup.lat, pickup.lng]} icon={pickupIcon}>
@@ -243,34 +312,51 @@ const ResourceMap = ({ pickup, delivery, allRestrictions = [] }) => {
                             <Popup><b>Điểm giao hàng</b><br />{delivery.address}</Popup>
                         </Marker>
 
-                        {/* Draw Unselected Routes (Background) */}
+                        {/* TIA X: Vẽ đường dữ liệu gốc từ Database màu Tím */}
+                        {allRoutes.map((route) =>
+                            (route.roadRestrictions || []).map((res, i) => {
+                                if (!res.isActive || !res.geometry || !res.geometry.coordinates) return null;
+                                if (res.geometry.type === 'LineString') {
+                                    const positions = res.geometry.coordinates.map(c => {
+                                        const p = normalizeCoord(c);
+                                        return [p.lat, p.lng];
+                                    });
+                                    return (
+                                        <Polyline
+                                            key={`db-${route.code}-${i}`}
+                                            positions={positions}
+                                            pathOptions={{ color: 'purple', weight: 12, opacity: 0.3 }}
+                                        >
+                                            <Popup>
+                                                <b>Dữ liệu gốc từ DB:</b> {route.name}<br />
+                                                Chỉ hiển thị để Admin kiểm tra tọa độ
+                                            </Popup>
+                                        </Polyline>
+                                    );
+                                }
+                                return null;
+                            })
+                        )}
+
                         {routesWithInfo.map((r, idx) => {
                             if (idx === selectedRouteIdx) return null;
                             return (
                                 <Polyline
                                     key={`alt-${idx}`}
                                     positions={r.geometry.coordinates.map(c => [c[1], c[0]])}
-                                    pathOptions={{
-                                        color: '#bfbfbf',
-                                        weight: 4,
-                                        opacity: 0.4,
-                                        dashArray: '5, 10'
-                                    }}
-                                    eventHandlers={{
-                                        click: () => setSelectedRouteIdx(idx)
-                                    }}
+                                    pathOptions={{ color: '#bfbfbf', weight: 4, opacity: 0.4, dashArray: '5, 10' }}
+                                    eventHandlers={{ click: () => setSelectedRouteIdx(idx) }}
                                 />
                             );
                         })}
 
-                        {/* Draw Active Route Segments */}
                         {segments.map((seg, idx) => (
                             <Polyline
                                 key={`seg-${idx}`}
                                 positions={seg.positions.map(p => [p.lat, p.lng])}
                                 pathOptions={{
                                     color: seg.isRestricted ? '#ff4d4f' : '#1890ff',
-                                    weight: 7,
+                                    weight: seg.isRestricted ? 8 : 6,
                                     opacity: 0.9,
                                     lineJoin: 'round'
                                 }}
@@ -278,7 +364,7 @@ const ResourceMap = ({ pickup, delivery, allRestrictions = [] }) => {
                                 {seg.isRestricted && (
                                     <Popup>
                                         <Badge status="error" text="Hạn chế di chuyển" /><br />
-                                        <b>{seg.restriction.roadName}</b><br />
+                                        <b>{seg.restriction.roadName || 'Tuyến đường hạn chế'}</b><br />
                                         {seg.restriction.description}
                                     </Popup>
                                 )}
@@ -286,29 +372,14 @@ const ResourceMap = ({ pickup, delivery, allRestrictions = [] }) => {
                         ))}
                     </MapContainer>
 
-                    {/* Floating Map Controls */}
                     <div style={{ position: 'absolute', bottom: 20, right: 20, zIndex: 1000 }}>
                         <Tooltip title="Về trung tâm">
-                            <Button
-                                shape="circle"
-                                icon={<CompassOutlined />}
-                                size="large"
-                                onClick={() => { }} // Placeholder for recenter logic if needed, Leaflet handled via ChangeView bounds updates
-                                style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}
-                            />
+                            <Button shape="circle" icon={<CompassOutlined />} size="large" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }} />
                         </Tooltip>
                     </div>
                 </div>
 
-                {/* Sidebar - Route Selection */}
-                <div style={{
-                    width: '320px',
-                    background: '#fff',
-                    borderLeft: '1px solid #f0f0f0',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    zIndex: 1001
-                }}>
+                <div style={{ width: '320px', background: '#fff', borderLeft: '1px solid #f0f0f0', display: 'flex', flexDirection: 'column', zIndex: 1001 }}>
                     <div style={{ padding: '12px', background: '#fafafa', borderBottom: '1px solid #f0f0f0' }}>
                         <Text strong size="small">Tuyển đường gợi ý ({routes.length})</Text>
                     </div>
@@ -319,9 +390,7 @@ const ResourceMap = ({ pickup, delivery, allRestrictions = [] }) => {
                                 <div
                                     onClick={() => setSelectedRouteIdx(index)}
                                     style={{
-                                        padding: '12px 16px',
-                                        cursor: 'pointer',
-                                        transition: 'all 0.3s',
+                                        padding: '12px 16px', cursor: 'pointer', transition: 'all 0.3s',
                                         background: selectedRouteIdx === index ? '#e6f7ff' : '#fff',
                                         borderLeft: selectedRouteIdx === index ? '4px solid #1890ff' : '4px solid transparent',
                                         borderBottom: '1px solid #f0f0f0'
@@ -335,11 +404,11 @@ const ResourceMap = ({ pickup, delivery, allRestrictions = [] }) => {
                                     </div>
                                     <div style={{ display: 'flex', gap: '16px', fontSize: '13px', color: '#595959' }}>
                                         <span><CarOutlined /> {(item.distance / 1000).toFixed(1)} km</span>
-                                        <span> Thời gian: {Math.round(item.duration / 60)} phút</span>
+                                        <span>Thời gian: {Math.round(item.duration / 60)} phút</span>
                                     </div>
                                     {!item.isSafe && (
                                         <div style={{ marginTop: 8, fontSize: '11px', color: '#ff4d4f' }}>
-                                            <InfoCircleOutlined /> Có {item.restrictions.length} đoạn đường bị hạn chế
+                                            <InfoCircleOutlined /> Có {item.restrictions.length} khu vực bị hạn chế
                                         </div>
                                     )}
                                 </div>
@@ -347,7 +416,6 @@ const ResourceMap = ({ pickup, delivery, allRestrictions = [] }) => {
                         />
                     </div>
 
-                    {/* Selected Route Detailed Warnings */}
                     <div style={{ padding: '12px', borderTop: '1px solid #f0f0f0', background: '#fafafa' }}>
                         {currentRouteInfo?.restrictions.length > 0 ? (
                             <Alert
@@ -363,22 +431,14 @@ const ResourceMap = ({ pickup, delivery, allRestrictions = [] }) => {
                                 }
                             />
                         ) : (
-                            <Alert message="Lộ trình an toàn, không có đoạn đường cấm tải trọng/giờ." type="success" showIcon />
+                            <Alert message="Lộ trình an toàn, không có đoạn đường cấm." type="success" showIcon />
                         )}
                     </div>
                 </div>
             </div>
 
             {loading && (
-                <div style={{
-                    position: 'absolute',
-                    top: 0, left: 0, right: 0, bottom: 0,
-                    zIndex: 2000,
-                    background: 'rgba(255, 255, 255, 0.6)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                }}>
+                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 2000, background: 'rgba(255, 255, 255, 0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <AntdSpin size="large" tip="Đang phân tích các cung đường..." />
                 </div>
             )}
