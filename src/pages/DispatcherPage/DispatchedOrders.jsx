@@ -20,7 +20,7 @@ const DispatchedOrders = () => {
         try {
             const response = await api.get('/invoices');
             if (response.data && response.data.success) {
-                const targetStatuses = statusFilter ? [statusFilter] : ['ASSIGNED', 'IN_DISPATCH', 'IN_PROGRESS', 'COMPLETED'];
+                const targetStatuses = statusFilter ? [statusFilter] : ['ASSIGNED', 'IN_PROGRESS', 'COMPLETED'];
                 const filtered = response.data.data.filter(inv => targetStatuses.includes(inv.status));
                 setInvoices(filtered);
             }
@@ -33,12 +33,12 @@ const DispatchedOrders = () => {
 
     useEffect(() => {
         fetchInvoices();
-        
+
         // Auto-reload data every 10 seconds to catch DB changes
         const intervalId = setInterval(() => {
             fetchInvoices(true);
         }, 10000);
-        
+
         return () => clearInterval(intervalId);
     }, [statusFilter]); // trigger re-fetch/filter when filter changes
 
@@ -122,7 +122,7 @@ const DispatchedOrders = () => {
     return (
         <div style={{ padding: '24px', background: '#fff', borderRadius: '8px' }}>
             <Title level={4}>Theo dõi đơn hàng đã điều phối</Title>
-            
+
             <div style={{ marginBottom: 16, display: 'flex', gap: '10px', alignItems: 'center' }}>
                 <Text strong>Lọc trạng thái:</Text>
                 <Select

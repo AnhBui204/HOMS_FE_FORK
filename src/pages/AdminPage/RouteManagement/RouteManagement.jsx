@@ -9,14 +9,30 @@ const DISTRICTS = [
     "HAI_CHAU", "THANH_KHE", "SON_TRA", "NGU_HANH_SON", "LIEN_CHIEU", "CAM_LE"
 ];
 
+const DISTRICT_LABELS = {
+    "HAI_CHAU": "Quận Hải Châu",
+    "THANH_KHE": "Quận Thanh Khê",
+    "SON_TRA": "Quận Sơn Trà",
+    "NGU_HANH_SON": "Quận Ngũ Hành Sơn",
+    "LIEN_CHIEU": "Quận Liên Chiểu",
+    "CAM_LE": "Quận Cẩm Lệ"
+};
+
+const RULE_TYPE_LABELS = {
+    "PEAK_HOUR": "Giờ cao điểm",
+    "TRUCK_BAN": "Cấm xe tải",
+    "WEATHER": "Thời tiết",
+    "HOLIDAY": "Ngày lễ"
+};
+
 const RouteManagement = () => {
     const [routes, setRoutes] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [isMenuModalVisible, setIsMenuModalVisible] = useState(false);
     const [isRuleModalVisible, setIsRuleModalVisible] = useState(false);
     const [editingRoute, setEditingRoute] = useState(null);
     const [form] = Form.useForm();
     const [ruleForm] = Form.useForm();
+    const [isMenuModalVisible, setIsMenuModalVisible] = useState(false);
 
     const fetchRoutes = async () => {
         setLoading(true);
@@ -75,7 +91,7 @@ const RouteManagement = () => {
             setIsRuleModalVisible(false);
             fetchRoutes();
         } catch (error) {
-             message.error(error.response?.data?.message || 'Có lỗi xảy ra');
+            message.error(error.response?.data?.message || 'Có lỗi xảy ra');
         }
     };
 
@@ -97,16 +113,16 @@ const RouteManagement = () => {
             render: text => <strong>{text}</strong>
         },
         {
-            title: 'Từ Quận',
-            dataIndex: 'fromDistrict',
-            key: 'fromDistrict',
-            render: text => <Tag color="blue">{text}</Tag>
+            title: 'Tên Đường',
+            dataIndex: 'name',
+            key: 'name',
+            render: text => <strong>{text}</strong>
         },
         {
-            title: 'Đến Quận',
-            dataIndex: 'toDistrict',
-            key: 'toDistrict',
-            render: text => <Tag color="green">{text}</Tag>
+            title: 'Quận/Huyện',
+            dataIndex: 'district',
+            key: 'district',
+            render: text => <Tag color="blue">{DISTRICT_LABELS[text] || text}</Tag>
         },
         {
             title: 'Khu vực',
@@ -127,7 +143,7 @@ const RouteManagement = () => {
                 <Space direction="vertical">
                     {(rules || []).map((rule, idx) => (
                         <Tag color="orange" key={idx}>
-                            {rule.ruleType}: {rule.startTime} - {rule.endTime}
+                            {RULE_TYPE_LABELS[rule.ruleType] || rule.ruleType}: {rule.startTime} - {rule.endTime}
                         </Tag>
                     ))}
                 </Space>
@@ -154,20 +170,20 @@ const RouteManagement = () => {
 
             <Modal title={editingRoute ? 'Cập nhật lộ trình' : 'Tạo mới lộ trình'} visible={isMenuModalVisible} onCancel={() => setIsMenuModalVisible(false)} onOk={() => form.submit()} width={800}>
                 <Form form={form} layout="vertical" onFinish={handleRouteSubmit}>
-                   <Row gutter={16}>
+                    <Row gutter={16}>
                         <Col span={12}>
-                           <Form.Item name="code" label="Mã lộ trình" rules={[{ required: true }]}>
-                               <Input placeholder="Ví dụ: HCM-Q1-Q7" disabled={!!editingRoute} />
-                           </Form.Item>
+                            <Form.Item name="code" label="Mã đường (Viết tắt)" rules={[{ required: true }]}>
+                                <Input placeholder="Ví dụ: QUANG_TRUNG" disabled={!!editingRoute} />
+                            </Form.Item>
                         </Col>
                         <Col span={12}>
-                           <Form.Item name="area" label="Khu vực (Tỉnh/Thành)" rules={[{ required: true }]}>
-                               <Input placeholder="Ví dụ: Da_Nang" />
-                           </Form.Item>
+                            <Form.Item name="name" label="Tên đường" rules={[{ required: true }]}>
+                                <Input placeholder="Ví dụ: Quang Trung" />
+                            </Form.Item>
                         </Col>
-                        
+
                         <Col span={12}>
-                            <Form.Item name="fromDistrict" label="Từ Quận/Huyện" rules={[{ required: true }]}>
+                            <Form.Item name="district" label="Quận/Huyện" rules={[{ required: true }]}>
                                 <Select>
                                     {DISTRICTS.map(d => <Option key={d} value={d}>{d}</Option>)}
                                 </Select>
@@ -175,29 +191,27 @@ const RouteManagement = () => {
                         </Col>
 
                         <Col span={12}>
-                            <Form.Item name="toDistrict" label="Đến Quận/Huyện" rules={[{ required: true }]}>
-                                <Select>
-                                    {DISTRICTS.map(d => <Option key={d} value={d}>{d}</Option>)}
-                                </Select>
+                            <Form.Item name="area" label="Thành phố" rules={[{ required: true }]}>
+                                <Input placeholder="Ví dụ: Da_Nang" />
                             </Form.Item>
                         </Col>
 
                         <Col span={8}>
-                           <Form.Item name="estimatedDistanceKm" label="Khoảng cách (km)">
-                               <InputNumber style={{ width: '100%' }} min={0} />
-                           </Form.Item>
+                            <Form.Item name="estimatedDistanceKm" label="Khoảng cách (km)">
+                                <InputNumber style={{ width: '100%' }} min={0} />
+                            </Form.Item>
                         </Col>
                         <Col span={8}>
-                           <Form.Item name="estimatedDurationMin" label="Thời gian (phút)">
-                               <InputNumber style={{ width: '100%' }} min={0} />
-                           </Form.Item>
+                            <Form.Item name="estimatedDurationMin" label="Thời gian (phút)">
+                                <InputNumber style={{ width: '100%' }} min={0} />
+                            </Form.Item>
                         </Col>
                         <Col span={8}>
-                           <Form.Item name="routeSurcharge" label="Phụ phí lộ trình (VND)">
-                               <InputNumber style={{ width: '100%' }} min={0} />
-                           </Form.Item>
+                            <Form.Item name="routeSurcharge" label="Phụ phí lộ trình (VND)">
+                                <InputNumber style={{ width: '100%' }} min={0} />
+                            </Form.Item>
                         </Col>
-                   </Row>
+                    </Row>
                 </Form>
             </Modal>
 
@@ -214,35 +228,35 @@ const RouteManagement = () => {
 
                     <Row gutter={16}>
                         <Col span={12}>
-                           <Form.Item name="startTime" label="Giờ bắt đầu (VD: 06:00)" rules={[{ required: true }]}>
-                               <Input placeholder="06:00" />
-                           </Form.Item>
+                            <Form.Item name="startTime" label="Giờ bắt đầu (VD: 06:00)" rules={[{ required: true }]}>
+                                <Input placeholder="06:00" />
+                            </Form.Item>
                         </Col>
                         <Col span={12}>
-                           <Form.Item name="endTime" label="Giờ kết thúc (VD: 09:00)" rules={[{ required: true }]}>
-                               <Input placeholder="09:00" />
-                           </Form.Item>
+                            <Form.Item name="endTime" label="Giờ kết thúc (VD: 09:00)" rules={[{ required: true }]}>
+                                <Input placeholder="09:00" />
+                            </Form.Item>
                         </Col>
                     </Row>
 
                     <Form.Item name="daysOfWeek" label="Ngày áp dụng">
-                         <Select mode="multiple" placeholder="Trống = Cả tuần">
-                             <Option value="MONDAY">Thứ 2</Option>
-                             <Option value="TUESDAY">Thứ 3</Option>
-                             <Option value="WEDNESDAY">Thứ 4</Option>
-                             <Option value="THURSDAY">Thứ 5</Option>
-                             <Option value="FRIDAY">Thứ 6</Option>
-                             <Option value="SATURDAY">Thứ 7</Option>
-                             <Option value="SUNDAY">Chủ nhật</Option>
-                         </Select>
+                        <Select mode="multiple" placeholder="Trống = Cả tuần">
+                            <Option value="MONDAY">Thứ 2</Option>
+                            <Option value="TUESDAY">Thứ 3</Option>
+                            <Option value="WEDNESDAY">Thứ 4</Option>
+                            <Option value="THURSDAY">Thứ 5</Option>
+                            <Option value="FRIDAY">Thứ 6</Option>
+                            <Option value="SATURDAY">Thứ 7</Option>
+                            <Option value="SUNDAY">Chủ nhật</Option>
+                        </Select>
                     </Form.Item>
-                    
+
                     <Form.Item name="restrictedVehicles" label="Loại xe bị cấm (Tùy chọn)">
-                         <Select mode="tags" placeholder="Ví dụ: 2T, 5T" />
+                        <Select mode="tags" placeholder="Ví dụ: 2T, 5T" />
                     </Form.Item>
 
                     <Form.Item name="note" label="Ghi chú">
-                         <Input.TextArea rows={2} />
+                        <Input.TextArea rows={2} />
                     </Form.Item>
                 </Form>
             </Modal>
