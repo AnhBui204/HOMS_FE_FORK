@@ -106,5 +106,156 @@ const ContractDetailModal = ({ contract, open, onClose, onDownload }) => {
 };
 
 
+const MyContract = () => {
+  const [contracts, setContracts]   = useState([]);
+  const [loading, setLoading]       = useState(false);
+  const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
+  const [filters, setFilters]       = useState({ status: undefined, search: '' });
+  const [stats, setStats]           = useState({ total: 0, signed: 0, pending: 0, expired: 0 });
+  const [selectedContract, setSelectedContract] = useState(null);
+  const [detailOpen, setDetailOpen]             = useState(false);
+  const [detailLoading, setDetailLoading]       = useState(false);
+
+  const fetchContracts = useCallback(async (page = 1, pageSize = 10, currentFilters = filters) => {
+    setLoading(true);
+    try {
+      const res = await ContractService.getMyContracts({
+        page, limit: pageSize,
+        ...(currentFilters.status && { status: currentFilters.status }),
+        ...(currentFilters.search && { search: currentFilters.search }),
+      });
+      if (res.success) {
+        setContracts(res.data);
+        setPagination(prev => ({ ...prev, current: page, pageSize, total: res.pagination?.total || 0 }));
+        if (res.stats) setStats(res.stats);
+      }
+    } catch {
+      message.error('Không thể tải danh sách hợp đồng.');
+    } finally {
+      setLoading(false);
+    }
+  }, [filters]);
+
+  useEffect(() => {
+    fetchContracts(1, 10, { status: undefined, search: '' });
+  
+  }, []);
+
+  
+
+  return (
+    <>
+       <AppHeader />
+    <div style={{ padding: 24, background: '#f1f5f9', minHeight: '100vh' }}>
+ 
+      <div style={{ marginBottom: 24 }}>
+        <Title level={3} style={{ margin: 0, color: '#0f172a', fontWeight: 700 }}>
+          <FileTextOutlined style={{ marginRight: 10, color: '#3b82f6' }} />
+          Hợp đồng của tôi
+        </Title>
+        <Text type="secondary">Xem và tải xuống tất cả hợp đồng của bạn</Text>
+      </div>
+
+      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+        {[
+          { title: 'Tổng hợp đồng', value: stats.total,   icon: <FileTextOutlined />,         color: '#3b82f6', bg: '#eff6ff' },
+          { title: 'Đã ký',         value: stats.signed,  icon: <CheckCircleOutlined />,       color: '#10b981', bg: '#ecfdf5' },
+          { title: 'Chờ ký',        value: stats.pending, icon: <ClockCircleOutlined />,       color: '#f59e0b', bg: '#fffbeb' },
+          { title: 'Hết hạn',       value: stats.expired, icon: <ExclamationCircleOutlined />, color: '#ef4444', bg: '#fef2f2' },
+        ].map((s) => (
+          <Col xs={24} sm={12} md={6} key={s.title}>
+            <Card size="small" style={{ border: 'none', borderRadius: 12, background: s.bg, boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ width: 44, height: 44, borderRadius: 10, background: s.color, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 18, flexShrink: 0 }}>
+                  {s.icon}
+                </div>
+                <Statistic
+                  title={<span style={{ fontSize: 12, color: '#64748b', fontWeight: 500 }}>{s.title}</span>}
+                  value={s.value}
+                  valueStyle={{ fontSize: 22, fontWeight: 700, color: '#0f172a', lineHeight: 1.2 }}
+                />
+              </div>
+            </Card>
+          </Col>
+        ))}
+      </Row>
+
+      <Card style={{ borderRadius: 12, border: 'none', boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }} bodyStyle={{ padding: 0 }}>
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid #f1f5f9', display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+          <Search
+            placeholder="Tìm theo số hợp đồng..."
+            allowClear
+            style={{ width: 280 }}
+            onSearch={(val) => {
+              const f = { ...filters, search: val };
+              setFilters(f);
+              fetchContracts(1, pagination.pageSize, f);
+            }}
+          />
+          <Select
+            placeholder="Lọc trạng thái" allowClear style={{ width: 160 }}
+            value={filters.status}
+            onChange={(val) => {
+              const f = { ...filters, status: val };
+              setFilters(f);
+              fetchContracts(1, pagination.pageSize, f);
+            }}
+          >
+            {Object.entries(STATUS_CONFIG).map(([key, val]) => (
+              <Option value={key} key={key}><Space size={6}>{val.icon}{val.label}</Space></Option>
+            ))}
+          </Select>
+          <Button icon={<SyncOutlined />} style={{ marginLeft: 'auto' }}
+            onClick={() => fetchContracts(1, pagination.pageSize, filters)}>
+            Làm mới
+          </Button>
+        </div>
+
+        <Table
+          columns={columns}
+          dataSource={contracts}
+          rowKey="_id"
+          loading={loading}
+          scroll={{ x: 800 }}
+          pagination={{
+            ...pagination,
+            showSizeChanger: true,
+            pageSizeOptions: ['10', '20', '50'],
+            showTotal: (total) => `Tổng ${total} hợp đồng`,
+            style: { padding: '12px 20px' },
+          }}
+          onChange={(pag) => fetchContracts(pag.current, pag.pageSize, filters)}
+          locale={{
+            emptyText: (
+              <Empty image={Empty.PRESENTED_IMAGE_SIMPLE}
+                description={
+                  <Text type="secondary">
+                    {filters.status || filters.search ? 'Không tìm thấy hợp đồng phù hợp' : 'Bạn chưa có hợp đồng nào'}
+                  </Text>
+                }
+              />
+            ),
+          }}
+        />
+      </Card>
+
+      {detailLoading ? (
+        <Modal open={detailOpen} footer={null} onCancel={closeDetail} width={820}>
+          <div style={{ textAlign: 'center', padding: '60px 0' }}>
+            <Spin size="large" tip="Đang tải..." />
+          </div>
+        </Modal>
+      ) : (
+        <ContractDetailModal
+          contract={selectedContract}
+          open={detailOpen}
+          onClose={closeDetail}
+          onDownload={handleDownload}
+        />
+      )}
+    </div>
+    </>
+  );
+};
 
 export default MyContract;
