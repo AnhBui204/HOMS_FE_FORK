@@ -304,6 +304,9 @@ const handleDownload = async (contractId) => {
             showSizeChanger: true,
             pageSizeOptions: ['10', '20', '50'],
             showTotal: (total) => `Tổng ${total} hợp đồng`,
+             locale: {
+      items_per_page: '/Trang',
+    },
             style: { padding: '12px 20px' },
           }}
           onChange={(pag) => fetchContracts(pag.current, pag.pageSize, filters)}
