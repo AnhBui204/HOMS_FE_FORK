@@ -216,6 +216,11 @@ useEffect(() => {
                           label: "Trang cá nhân",
                           onClick: () => navigate("/customer/profile")
                         },
+                         {
+        key: "contracts",
+        label: "Hợp đồng của tôi",
+        onClick: () => navigate("/customer/contracts") 
+      },
                         {
                           type: "divider",
                         },

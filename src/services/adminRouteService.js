@@ -59,6 +59,16 @@ const adminRouteService = {
             console.error('Error adding traffic rule', error);
             throw error;
         }
+    },
+
+    addRoadRestriction: async (id, restrictionData) => {
+        try {
+            const response = await api.post(`/admin/routes/${id}/road-restrictions`, restrictionData);
+            return response.data;
+        } catch (error) {
+            console.error('Error adding road restriction', error);
+            throw error;
+        }
     }
 };
 

@@ -135,7 +135,7 @@ const SurveySchedulingPage = () => {
         return (
           <div>
             <b>Thời gian:</b> {scheduledDate ? dayjs(scheduledDate).format("HH:mm - DD/MM/YYYY") : "Chưa rõ"} <br />
-            <b>Hình thức:</b> <Tag color={surveyType === "ONLINE" ? "purple" : "cyan"}>{surveyType}</Tag>
+            <b>Hình thức:</b> <Tag color={surveyType === "ONLINE" ? "purple" : "cyan"}>{surveyType === "ONLINE" ? "Trực tuyến" : "Trực tiếp"}</Tag>
           </div>
         );
       },

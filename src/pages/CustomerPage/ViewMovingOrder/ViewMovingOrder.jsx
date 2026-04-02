@@ -128,7 +128,8 @@ const OrderCard = ({
   onViewIncident,
   onCancelQuote,
   onRateService,    // [RATING] handler mở modal đánh giá
-  tourRefs,         // Refs for Ant Design Tour
+  tourRefs,   
+    onDepositPayment,      // Refs for Ant Design Tour
 }) => {
   const [expanded, setExpanded] = useState(false);
 
@@ -149,9 +150,12 @@ const OrderCard = ({
 
   // [RATING] Kiểm tra điều kiện hiển thị nút đánh giá
   const isInvoiceCompleted = ticket.invoice?.status === "COMPLETED";
+  const isPaid             = ticket.invoice?.paymentStatus === "PAID";
   const isRated            = ticket.invoice?.isRated === true;
-  const canRate            = isInvoiceCompleted && !isRated;
-
+  const canRate            = isInvoiceCompleted && isPaid && !isRated;
+const canPayRemaining =
+  ["IN_PROGRESS", "COMPLETED"].includes(ticket.invoice?.status) &&
+  ticket.invoice?.paymentStatus === "PARTIAL";
   return (
     <div className={`mo-card ${isQuoted ? "mo-card--highlight" : ""}`}>
       {/* ── QUOTED: Action notice banner ── */}
@@ -259,6 +263,14 @@ const OrderCard = ({
               <CreditCardOutlined /> Thanh toán cọc
             </button>
           )}
+          {canPayRemaining && (
+  <button
+    className="mo-btn mo-btn--deposit"
+    onClick={() => onDepositPayment(ticket)}
+  >
+    <CreditCardOutlined /> Tất toán
+  </button>
+)}
           {hasPricing && !isQuoted && (
             <button className="mo-btn mo-btn--contact" onClick={() => onViewSurvey(ticket)}>
               <FileTextOutlined /> Xem báo giá
@@ -317,19 +329,23 @@ const OrderCard = ({
           )}
           {/* [RATING] Hiển thị trạng thái đánh giá trong chi tiết */}
           {isInvoiceCompleted && (
-            <div className="mo-expand-item">
-              <span className="mo-expand-label">Đánh giá dịch vụ</span>
-              <span className="mo-expand-val">
-                {isRated ? (
-                  <span style={{ color: '#f59e0b', fontWeight: 600 }}>
-                    <StarFilled style={{ marginRight: 4 }} />Đã đánh giá
-                  </span>
-                ) : (
-                  <span style={{ color: '#64748b' }}>Chưa đánh giá</span>
-                )}
-              </span>
-            </div>
-          )}
+  <div className="mo-expand-item">
+    <span className="mo-expand-label">Đánh giá dịch vụ</span>
+    <span className="mo-expand-val">
+      {isRated ? (
+        <span style={{ color: '#f59e0b', fontWeight: 600 }}>
+          <StarFilled style={{ marginRight: 4 }} />Đã đánh giá
+        </span>
+      ) : isPaid ? (
+        <span style={{ color: '#64748b' }}>Chưa đánh giá</span>
+      ) : (
+        <span style={{ color: '#ef4444' }}>
+          Cần thanh toán đủ để đánh giá
+        </span>
+      )}
+    </span>
+  </div>
+)}
         </div>
       </div>
     </div>

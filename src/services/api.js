@@ -23,12 +23,34 @@ const PUBLIC_ENDPOINTS = [
   '/reset-password',
   '/ai/chat',
   '/auth/google-login',
-  '/orders/validate'
+  '/orders/validate',
+  '/csrf-token'
 ];
+let csrfToken = null;
+
+export const initCsrfToken = async () => {
+  try {
+    const res = await api.get('/csrf-token', {
+  withCredentials: true,
+});
+    csrfToken = res.data.csrfToken;
+    console.log('✅ CSRF token loaded',csrfToken);
+  } catch (err) {
+    console.error('❌ Failed to load CSRF token', err);
+  }
+};
+
 // Hàm gắn interceptor
 export const setupInterceptors = (contextLogout) => {
   api.interceptors.request.use(
     async (config) => {
+      if (['post', 'put', 'patch', 'delete'].includes(config.method)) {
+      if (!csrfToken) {
+        await initCsrfToken();
+      }
+      config.headers['X-CSRF-Token'] = csrfToken;
+      console.log("CSRF HEADER:", csrfToken);
+    }
       const isPublicPage = PUBLIC_ENDPOINTS.some(endpoint => config.url.endsWith(endpoint));
       if (isPublicPage) {
         return config;
