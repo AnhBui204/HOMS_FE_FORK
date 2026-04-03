@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Button, Modal, Form, Input, Card, Select, Space, Tag, message, Popconfirm, Row, Col, InputNumber, Typography, Divider, Tooltip, List, Badge } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, InfoCircleOutlined, EnvironmentOutlined, SearchOutlined, ClearOutlined, UndoOutlined, CompassOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, InfoCircleOutlined, EnvironmentOutlined, SearchOutlined, ClearOutlined, UndoOutlined, CompassOutlined, EyeOutlined } from '@ant-design/icons';
 import { MapContainer, TileLayer, Marker, Polyline, useMapEvents, useMap, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -84,9 +84,12 @@ const RouteManagement = () => {
     const [isRouteModalVisible, setIsRouteModalVisible] = useState(false);
     const [isRuleModalVisible, setIsRuleModalVisible] = useState(false);
     const [isRestrictionModalVisible, setIsRestrictionModalVisible] = useState(false);
+    const [isViewWorkspaceVisible, setIsViewWorkspaceVisible] = useState(false);
 
     const [editingRoute, setEditingRoute] = useState(null);
+    const [viewingRoute, setViewingRoute] = useState(null);
     const [editingRestriction, setEditingRestriction] = useState(null);
+    const [editingRule, setEditingRule] = useState(null);
 
     const [drawnCoords, setDrawnCoords] = useState([]);
     const [mapCenter, setMapCenter] = useState(DANANG_CENTER);
@@ -106,6 +109,24 @@ const RouteManagement = () => {
     };
 
     useEffect(() => { fetchRoutes(); }, []);
+
+    // --- ROUTE WORKSPACE ---
+    const showViewWorkspace = (record) => {
+        setViewingRoute(record);
+        setIsViewWorkspaceVisible(true);
+    };
+
+    const handleWorkspaceUpdate = () => {
+        // Refresh routes and update current viewing route if open
+        fetchRoutes();
+    };
+
+    useEffect(() => {
+        if (isViewWorkspaceVisible && viewingRoute) {
+            const updated = routes.find(r => r._id === viewingRoute._id);
+            if (updated) setViewingRoute(updated);
+        }
+    }, [routes, isViewWorkspaceVisible]);
 
     // --- ROUTE & RULES SUBMIT ---
     const showCreateRouteModal = () => {
@@ -142,16 +163,34 @@ const RouteManagement = () => {
         } catch (error) { message.error('Lỗi khi xóa lộ trình'); }
     };
 
-    const showAddRuleModal = (record) => {
+    const handleDeleteRule = async (routeId, ruleId) => {
+        try {
+            await adminRouteService.deleteTrafficRule(routeId, ruleId);
+            message.success('Đã xóa luật giao thông');
+            handleWorkspaceUpdate();
+        } catch (error) { message.error('Lỗi khi xóa luật'); }
+    };
+
+    const showAddRuleModal = (record, rule = null) => {
         setEditingRoute(record);
-        ruleForm.resetFields();
+        setEditingRule(rule);
+        if (rule) {
+            ruleForm.setFieldsValue(rule);
+        } else {
+            ruleForm.resetFields();
+        }
         setIsRuleModalVisible(true);
     };
 
     const handleRuleSubmit = async (values) => {
         try {
-            await adminRouteService.addTrafficRule(editingRoute._id, values);
-            message.success('Thêm luật giao thông thành công');
+            if (editingRule) {
+                await adminRouteService.updateTrafficRule(editingRoute._id, editingRule._id, values);
+                message.success('Cập nhật luật giao thông thành công');
+            } else {
+                await adminRouteService.addTrafficRule(editingRoute._id, values);
+                message.success('Thêm luật giao thông thành công');
+            }
             setIsRuleModalVisible(false);
             fetchRoutes();
         } catch (error) { message.error(error.response?.data?.message || 'Có lỗi xảy ra'); }
@@ -249,6 +288,7 @@ const RouteManagement = () => {
                 setIsRestrictionModalVisible(false);
             }
             fetchRoutes();
+            handleWorkspaceUpdate();
         } catch (error) { message.error('Lỗi khi xóa đoạn đường'); }
     };
 
@@ -259,18 +299,42 @@ const RouteManagement = () => {
     );
 
     const columns = [
-        { title: 'Mã Tuyến', dataIndex: 'code', key: 'code', render: t => <Text strong>{t}</Text> },
+        { 
+            title: 'Mã Tuyến', 
+            dataIndex: 'code', 
+            key: 'code', 
+            render: t => <Text strong style={{ color: '#1890ff' }}>{t}</Text> 
+        },
         { title: 'Tên Đường', dataIndex: 'name', key: 'name', render: t => <Text strong>{t}</Text> },
-        { title: 'Quận/Huyện', dataIndex: 'district', key: 'district', render: d => <Tag color="blue">{DISTRICT_LABELS[d] || d}</Tag> },
+        { 
+            title: 'Quận/Huyện', 
+            dataIndex: 'district', 
+            key: 'district', 
+            render: d => <Tag color="blue" style={{ borderRadius: 4 }}>{DISTRICT_LABELS[d] || d}</Tag> 
+        },
         { title: 'Thành phố', dataIndex: 'area', key: 'area' },
-        { title: 'K/cách (km)', dataIndex: 'estimatedDistanceKm', key: 'estimatedDistanceKm', align: 'center' },
+        { 
+            title: 'Khoảng cách', 
+            dataIndex: 'estimatedDistanceKm', 
+            key: 'estimatedDistanceKm', 
+            align: 'center',
+            render: (val) => <Tag color="cyan">{val} km</Tag>
+        },
         {
             title: 'Thống kê',
             key: 'stats',
             render: (_, r) => (
-                <Space direction="vertical" size="small">
-                    <Badge count={r.trafficRules?.length || 0} showZero color="#faad14" text="Luật thời gian" />
-                    <Badge count={r.roadRestrictions?.length || 0} showZero color="#f5222d" text="Đoạn cấm (Map)" />
+                <Space size="middle">
+                    <Tooltip title="Luật thời gian">
+                      <Badge count={r.trafficRules?.length || 0} showZero color="#faad14" offset={[10, 0]}>
+                        <InfoCircleOutlined style={{ fontSize: 16, color: '#faad14' }} />
+                      </Badge>
+                    </Tooltip>
+                    <Tooltip title="Đoạn cấm (Map)">
+                      <Badge count={r.roadRestrictions?.length || 0} showZero color="#f5222d" offset={[10, 0]}>
+                        <EnvironmentOutlined style={{ fontSize: 16, color: '#f5222d' }} />
+                      </Badge>
+                    </Tooltip>
                 </Space>
             )
         },
@@ -279,11 +343,22 @@ const RouteManagement = () => {
             key: 'action',
             render: (_, record) => (
                 <Space size="small">
-                    <Tooltip title="Sửa Lộ trình"><Button type="primary" ghost icon={<EditOutlined />} onClick={() => showEditRouteModal(record)} /></Tooltip>
-                    <Tooltip title="Thêm Luật Giờ/Tải trọng"><Button style={{ color: '#faad14', borderColor: '#faad14' }} icon={<InfoCircleOutlined />} onClick={() => showAddRuleModal(record)} /></Tooltip>
-                    <Tooltip title="Vẽ tọa độ cấm trên Bản đồ"><Button danger icon={<EnvironmentOutlined />} onClick={() => showAddRestrictionModal(record)} /></Tooltip>
+                    <Tooltip title="Xem Chi tiết & Bản đồ">
+                        <Button type="text" icon={<EyeOutlined style={{ color: '#1890ff' }} />} onClick={() => showViewWorkspace(record)} />
+                    </Tooltip>
+                    <Tooltip title="Sửa Lộ trình">
+                        <Button type="text" icon={<EditOutlined />} onClick={() => showEditRouteModal(record)} />
+                    </Tooltip>
+                    <Tooltip title="Thêm Luật">
+                        <Button type="text" style={{ color: '#faad14' }} icon={<PlusOutlined />} onClick={() => showAddRuleModal(record)} />
+                    </Tooltip>
+                    <Tooltip title="Vẽ bản đồ">
+                        <Button type="text" danger icon={<CompassOutlined />} onClick={() => showAddRestrictionModal(record)} />
+                    </Tooltip>
                     <Popconfirm title="Tắt trạng thái hoạt động lộ trình này?" onConfirm={() => handleDeleteRoute(record._id)}>
-                        <Button type="text" danger icon={<DeleteOutlined />} />
+                        <Tooltip title="Xóa">
+                            <Button type="text" danger icon={<DeleteOutlined />} />
+                        </Tooltip>
                     </Popconfirm>
                 </Space>
             )
@@ -291,53 +366,106 @@ const RouteManagement = () => {
     ];
 
     const expandedRowRender = (record) => (
-        <div style={{ padding: '16px', background: '#fcfcfc', border: '1px solid #f0f0f0', borderRadius: 8 }}>
-            <Row gutter={24}>
-                <Col span={10}>
-                    <Text strong style={{ color: '#faad14' }}>📜 Luật Giao Thông (Giờ/Tải trọng)</Text>
-                    <Divider style={{ margin: '8px 0' }} />
+        <div style={{ padding: '12px 24px', background: '#fafafa', borderRadius: 8, margin: '8px 0' }}>
+            <Row gutter={[32, 16]}>
+                <Col span={12}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                        <Text strong><Badge status="warning" /> Luật Giao Thông ({record.trafficRules?.length || 0})</Text>
+                        <Button size="small" type="link" onClick={() => showAddRuleModal(record)}>Thêm luật</Button>
+                    </div>
                     {record.trafficRules?.length > 0 ? (
-                        <List size="small" dataSource={record.trafficRules} renderItem={rule => (
-                            <List.Item>
-                                <Text>[{RULE_TYPE_LABELS[rule.ruleType]}] {rule.startTime} - {rule.endTime}</Text><br />
-                                <Text type="secondary">Cấm: {rule.restrictedVehicles?.join(', ')}</Text>
-                            </List.Item>
-                        )} />
-                    ) : <Text type="secondary">Chưa có luật nào.</Text>}
+                        <List
+                            size="small"
+                            dataSource={record.trafficRules}
+                            renderItem={rule => (
+                                <List.Item style={{ padding: '8px 0' }}>
+                                    <div style={{ width: '100%' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                            <Text strong size="small">{RULE_TYPE_LABELS[rule.ruleType]}</Text>
+                                            <Tag color="orange" style={{ fontSize: 11 }}>{rule.startTime} - {rule.endTime}</Tag>
+                                        </div>
+                                        <Text type="secondary" style={{ fontSize: 12 }}>Hạn chế: {rule.restrictedVehicles?.join(', ') || 'Không giới hạn loại xe'}</Text>
+                                    </div>
+                                </List.Item>
+                            )}
+                        />
+                    ) : <div style={{ textAlign: 'center', padding: '16px', color: '#bfbfbf' }}>Chưa có luật nào</div>}
                 </Col>
-                <Col span={14}>
-                    <Text strong style={{ color: '#f5222d' }}>📍 Tọa độ cấm (Road Restrictions)</Text>
-                    <Divider style={{ margin: '8px 0' }} />
-                    <List
-                        size="small"
-                        dataSource={record.roadRestrictions}
-                        locale={{ emptyText: 'Chưa vẽ đoạn cấm nào trên bản đồ.' }}
-                        renderItem={res => (
-                            <List.Item actions={[
-                                <Button size="small" type="link" icon={<EditOutlined />} onClick={() => showAddRestrictionModal(record, res)}>Sửa trên Map</Button>,
-                                <Popconfirm title="Xóa đoạn vẽ này khỏi bản đồ?" onConfirm={() => handleDeleteRestriction(record._id, res._id)}>
-                                    <Button size="small" type="link" danger icon={<DeleteOutlined />}>Xóa</Button>
-                                </Popconfirm>
-                            ]}>
-                                <List.Item.Meta
-                                    title={<Space><Tag color={res.severity === 'AVOID' ? 'red' : 'orange'}>{res.severity}</Tag><Text strong>{res.roadName}</Text></Space>}
-                                    description={<span>{res.description} <Text type="secondary">(Dạng: {res.geometry.type})</Text></span>}
-                                />
-                            </List.Item>
-                        )}
-                    />
+                <Col span={12}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                        <Text strong><Badge status="error" /> Tọa độ hạn chế ({record.roadRestrictions?.length || 0})</Text>
+                        <Button size="small" type="link" onClick={() => showAddRestrictionModal(record)}>Vẽ thêm</Button>
+                    </div>
+                    {record.roadRestrictions?.length > 0 ? (
+                        <List
+                            size="small"
+                            dataSource={record.roadRestrictions}
+                            renderItem={res => (
+                                <List.Item 
+                                    style={{ padding: '8px 0' }}
+                                    actions={[
+                                        <Tooltip title="Sửa trên Map"><Button size="small" type="text" icon={<EnvironmentOutlined />} onClick={() => showAddRestrictionModal(record, res)} /></Tooltip>,
+                                        <Popconfirm title="Xóa đoạn này?" onConfirm={() => handleDeleteRestriction(record._id, res._id)}>
+                                            <Button size="small" type="text" danger icon={<DeleteOutlined />} />
+                                        </Popconfirm>
+                                    ]}
+                                >
+                                    <List.Item.Meta
+                                        title={<Text strong style={{ fontSize: 13 }}>{res.roadName}</Text>}
+                                        description={
+                                            <Space split={<Divider type="vertical" />} style={{ fontSize: 11 }}>
+                                                <Tag color={res.severity === 'AVOID' ? 'red' : 'gold'} style={{ margin: 0, fontSize: 10 }}>{res.severity}</Tag>
+                                                <span>{res.geometry.type}</span>
+                                            </Space>
+                                        }
+                                    />
+                                </List.Item>
+                            )}
+                        />
+                    ) : <div style={{ textAlign: 'center', padding: '16px', color: '#bfbfbf' }}>Chưa có tọa độ cấm nào</div>}
                 </Col>
             </Row>
         </div>
     );
 
     return (
-        <Card title="Quản lý Lộ Trình & Bản đồ Hạn chế" extra={<Button type="primary" icon={<PlusOutlined />} onClick={showCreateRouteModal}>Tạo Tuyến Mới</Button>}>
-            <Space style={{ marginBottom: 16 }}>
-                <Input placeholder="Tìm tuyến đường..." prefix={<SearchOutlined />} onChange={e => setSearchText(e.target.value)} style={{ width: 300 }} />
-            </Space>
+        <div style={{ padding: '4px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+                <Typography.Title level={4} style={{ margin: 0 }}>Quản lý Lộ Trình & Bản đồ Hạn chế</Typography.Title>
+                <Button type="primary" icon={<PlusOutlined />} onClick={showCreateRouteModal} style={{ borderRadius: 8 }}>
+                    Tạo Tuyến Mới
+                </Button>
+            </div>
 
-            <Table columns={columns} dataSource={filteredRoutes} rowKey="_id" loading={loading} expandable={{ expandedRowRender }} />
+            <Card style={{ borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.05)', border: 'none' }}>
+                <div style={{ marginBottom: 24 }}>
+                    <Input 
+                        placeholder="Tìm tuyến đường bằng tên hoặc mã..." 
+                        prefix={<SearchOutlined style={{ color: '#bfbfbf' }} />} 
+                        onChange={e => setSearchText(e.target.value)} 
+                        style={{ width: 350, borderRadius: 8 }} 
+                        allowClear
+                    />
+                </div>
+
+                <Table 
+                    columns={columns} 
+                    dataSource={filteredRoutes} 
+                    rowKey="_id" 
+                    loading={loading} 
+                    expandable={{ 
+                        expandedRowRender,
+                        expandRowByClick: false,
+                        expandIcon: ({ expanded, onExpand, record }) =>
+                            expanded ? (
+                              <UndoOutlined onClick={e => onExpand(record, e)} style={{ color: '#1890ff' }} />
+                            ) : (
+                              <InfoCircleOutlined onClick={e => onExpand(record, e)} style={{ color: '#bfbfbf' }} />
+                            )
+                    }} 
+                    pagination={{ pageSize: 8, showTotal: (total) => `Tổng cộng ${total} tuyến` }}
+                />
+            </Card>
 
             {/* MODAL 1: TẠO / SỬA LỘ TRÌNH CHÍNH */}
             <Modal title={editingRoute ? 'Cập nhật lộ trình' : 'Tạo mới lộ trình'} visible={isRouteModalVisible} onCancel={() => setIsRouteModalVisible(false)} onOk={() => form.submit()} width={800}>
@@ -394,8 +522,8 @@ const RouteManagement = () => {
                         </Col>
                         <Col span={11} style={{ textAlign: 'right', paddingBottom: 24 }}>
                             <Space>
-                                <Button icon={<CompassOutlined />} onClick={() => setMapCenter([...DANANG_CENTER])}>Trung tâm ĐN</Button>
-                                <Button danger icon={<ClearOutlined />} onClick={() => setDrawnCoords([])}>Xóa trắng bản đồ</Button>
+                                <Button icon={<CompassOutlined />} onClick={() => setMapCenter([...DANANG_CENTER])} style={{ borderRadius: 8 }}>Trung tâm ĐN</Button>
+                                <Button danger icon={<ClearOutlined />} onClick={() => setDrawnCoords([])} style={{ borderRadius: 8 }}>Xóa trắng bản đồ</Button>
                             </Space>
                         </Col>
                     </Row>
@@ -493,7 +621,144 @@ const RouteManagement = () => {
                     </Row>
                 </Form>
             </Modal>
-        </Card>
+            {/* MODAL 4: ROUTE WORKSPACE (XEM TỔNG QUAN & QUẢN LÝ NHANH) */}
+            <Modal
+                title={
+                    <Space>
+                        <CompassOutlined style={{ color: '#1890ff' }} />
+                        <span>QUẢN LÝ LỘ TRÌNH: <Text strong style={{ color: '#1890ff' }}>{viewingRoute?.code}</Text> - {viewingRoute?.name}</span>
+                    </Space>
+                }
+                open={isViewWorkspaceVisible}
+                onCancel={() => setIsViewWorkspaceVisible(false)}
+                footer={[<Button key="close" type="primary" onClick={() => setIsViewWorkspaceVisible(false)} style={{ borderRadius: 8 }}>Đóng Workspace</Button>]}
+                width={1300}
+                style={{ top: 20 }}
+                bodyStyle={{ padding: '24px', backgroundColor: '#f0f2f5' }}
+                destroyOnClose
+            >
+                {viewingRoute && (
+                    <Row gutter={24}>
+                        {/* CỘT TRÁI: THÔNG TIN & LUẬT */}
+                        <Col span={9}>
+                            <Card title="Thông tin & Luật Giao Thông" bordered={false} style={{ borderRadius: 12, height: '100%', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
+                                <div style={{ marginBottom: 24, padding: '12px', background: '#e6f7ff', borderRadius: 8 }}>
+                                    <Row gutter={[16, 8]}>
+                                        <Col span={12}><Text type="secondary" style={{ fontSize: 11 }}>Quận/Huyện:</Text><br /><Text strong>{DISTRICT_LABELS[viewingRoute.district]}</Text></Col>
+                                        <Col span={12}><Text type="secondary" style={{ fontSize: 11 }}>Khu vực:</Text><br /><Text strong>{viewingRoute.area}</Text></Col>
+                                        <Col span={12}><Text type="secondary" style={{ fontSize: 11 }}>Khoảng cách:</Text><br /><Tag color="blue" style={{ borderRadius: 4 }}>{viewingRoute.estimatedDistanceKm} km</Tag></Col>
+                                        <Col span={12}><Text type="secondary" style={{ fontSize: 11 }}>Phụ phí:</Text><br /><Text strong style={{ color: '#52c41a' }}>{viewingRoute.routeSurcharge?.toLocaleString()} đ</Text></Col>
+                                    </Row>
+                                </div>
+
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                                    <Text strong><Badge status="warning" /> Danh sách Luật ({viewingRoute.trafficRules?.length || 0})</Text>
+                                    <Button size="small" type="primary" ghost icon={<PlusOutlined />} onClick={() => showAddRuleModal(viewingRoute)} style={{ borderRadius: 6 }}>Thêm mới</Button>
+                                </div>
+
+                                <List
+                                    size="small"
+                                    dataSource={viewingRoute.trafficRules}
+                                    locale={{ emptyText: 'Chưa có luật nào' }}
+                                    style={{ maxHeight: '430px', overflowY: 'auto' }}
+                                    renderItem={rule => (
+                                        <List.Item
+                                            key={rule._id}
+                                            actions={[
+                                                <Tooltip title="Sửa luật">
+                                                    <Button size="small" type="text" icon={<EditOutlined style={{ color: '#faad14' }} />} onClick={() => showAddRuleModal(viewingRoute, rule)} />
+                                                </Tooltip>,
+                                                <Popconfirm title="Xóa luật này?" onConfirm={() => handleDeleteRule(viewingRoute._id, rule._id)}>
+                                                    <Button size="small" type="text" danger icon={<DeleteOutlined />} />
+                                                </Popconfirm>
+                                            ]}
+                                        >
+                                            <List.Item.Meta
+                                                title={<Text strong style={{ fontSize: 13 }}>{RULE_TYPE_LABELS[rule.ruleType]}</Text>}
+                                                description={
+                                                    <div>
+                                                        <Tag color="orange" style={{ fontSize: 10, borderRadius: 4 }}>{rule.startTime} - {rule.endTime}</Tag>
+                                                        {rule.restrictedVehicles?.length > 0 && <div style={{ fontSize: 11, marginTop: 4 }}>Cấm: {rule.restrictedVehicles.join(', ')}</div>}
+                                                    </div>
+                                                }
+                                            />
+                                        </List.Item>
+                                    )}
+                                />
+                            </Card>
+                        </Col>
+
+                        {/* CỘT PHẢI: BẢN ĐỒ & ROAD RESTRICTIONS */}
+                        <Col span={15}>
+                            <Card title="Bản đồ Tổng quát các Đoạn hạn chế" bordered={false} style={{ borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
+                                <div style={{ height: '480px', border: '1px solid #d9d9d9', borderRadius: 12, overflow: 'hidden', marginBottom: 20 }}>
+                                    <MapContainer center={DANANG_CENTER} zoom={13} style={{ height: '100%', width: '100%' }}>
+                                        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                                        <FixMapSize />
+                                        <MapController center={DANANG_CENTER} zoom={13} />
+                                        
+                                        {(viewingRoute.roadRestrictions || []).map(res => {
+                                            if (!res.geometry || !res.geometry.coordinates) return null;
+                                            const color = res.severity === 'AVOID' ? '#f5222d' : '#faad14';
+
+                                            if (res.geometry.type === 'Point') {
+                                                const c = toLatLng(res.geometry.coordinates);
+                                                return (
+                                                    <Marker key={res._id} position={c}>
+                                                        <Popup><b>{res.roadName}</b><br />{res.description}</Popup>
+                                                    </Marker>
+                                                );
+                                            }
+
+                                            if (res.geometry.type === 'LineString') {
+                                                const positions = res.geometry.coordinates.map(c => toLatLng(c));
+                                                return (
+                                                    <Polyline key={res._id} positions={positions} pathOptions={{ color, weight: 6 }}>
+                                                        <Popup><b>{res.roadName}</b><br />{res.description}</Popup>
+                                                    </Polyline>
+                                                );
+                                            }
+                                            return null;
+                                        })}
+                                    </MapContainer>
+                                </div>
+
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                                    <Text strong><Badge status="error" /> Danh sách Đoạn cấm trên Map ({viewingRoute.roadRestrictions?.length || 0})</Text>
+                                    <Button size="small" type="primary" danger ghost icon={<EnvironmentOutlined />} onClick={() => showAddRestrictionModal(viewingRoute)} style={{ borderRadius: 6 }}>Vẽ đoạn mới</Button>
+                                </div>
+
+                                <List
+                                    grid={{ gutter: 16, column: 2 }}
+                                    dataSource={viewingRoute.roadRestrictions}
+                                    style={{ maxHeight: '220px', overflowY: 'auto', padding: '4px' }}
+                                    renderItem={res => (
+                                        <List.Item>
+                                            <Card size="small" style={{ borderRadius: 8, borderLeft: `4px solid ${res.severity === 'AVOID' ? '#ff4d4f' : '#faad14'}`, boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                                    <div style={{ flex: 1 }}>
+                                                        <Text strong style={{ fontSize: 12 }}>{res.roadName}</Text><br />
+                                                        <Text type="secondary" style={{ fontSize: 11 }}>Dạng: {res.geometry.type}</Text>
+                                                    </div>
+                                                    <Space>
+                                                        <Tooltip title="Sửa trên Map">
+                                                            <Button size="small" type="text" icon={<EditOutlined style={{ color: '#1890ff' }} />} onClick={() => showAddRestrictionModal(viewingRoute, res)} />
+                                                        </Tooltip>
+                                                        <Popconfirm title="Xóa đoạn này?" onConfirm={() => handleDeleteRestriction(viewingRoute._id, res._id)}>
+                                                            <Button size="small" type="text" danger icon={<DeleteOutlined />} />
+                                                        </Popconfirm>
+                                                    </Space>
+                                                </div>
+                                            </Card>
+                                        </List.Item>
+                                    )}
+                                />
+                            </Card>
+                        </Col>
+                    </Row>
+                )}
+            </Modal>
+        </div>
     );
 };
 
