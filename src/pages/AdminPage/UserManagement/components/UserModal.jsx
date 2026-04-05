@@ -1,5 +1,6 @@
-import React, { useEffect } from 'react';
-import { Modal, Form, Input, Select, Button, message } from 'antd';
+import React, { useEffect, useState } from 'react';
+import { Modal, Form, Input, Select, Button, message, Typography, Space } from 'antd';
+import { CheckCircleOutlined, CopyOutlined, UserAddOutlined } from '@ant-design/icons';
 import adminUserService from '../../../../services/adminUserService';
 
 const { Option } = Select;
@@ -18,14 +19,16 @@ const UserModal = ({ visible, onClose, onSuccess, user }) => {
                 form.setFieldsValue({
                     fullName: user.fullName,
                     email: user.email,
-                    phoneNumber: user.phoneNumber,
-                    gender: user.gender,
+                    phoneNumber: user.phone || user.phoneNumber,
                     role: user.role,
                     status: user.status,
                     workingAreas: user.dispatcherProfile?.workingAreas || []
                 });
             } else {
+                // set default password visible on create
+                form.setFieldsValue({ password: 'User123@' });
                 form.resetFields();
+                form.setFieldsValue({ password: 'User123@' });
             }
         }
     }, [visible, user, form]);
@@ -65,6 +68,8 @@ const UserModal = ({ visible, onClose, onSuccess, user }) => {
     };
 
     const [confirmVisible, setConfirmVisible] = React.useState(false);
+    const [confirmHover, setConfirmHover] = React.useState(false);
+    const [createHover, setCreateHover] = useState(false);
 
     const handleConfirmSubmit = () => {
         setConfirmVisible(false);
@@ -83,13 +88,35 @@ const UserModal = ({ visible, onClose, onSuccess, user }) => {
     return (
         <>
             <Modal
-                title={user ? "Edit User" : "Create New Staff Account"}
+                title={null}
                 open={visible}
                 onCancel={onClose}
-                onOk={attemptSubmit}
-                okText={user ? "Save Changes" : "Create"}
+                footer={null}
+                centered
+                width={640}
+                bodyStyle={{ padding: 24 }}
                 destroyOnClose
             >
+
+                {/* Header */}
+                <div style={{ display: 'flex', gap: 16, alignItems: 'center', marginBottom: 8 }}>
+                    <div style={{
+                        width: 56,
+                        height: 56,
+                        borderRadius: 12,
+                        background: 'linear-gradient(135deg, rgba(45,79,54,0.08), rgba(68,98,74,0.03))',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                    }}>
+                        <UserAddOutlined style={{ fontSize: 24, color: '#2D4F36' }} />
+                    </div>
+                    <div>
+                        <Typography.Title level={4} style={{ margin: 0 }}>{user ? 'Edit User' : 'Create New Staff Account'}</Typography.Title>
+                        <Typography.Text type="secondary">{user ? 'Cập nhật thông tin người dùng' : 'Tạo tài khoản nhân viên mới với mật khẩu mặc định'}</Typography.Text>
+                    </div>
+                </div>
+
                 <Form form={form} layout="vertical">
                     <Form.Item name="fullName" label="Full Name" rules={[{ required: true, message: 'Please enter full name' }]}>
                         <Input placeholder="Enter full name" />
@@ -98,23 +125,18 @@ const UserModal = ({ visible, onClose, onSuccess, user }) => {
                         <Input placeholder="Enter email" disabled={!!user} />
                     </Form.Item>
                     {!user && (
-                        <Form.Item name="password" label="Password" rules={[{ required: true, message: 'Please enter password' }]}>
-                            <Input.Password placeholder="Enter password" />
+                        <Form.Item name="password" label="Password">
+                            {/* show default password but don't allow editing */}
+                            <Input.Password placeholder="User123@" disabled />
                         </Form.Item>
                     )}
+
                     <Form.Item name="phoneNumber" label="Phone Number" rules={[{ required: true, message: 'Please enter phone number' }]}>
                         <Input placeholder="Enter phone number" />
                     </Form.Item>
-                    <Form.Item name="gender" label="Gender" rules={[{ required: true }]}>
-                        <Select placeholder="Select gender">
-                            <Option value="Male">Male</Option>
-                            <Option value="Female">Female</Option>
-                            <Option value="Other">Other</Option>
-                        </Select>
-                    </Form.Item>
+
                     <Form.Item name="role" label="Role" rules={[{ required: true }]}>
                         <Select placeholder="Select role" disabled={!!user && user.role === 'admin'}>
-                            <Option value="customer">Customer</Option>
                             <Option value="dispatcher">Dispatcher</Option>
                             <Option value="driver">Driver</Option>
                             <Option value="staff">Staff</Option>
@@ -140,6 +162,28 @@ const UserModal = ({ visible, onClose, onSuccess, user }) => {
                         </Form.Item>
                     )}
                 </Form>
+
+                {/* Footer actions (custom) */}
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 12 }}>
+                    <Button onClick={onClose} style={{ borderRadius: 8 }}>
+                        Cancel
+                    </Button>
+                    <Button
+                        onMouseEnter={() => setCreateHover(true)}
+                        onMouseLeave={() => setCreateHover(false)}
+                        onClick={attemptSubmit}
+                        style={{
+                            borderRadius: 8,
+                            minWidth: 140,
+                            background: createHover ? '#2D4F36' : '#fff',
+                            borderColor: '#2D4F36',
+                            color: createHover ? '#ffffff' : '#2D4F36',
+                            boxShadow: createHover ? '0 6px 18px rgba(45,79,54,0.12)' : 'none'
+                        }}
+                    >
+                        {user ? 'Save Changes' : 'Create'}
+                    </Button>
+                </div>
             </Modal>
 
             <Modal
@@ -147,27 +191,104 @@ const UserModal = ({ visible, onClose, onSuccess, user }) => {
                 open={confirmVisible}
                 onCancel={() => setConfirmVisible(false)}
                 footer={null}
-                closable={false}
+                closable={true}
                 centered
-                bodyStyle={{ textAlign: 'center', padding: '30px 20px', backgroundColor: '#cad5c1', borderRadius: '16px' }}
-                width={300}
+                width={420}
+                bodyStyle={{ padding: 24 }}
             >
-                <h3 style={{ color: 'white', marginBottom: '30px', fontWeight: 'bold' }}>
-                    Xác nhận "{user ? 'lưu' : 'tạo'}"<br />người dùng ?
-                </h3>
-                <div style={{ display: 'flex', justifyContent: 'center', gap: '20px' }}>
-                    <Button
-                        onClick={handleConfirmSubmit}
-                        style={{ borderRadius: '20px', padding: '0 24px', fontWeight: 'bold' }}
-                    >
-                        Xác nhận
-                    </Button>
-                    <Button
-                        onClick={() => setConfirmVisible(false)}
-                        style={{ borderRadius: '20px', padding: '0 24px', fontWeight: 'bold' }}
-                    >
-                        Hủy
-                    </Button>
+                {/* Polished confirmation card */}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 18 }}>
+                    <div style={{
+                        width: 72,
+                        height: 72,
+                        borderRadius: 36,
+                        background: 'linear-gradient(135deg, rgba(45,79,54,0.12), rgba(68,98,74,0.06))',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                    }}>
+                        <CheckCircleOutlined style={{ fontSize: 36, color: '#2D4F36' }} />
+                    </div>
+
+                    <Typography.Title level={4} style={{ margin: 0 }}>
+                        {user ? 'Xác nhận lưu thay đổi' : 'Xác nhận tạo tài khoản'}
+                    </Typography.Title>
+
+                    <Typography.Text type="secondary" style={{ textAlign: 'center' }}>
+                        {user ? 'Bạn sắp lưu các thay đổi cho người dùng. Vui lòng kiểm tra thông tin trước khi xác nhận.' : 'Bạn sắp tạo một tài khoản mới cho hệ thống. Vui lòng kiểm tra thông tin sau trước khi xác nhận.'}
+                    </Typography.Text>
+
+                    <div style={{ width: '100%', marginTop: 6 }}>
+                        <Space direction="vertical" style={{ width: '100%' }}>
+                            {(() => {
+                                const vals = form.getFieldsValue();
+                                const displayName = vals.fullName || '';
+                                const displayRole = vals.role || '';
+                                const displayPhone = vals.phoneNumber || vals.phone || '';
+                                const displayPassword = user ? null : 'User123@';
+                                return (
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                            <Typography.Text strong>Full name</Typography.Text>
+                                            <Typography.Text>{displayName}</Typography.Text>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                            <Typography.Text strong>Role</Typography.Text>
+                                            <Typography.Text>{displayRole}</Typography.Text>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                            <Typography.Text strong>Phone</Typography.Text>
+                                            <Typography.Text>{displayPhone}</Typography.Text>
+                                        </div>
+                                        { !user && (
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <div>
+                                                    <Typography.Text strong>Password</Typography.Text>
+                                                    <div style={{ fontSize: 12, color: '#8c8c8c' }}>Mật khẩu mặc định</div>
+                                                </div>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                                    <Typography.Text style={{ fontFamily: 'monospace', background: '#f5f7fb', padding: '6px 10px', borderRadius: 6 }}>{displayPassword}</Typography.Text>
+                                                    <Button icon={<CopyOutlined />} onClick={async () => {
+                                                        try {
+                                                            await navigator.clipboard.writeText(displayPassword);
+                                                            message.success('Mật khẩu mặc định đã được copy');
+                                                        } catch (err) {
+                                                            message.error('Không thể copy mật khẩu');
+                                                        }
+                                                    }} type="text" />
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })()}
+                        </Space>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
+                        <Button onClick={() => setConfirmVisible(false)} style={{ borderRadius: 8 }}>
+                            Hủy
+                        </Button>
+                        <Button
+                            onMouseEnter={() => setConfirmHover(true)}
+                            onMouseLeave={() => setConfirmHover(false)}
+                            onClick={handleConfirmSubmit}
+                            style={{
+                                borderRadius: 8,
+                                minWidth: 160,
+                                background: confirmHover ? '#2D4F36' : '#fff',
+                                borderColor: '#2D4F36',
+                                color: confirmHover ? '#ffffff' : '#2D4F36',
+                                boxShadow: confirmHover ? '0 4px 12px rgba(45,79,54,0.12)' : 'none'
+                            }}
+                        >
+                            {user ? 'Xác nhận & Lưu' : 'Xác nhận & Tạo'}
+                        </Button>
+                    </div>
+
+                    <Typography.Text type="secondary" style={{ fontSize: 12, marginTop: 6 }}>
+                        Lưu ý: Người dùng nên đổi mật khẩu khi đăng nhập lần đầu.
+                    </Typography.Text>
                 </div>
             </Modal>
         </>
