@@ -96,15 +96,12 @@ Example of a valid response format (replace with actual values you estimate):
   "totalActualWeight": 30,
   "totalActualVolume": 0.53,
   "totalActualItems": 2,
-  "suggestedVehicle": "500KG",
-  "suggestedStaffCount": 2,
   "notes": "Chuyển nhà nhỏ, ít đồ đạc"
 }
 Rules:
 - category: use 'primary' for large/heavy furniture (beds, sofas, fridges, TVs, wardrobes, washing machines, motorcycles); use 'secondary' for small items (books, clothes, bowls, lamps, fans, plants, mirrors, curtains, toys, shoes, boxes, toiletries, small appliances).
 - Estimate realistic weight (kg), dimensions (cm), and volume (m³) for EVERY item — do NOT use 0.
 - All numeric fields must be plain numbers (not strings).
-- suggestedVehicle must be exactly one of: '500KG', '1TON', '1.5TON', '2TON'.
  - imageIndices must be an array of integer media indices (0-based).
  - boundingBoxes must be an array of objects. Each object MUST have: "imageIndex" (integer matching one entry from imageIndices), and four numbers "centerX", "centerY", "width", "height" — all normalized between 0 and 1 relative to that media frame. centerX/centerY are the center of the item in the frame; width/height are the approximate size of the item.
  - If you are not sure of the exact size, still provide your best estimate for the bounding box; never omit boundingBoxes for items that appear in an image.
