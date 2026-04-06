@@ -6,7 +6,7 @@ import logo from '../../assets/images/logo.png'; // Using standard logo if avail
 
 const { Sider } = Layout;
 
-const AdminSidebar = () => {
+const AdminSidebar = ({ collapsed, onCollapse }) => {
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -69,7 +69,23 @@ const AdminSidebar = () => {
     ];
 
     return (
-        <Sider width={250} theme="light" style={{ borderRight: '1px solid #f0f0f0', height: '100vh', position: 'fixed', left: 0, top: 0, bottom: 0 }}>
+        <Sider 
+            breakpoint="lg"
+            collapsedWidth="0"
+            onCollapse={(c) => onCollapse(c)}
+            collapsed={collapsed}
+            width={250} 
+            theme="light" 
+            style={{ 
+                borderRight: '1px solid #f0f0f0', 
+                height: '100vh', 
+                position: 'fixed', 
+                left: 0, 
+                top: 0, 
+                bottom: 0,
+                zIndex: 1001 
+            }}
+        >
             <div style={{ padding: '24px', display: 'flex', alignItems: 'center', gap: '12px' }}>
                 {/* Fallback to text if logo has issues, but trying to use image */}
                 <img src={logo} alt="HOMS Logo" style={{ height: '40px', width: 'auto' }} onError={(e) => { e.target.style.display = 'none'; }} />

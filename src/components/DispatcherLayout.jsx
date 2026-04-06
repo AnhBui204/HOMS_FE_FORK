@@ -83,7 +83,7 @@ const DispatcherLayout = () => {
   return (
     <Layout style={{ minHeight: '100vh' }}>
       {/* HEADER CHUNG Ở TRÊN CÙNG */}
-      <AppHeader />
+      <AppHeader collapsed={collapsed} onToggleSidebar={setCollapsed} />
 
       {/* PHẦN LAYOUT BÊN DƯỚI GỒM SIDEBAR VÀ CONTENT */}
       <Layout>
@@ -93,10 +93,22 @@ const DispatcherLayout = () => {
           trigger={null}
           collapsible
           collapsed={collapsed}
+          breakpoint="lg"
+          collapsedWidth="0"
+          onCollapse={(c) => setCollapsed(c)}
           width={250}
-          style={{ background: '#fff' }} // Cho sidebar màu trắng hoặc giữ màu dark tùy bạn
+          style={{ 
+            background: '#fff',
+            height: '100vh',
+            position: 'fixed',
+            left: 0,
+            top: 0,
+            bottom: 0,
+            zIndex: 1001,
+            paddingTop: '64px' // height of AppHeader
+          }}
         >
-          {/* Nút thu gọn / mở rộng Sidebar */}
+          {/* Nút thu gọn / mở rộng Sidebar - only show if not auto-collapsed by breakpoint */}
           <div style={{ padding: '16px', textAlign: 'center' }}>
             <Button
               type="text"
@@ -116,7 +128,12 @@ const DispatcherLayout = () => {
         </Sider>
 
         {/* MAIN CONTENT AREA */}
-        <Layout style={{ padding: isVideoChatRoute ? 0 : '24px' }}>
+        <Layout style={{ 
+            marginLeft: collapsed ? 0 : 250, 
+            transition: 'margin-left 0.2s',
+            padding: isVideoChatRoute ? 0 : '16px',
+            minWidth: 0 
+        }}>
           <Content
             style={{
               padding: isVideoChatRoute ? 0 : 24,

@@ -22,14 +22,18 @@ const menuItems = [
     { key: '/staff/chat',      icon: <MessageOutlined />,       label: 'Chat' },
 ];
 
-const StaffSidebar = () => {
+const StaffSidebar = ({ collapsed, onCollapse }) => {
     const navigate = useNavigate();
     const location = useLocation();
     const { user } = useUser();
 
     return (
         <Sider
-            width={220}
+            breakpoint="lg"
+            collapsedWidth="0"
+            onCollapse={(c) => onCollapse(c)}
+            collapsed={collapsed}
+            width={250}
             theme="light"
             style={{
                 borderRight: '1px solid #f0f0f0',
@@ -38,6 +42,7 @@ const StaffSidebar = () => {
                 left: 0,
                 top: 0,
                 bottom: 0,
+                zIndex: 1001,
                 background: '#fff',
             }}
         >

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import {  Layout, Row, Col, Button, Input, Drawer, Menu, Avatar, Dropdown, Badge, Popover, List, Typography } from "antd";
-import { MenuOutlined, SearchOutlined, RightOutlined, BellOutlined } from "@ant-design/icons";
+import { MenuOutlined, SearchOutlined, RightOutlined, BellOutlined, MenuUnfoldOutlined, MenuFoldOutlined } from "@ant-design/icons";
 import "./header.css";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import useUser from "../../contexts/UserContext";
@@ -8,7 +8,7 @@ import useNotificationSocket from "../../hooks/useNotificationSocket";
 import { getNotifications,markNotificationRead } from "../../services/notificationService";
 const { Header } = Layout;
 const { Text } = Typography;
-const AppHeader = () => {
+const AppHeader = ({ collapsed, onToggleSidebar }) => {
 
   const [mobileMenuVisible, setMobileMenuVisible] = useState(false);
   const [activeMenu, setActiveMenu] = useState("dashboard"); // State để track menu đang active

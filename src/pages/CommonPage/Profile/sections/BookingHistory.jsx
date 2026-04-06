@@ -213,6 +213,7 @@ const BookingHistory = () => {
           onCancel={() => setIsModalVisible(false)}
           footer={null}
           width={800}
+          style={{ top: 20 }}
           className="booking-history-modal"
         >
           {selectedBooking && (

@@ -14,8 +14,8 @@ export const logoutApi = async () => {
   return await api.post("/auth/logout");
 };
 let isRefreshing = false;
+// ... (omitted lines)
 let refreshSubscribers = [];
-let refreshTimeout = null;
 
 const onRefreshed = (token) => {
   console.log(" [Auth] Đang cấp phát Access Token mới cho các request đang chờ...");
