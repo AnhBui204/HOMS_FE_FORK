@@ -643,21 +643,122 @@ body {
   box-shadow: 0 20px 48px rgba(0, 0, 0, 0.22) !important;
 }
 
-.testimonial-quote-icon {
-  font-size: 2.4rem;
-  color: #C0CFB2;
-  line-height: 1;
-  margin-bottom: 8px;
-  font-family: Georgia, serif;
+.modern-testimonial-card {
+  border-radius: 20px !important;
+  border: 1px solid #E8EDEA !important;
+  background: #fff !important;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08) !important;
 }
 
-.testimonial-footer {
-  background: linear-gradient(135deg, #8BA888 0%, #44624A 100%);
-  margin: 0 -24px -1px;
-  padding: 14px 24px;
+.modern-testimonial-card:hover {
+  transform: translateY(-8px) !important;
+  box-shadow: 0 16px 40px rgba(45, 79, 54, 0.2) !important;
+}
+
+.modern-review-content {
+  padding: 30px 24px 20px;
+  position: relative;
+}
+
+.quote-mark {
+  font-size: 4.5rem;
+  color: rgba(139, 168, 136, 0.2);
+  font-family: Georgia, serif;
+  line-height: 1;
+  position: absolute;
+  top: 15px;
+  left: 20px;
+}
+
+.review-rating {
+  margin-bottom: 16px;
+  position: relative;
+  z-index: 1;
+}
+
+.review-text {
+  color: #444;
+  font-size: 0.95rem;
+  font-style: italic;
+  line-height: 1.65;
+  min-height: 80px;
+  margin: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.modern-testimonial-footer {
+  background: #F7F8F6;
+  border-top: 1px solid #E8EDEA;
+  padding: 16px 24px;
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 16px;
+}
+
+.reviewer-avatar {
+  border: 2px solid #C0CFB2;
+  flex-shrink: 0;
+}
+
+.reviewer-info h4 {
+  color: #2D4F36;
+  font-weight: 700;
+  font-size: 16px;
+  margin: 0 0 4px 0;
+}
+
+.reviewer-info p {
+  color: #777;
+  font-size: 13px;
+  margin: 0;
+}
+
+/* Custom Arrows */
+.feedback-carousel {
+  position: relative;
+}
+
+.custom-carousel-arrow {
+  position: absolute !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  width: 50px !important;
+  height: 50px !important;
+  background: #fff !important;
+  color: #2D4F36 !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 20px !important;
+  cursor: pointer !important;
+  z-index: 10 !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
+  transition: all 0.3s ease !important;
+  border: 1.5px solid #2D4F36 !important;
+}
+
+.slick-prev::before,
+.slick-next::before,
+.custom-carousel-arrow::before,
+.custom-carousel-arrow::after {
+  content: "" !important;
+  display: none !important;
+}
+
+.custom-carousel-arrow:hover {
+  background: #2D4F36 !important;
+  color: #fff !important;
+  box-shadow: 0 6px 24px rgba(45, 79, 54, 0.3) !important;
+}
+
+.custom-carousel-arrow.left-arrow {
+  left: -60px !important;
+}
+
+.custom-carousel-arrow.right-arrow {
+  right: -60px !important;
 }
 
 /* ====================================================

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Layout, Row, Col, Button, Form, Input, Select, Card, Rate, Space, Menu, Drawer, App, Avatar, Modal, InputNumber, message } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Layout, Row, Col, Button, Form, Input, Select, Card, Rate, Space, Menu, Drawer, App, Avatar, Modal, InputNumber, message, Carousel, notification } from 'antd';
 import {
     PhoneOutlined,
     MailOutlined,
@@ -19,7 +19,9 @@ import {
     MenuOutlined,
     CloseOutlined,
     UserOutlined,
-    TruckOutlined
+    TruckOutlined,
+    LeftOutlined,
+    RightOutlined
 } from '@ant-design/icons';
 import './LandingPage.css';
 import AppHeader from '../../../components/header/header';
@@ -31,6 +33,18 @@ const { Header, Content, Footer } = Layout;
 const { TextArea } = Input;
 const { Option } = Select;
 
+const CustomLeftArrow = ({ currentSlide, slideCount, className, style, onClick, ...props }) => (
+    <div className={`custom-carousel-arrow left-arrow ${className || ""}`} style={style} onClick={onClick}>
+        <LeftOutlined />
+    </div>
+);
+
+const CustomRightArrow = ({ currentSlide, slideCount, className, style, onClick, ...props }) => (
+    <div className={`custom-carousel-arrow right-arrow ${className || ""}`} style={style} onClick={onClick}>
+        <RightOutlined />
+    </div>
+);
+
 const LandingPage = () => {
     const [mobileMenuVisible, setMobileMenuVisible] = useState(false);
 
@@ -41,6 +55,70 @@ const LandingPage = () => {
     const handleGetStarted = () => {
         document.getElementById('hero-form').scrollIntoView({ behavior: 'smooth' });
     };
+
+    const [dbTestimonials, setDbTestimonials] = useState([]);
+
+    useEffect(() => {
+        let timer;
+        const fetchRecentOrders = async () => {
+            try {
+                const res = await api.get('/public/recent-orders');
+                if (res.data && res.data.success && res.data.data.length > 0) {
+                    const orders = res.data.data;
+                    let currentIndex = 0;
+                    
+                    // Hiện 1 cái đầu tiên sau 2 giây
+                    setTimeout(() => {
+                        showOrderNotification(orders[currentIndex]);
+                        currentIndex = (currentIndex + 1) % orders.length;
+
+                        // Lặp lại mỗi 12 giây
+                        timer = setInterval(() => {
+                            showOrderNotification(orders[currentIndex]);
+                            currentIndex = (currentIndex + 1) % orders.length;
+                        }, 12000); 
+                    }, 2000);
+                }
+            } catch (error) {
+                console.error("Lỗi fetch recent orders", error);
+            }
+        };
+
+        const showOrderNotification = (order) => {
+            const from = order.requestTicketId?.pickup?.district || '';
+            const to = order.requestTicketId?.delivery?.district || '';
+            const locationText = from && to ? ` từ ${from} đến ${to}` : '';
+            
+            notification.info({
+                message: <strong style={{ color: '#2D4F36', fontSize: '15px' }}>Tin vui từ HOMS!</strong>,
+                description: <span style={{ color: '#555' }}>Khách hàng <b>{order.customerId?.fullName || 'ẩn danh'}</b> vừa hoàn thành chuyến vận chuyển{locationText}.</span>,
+                placement: 'bottomLeft',
+                duration: 6,
+                icon: <CheckCircleOutlined style={{ color: '#8BA888', fontSize: '24px' }} />,
+                style: { borderRadius: '14px', border: '1px solid #E8EDEA', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }
+            });
+        };
+
+        fetchRecentOrders();
+
+        return () => {
+            if (timer) clearInterval(timer);
+        };
+    }, []);
+
+    useEffect(() => {
+        const fetchRatings = async () => {
+            try {
+                const res = await api.get('/public/ratings?limit=10');
+                if (res.data && res.data.success) {
+                    setDbTestimonials(res.data.data);
+                }
+            } catch (err) {
+                console.error("Lỗi lấy đánh giá:", err);
+            }
+        };
+        fetchRatings();
+    }, []);
 
     // States for Quick Estimate
     const [estimateModalVisible, setEstimateModalVisible] = useState(false);
@@ -424,41 +502,65 @@ const LandingPage = () => {
                             <div className="section-divider" style={{ background: 'linear-gradient(90deg, rgba(255,255,255,0.4), rgba(255,255,255,0.9))' }}></div>
                         </div>
 
-                        <Row gutter={[24, 24]}>
-                            {testimonialsData.map((testimonial) => (
-                                <Col key={testimonial.id} xs={24} sm={12} md={8}>
-                                    <Card
-                                        className="testimonial-card"
-                                        bodyStyle={{ padding: 0 }}
-                                    >
-                                        {/* Review content */}
-                                        <div style={{ padding: '24px 24px 16px', marginBottom: '4px' }}>
-                                            <div style={{ fontSize: '2.2rem', color: '#C0CFB2', lineHeight: 1, marginBottom: '8px', fontFamily: 'Georgia, serif' }}>“</div>
-                                            <div style={{ marginBottom: '10px' }}>
-                                                <Rate disabled value={testimonial.rating} style={{ color: '#F7C948', fontSize: '14px' }} />
+                        <Carousel
+                            dots={false}
+                            arrows={true}
+                            prevArrow={<CustomLeftArrow />}
+                            nextArrow={<CustomRightArrow />}
+                            infinite={true}
+                            speed={500}
+                            slidesToShow={3}
+                            slidesToScroll={1}
+                            autoplay={true}
+                            autoplaySpeed={4000}
+                            responsive={[
+                                { breakpoint: 1024, settings: { slidesToShow: 2 } },
+                                { breakpoint: 768, settings: { slidesToShow: 1 } }
+                            ]}
+                            className="feedback-carousel"
+                            style={{ paddingBottom: '30px' }}
+                        >
+                            {(dbTestimonials.length > 0 ? dbTestimonials.map(item => ({
+                                id: item._id,
+                                name: item.customerId?.fullName || 'Khách Hàng',
+                                text: item.comment || 'Dịch vụ rất tốt!',
+                                rating: item.rating,
+                                service: 'Dịch vụ vận chuyển',
+                                avatar: item.customerId?.avatar || 'https://xsgames.co/randomusers/avatar.php?g=pixel'
+                            })) : testimonialsData).map((testimonial) => (
+                                <div key={testimonial.id}>
+                                    <div style={{ margin: '0 12px' }}>
+                                        <Card
+                                            className="testimonial-card modern-testimonial-card"
+                                            bodyStyle={{ padding: 0 }}
+                                        >
+                                            <div className="modern-review-content">
+                                                <div className="quote-mark"></div>
+                                                <div className="review-rating">
+                                                    <Rate disabled value={testimonial.rating} />
+                                                </div>
+                                                <p className="review-text">
+                                                    {testimonial.text}
+                                                </p>
                                             </div>
-                                            <p style={{ color: '#555', fontSize: '14px', fontStyle: 'italic', lineHeight: '1.65', minHeight: '60px', margin: 0 }}>
-                                                {testimonial.text}
-                                            </p>
-                                        </div>
 
-                                        {/* Gradient footer */}
-                                        <div className="testimonial-footer">
-                                            <Avatar
-                                                size={48}
-                                                src={testimonial.avatar}
-                                                icon={<UserOutlined />}
-                                                style={{ border: '2px solid rgba(255,255,255,0.8)', flexShrink: 0 }}
-                                            />
-                                            <div>
-                                                <p style={{ color: '#fff', fontWeight: 700, fontSize: '15px', margin: 0 }}>{testimonial.name}</p>
-                                                <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '12px', margin: 0 }}>{testimonial.service}</p>
+                                            <div className="modern-testimonial-footer">
+                                                <Avatar
+                                                    size={54}
+                                                    src={testimonial.avatar}
+                                                    icon={<UserOutlined />}
+                                                    className="reviewer-avatar"
+                                                />
+                                                <div className="reviewer-info">
+                                                    <h4>{testimonial.name}</h4>
+                                                    <p>{testimonial.service}</p>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </Card>
-                                </Col>
+                                        </Card>
+                                    </div>
+                                </div>
                             ))}
-                        </Row>
+                        </Carousel>
                     </div>
                 </section>
 
