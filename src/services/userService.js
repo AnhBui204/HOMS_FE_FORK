@@ -40,6 +40,13 @@ export const updateUserInfo = (formData) =>
     },
   });
 
+export const uploadAvatar = (formData) =>
+  api.post('/customer/avatar', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  });
+
 export const changePassword = async (data) => {
   return api.put("/customer/change-password", data);
 };
