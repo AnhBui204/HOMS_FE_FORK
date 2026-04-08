@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Modal, Upload, Button, message, Typography, Spin, Row, Col, Space, Switch, Tag, Tooltip } from 'antd';
 import { InboxOutlined, CheckCircleOutlined, SyncOutlined, RobotOutlined, WarningOutlined, SwapOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import { analyzeMedia } from '../../services/ai/geminiVisionService';
+import { buildPreviewItems } from '../../services/ai/catalogMappingService';
 import './AIVisionAnalyzer.css';
 
 const VEHICLE_LABELS = {
@@ -105,8 +106,10 @@ const translateItemName = (name = '') => {
 /** Translate condition code to Vietnamese label */
 const translateCondition = (cond = '') => CONDITION_VI[cond] || CONDITION_VI[cond?.toLowerCase()] || cond;
 
-const AIVisionAnalyzer = ({ open, onCancel, onAnalyzeComplete, currentVehicle, currentStaffCount }) => {
+const AIVisionAnalyzer = ({ open, onCancel, onAnalyzeComplete, currentVehicle, currentStaffCount, primaryCatalog = [] }) => {
   const [fileList, setFileList] = useState([]);
+  const [thumbUrls, setThumbUrls] = useState([]);     // object URLs for image thumbnails
+  const [activeImageFilter, setActiveImageFilter] = useState(null); // null = show all
   const [isProcessing, setIsProcessing] = useState(false);
   const [result, setResult] = useState(null);
   // Override toggles: false = keep current (BE default), true = use AI suggestion
@@ -114,7 +117,6 @@ const AIVisionAnalyzer = ({ open, onCancel, onAnalyzeComplete, currentVehicle, c
   const [overrideStaff, setOverrideStaff] = useState(false);
 
   const handleBeforeUpload = (file) => {
-    // Check file type
     const isAccepted = file.type === 'image/jpeg' || file.type === 'image/png' || file.type === 'image/webp' || file.type === 'video/mp4' || file.type === 'video/webm' || file.type === 'video/quicktime';
 
     if (!isAccepted) {
@@ -122,25 +124,40 @@ const AIVisionAnalyzer = ({ open, onCancel, onAnalyzeComplete, currentVehicle, c
       return Upload.LIST_IGNORE;
     }
 
-    // Check file size (max 50MB limits for prompt)
     const isUnderLimit = file.size / 1024 / 1024 <= 50;
     if (!isUnderLimit) {
       message.error(`${file.name} quá lớn! (Tối đa 50MB)`);
       return Upload.LIST_IGNORE;
     }
 
+    // Update file list (dedup by uid or name)
     setFileList((prevList) => {
-      const exists = prevList.some(f => f.uid === file.uid || f.name === file.name);
-      if (!exists) return [...prevList, file];
-      return prevList;
+      if (prevList.some(f => f.uid === file.uid || f.name === file.name)) return prevList;
+      return [...prevList, file];
     });
-    return false; // Prevent automatic upload behavior
+
+    // Update thumbUrls OUTSIDE the fileList updater —
+    // React Strict Mode calls updater fns twice to detect side effects,
+    // so setThumbUrls / URL.createObjectURL must NOT be inside a setter.
+    setThumbUrls((prev) => {
+      if (prev.some(t => t.uid === file.uid)) return prev; // already added
+      const url = file.type.startsWith('image/') ? URL.createObjectURL(file) : null;
+      return [...prev, { uid: file.uid, url }];
+    });
+
+    return false;
   };
 
+
   const handleRemove = () => {
+    // Revoke object URLs to avoid memory leaks
+    thumbUrls.forEach(t => { if (t.url) URL.revokeObjectURL(t.url); });
     setFileList([]);
+    setThumbUrls([]);
+    setActiveImageFilter(null);
     setResult(null);
   };
+
 
   const processFile = async () => {
     if (fileList.length === 0) {
@@ -150,15 +167,53 @@ const AIVisionAnalyzer = ({ open, onCancel, onAnalyzeComplete, currentVehicle, c
 
     setIsProcessing(true);
     setResult(null);
+    setActiveImageFilter(null);
     setOverrideVehicle(false);
     setOverrideStaff(false);
+
 
     try {
       const rawResponse = await analyzeMedia(fileList);
 
-      // Clean and parse the markdown JSON wrap often returned by Gemini
-      const cleanData = rawResponse.replace(/\`\`\`json\n?|\`\`\`/g, '').trim();
-      const parsedData = JSON.parse(cleanData);
+      // ── Robust JSON sanitizer ────────────────────────────────────────────────
+      // With responseMimeType: 'application/json' the model should return clean
+      // JSON, but we still sanitize defensively for older/fallback responses.
+      const sanitizeJSON = (raw) => {
+        // 1. Strip markdown code fences (```json ... ``` or ``` ... ```)
+        let s = raw.replace(/```json\s*/gi, '').replace(/```/g, '').trim();
+
+        // 2. Extract the first complete JSON object from the string
+        const firstBrace = s.indexOf('{');
+        const lastBrace = s.lastIndexOf('}');
+        if (firstBrace !== -1 && lastBrace !== -1) {
+          s = s.slice(firstBrace, lastBrace + 1);
+        }
+
+        // 3. Remove single-line JavaScript comments ( // ... )
+        s = s.replace(/\/\/[^\n]*/g, '');
+
+        // 4. Remove multi-line comments ( /* ... */ )
+        s = s.replace(/\/\*[\s\S]*?\*\//g, '');
+
+        // 5. Remove trailing commas before } or ]
+        s = s.replace(/,\s*([}\]])/g, '$1');
+
+        // 6. Strip BOM or other non-printable leading characters
+        s = s.replace(/^\uFEFF/, '');
+
+        return s;
+      };
+
+      const cleanData = sanitizeJSON(rawResponse);
+
+      let parsedData;
+      try {
+        parsedData = JSON.parse(cleanData);
+      } catch (parseErr) {
+        console.error('[AI] Raw response causing parse error:', rawResponse);
+        console.error('[AI] After sanitization:', cleanData);
+        throw new Error(`Phản hồi AI không đúng định dạng JSON. Chi tiết: ${parseErr.message}`);
+      }
 
       setResult(parsedData);
       message.success('AI đã phân tích xong cấu trúc đồ đạc!');
@@ -172,8 +227,21 @@ const AIVisionAnalyzer = ({ open, onCancel, onAnalyzeComplete, currentVehicle, c
     }
   };
 
+
   const applyResults = () => {
     if (result) {
+      // Build a lightweight, image-indexed list of thumbnails we can pass
+      // back to the survey screen so it can later highlight item locations.
+      const images = fileList
+        .map((file, index) => {
+          if (!file.type.startsWith('image/')) return null;
+          const thumb = thumbUrls.find(t => t.uid === file.uid);
+          return thumb?.url
+            ? { index, name: file.name, url: thumb.url }
+            : null;
+        })
+        .filter(Boolean);
+
       // Translate item names to Vietnamese before passing back to the survey form
       const translatedResult = {
         ...result,
@@ -184,6 +252,7 @@ const AIVisionAnalyzer = ({ open, onCancel, onAnalyzeComplete, currentVehicle, c
         })),
         _applyVehicle: overrideVehicle,
         _applyStaff: overrideStaff,
+        _images: images,
       };
       onAnalyzeComplete(translatedResult);
       closeModal();
@@ -219,7 +288,7 @@ const AIVisionAnalyzer = ({ open, onCancel, onAnalyzeComplete, currentVehicle, c
         {/* State 1: Upload or Loading */}
         {!result && (
           <div className="upload-section">
-            <Spin spinning={isProcessing} tip="AI đang phân tích..." size="large">
+            <Spin spinning={isProcessing} tip="AI đang phân tích ..." size="large">
               <Upload.Dragger
                 name="file"
                 multiple={true}
@@ -344,23 +413,103 @@ const AIVisionAnalyzer = ({ open, onCancel, onAnalyzeComplete, currentVehicle, c
             </div>
 
             <div className="items-list-preview">
-              <Typography.Text strong style={{ color: '#44624a', display: 'block', marginBottom: 10 }}>Chi tiết danh sách bóc tách:</Typography.Text>
-              <ul className="extracted-list">
-                {(result.items || []).map((item, idx) => (
-                  <li key={idx} className="extracted-item">
-                    <div className="item-main">
-                      <span className="item-name">{translateItemName(item.name)}</span>
-                      <span className={`condition-badge ${(item.condition || 'good').toLowerCase()}`}>
-                        {translateCondition(item.condition)}
-                      </span>
-                    </div>
-                    <div className="item-meta">
-                      {item.actualWeight}kg | {item.actualVolume}m³
-                      {item.actualDimensions && ` (${item.actualDimensions.length}×${item.actualDimensions.width}×${item.actualDimensions.height} cm)`}
-                    </div>
-                  </li>
-                ))}
-              </ul>
+              <div className="items-pane-header">
+                <Typography.Text strong style={{ color: '#44624a' }}>Chi tiết danh sách đồ đạc</Typography.Text>
+                {fileList.length > 1 && (
+                  <span className="image-filter-hint">
+                    Click ảnh để lọc / highlight đồ đạc
+                  </span>
+                )}
+              </div>
+
+              <div className={`items-dual-pane ${fileList.length > 1 ? 'has-image-strip' : ''}`}>
+
+                {/* ── LEFT: image thumbnail strip (only when multiple images) ─ */}
+                {fileList.length > 1 && (
+                  <div className="image-strip">
+                    <button
+                      className={`image-thumb-btn ${activeImageFilter === null ? 'active' : ''}`}
+                      onClick={() => setActiveImageFilter(null)}
+                    >
+                      <span className="thumb-label">🔍 Tất cả</span>
+                    </button>
+                    {thumbUrls.map((t, i) => (
+                      <button
+                        key={t.uid}
+                        className={`image-thumb-btn ${activeImageFilter === i ? 'active' : ''}`}
+                        onClick={() => setActiveImageFilter(activeImageFilter === i ? null : i)}
+                        title={`Ảnh ${i + 1}`}
+                      >
+                        {t.url
+                          ? <img src={t.url} alt={`Ảnh ${i + 1}`} className="thumb-img" />
+                          : <span className="thumb-video-icon">🎬</span>
+                        }
+                        <span className="thumb-label">Ảnh {i + 1}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* ── RIGHT: global item list with highlight/fade ────────────── */}
+                <ul className="extracted-list">
+                  {buildPreviewItems(result.items || [], primaryCatalog).map((item, idx) => {
+                    const indices = Array.isArray(item.imageIndices) ? item.imageIndices : [];
+                    const isHighlighted = activeImageFilter === null || indices.includes(activeImageFilter);
+                    const appearsInCount = indices.length;
+
+                    return (
+                      <li
+                        key={idx}
+                        className={`extracted-item ${isHighlighted ? '' : 'item-faded'}`}
+                      >
+                        <div className="item-main">
+                          <span className="item-name">{translateItemName(item.name)}</span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap' }}>
+                            {/* Image source badges */}
+                            {fileList.length > 1 && appearsInCount > 0 && indices.map(i => (
+                              <span key={i} className="item-img-badge">Ảnh {i + 1}</span>
+                            ))}
+                            {fileList.length > 1 && appearsInCount > 1 && (
+                              <span className="item-multi-badge">{appearsInCount} ảnh</span>
+                            )}
+                            <span className={`condition-badge ${(item.condition || 'good').toLowerCase()}`}>
+                              {translateCondition(item.condition)}
+                            </span>
+                          </div>
+                        </div>
+                        {item._match ? (
+                          /* Primary catalog match */
+                          <div className="item-meta item-meta--mapped">
+                            <span className="item-meta-arrow">→</span>
+                            <span className="item-catalog-tag">
+                              {item._match.catalogName} &middot; {item._match.preset.label}
+                            </span>
+                            <span className={`item-confidence ${item._match.confidence >= 0.6 ? 'high' : 'low'}`}>
+                              {Math.round(item._match.confidence * 100)}% phù hợp
+                              {item._match.confidence < 0.6 && ' ⚠️'}
+                            </span>
+                          </div>
+                        ) : item._secondaryLabel ? (
+                          /* Secondary catalog match */
+                          <div className="item-meta item-meta--mapped">
+                            <span className="item-meta-arrow">→</span>
+                            <span className="item-catalog-tag item-catalog-tag--secondary">
+                              {item._secondaryLabel}
+                            </span>
+                            <span className="item-confidence high">đồ phụ</span>
+                          </div>
+                        ) : (
+                          /* No match — show raw data */
+                          <div className="item-meta">
+                            {item.actualWeight}kg | {item.actualVolume}m³
+                            {item.actualDimensions && ` (${item.actualDimensions.length}×${item.actualDimensions.width}×${item.actualDimensions.height} cm)`}
+                          </div>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
             </div>
 
             <div className="warning-note">

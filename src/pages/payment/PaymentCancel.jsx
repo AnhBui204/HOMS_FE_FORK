@@ -7,12 +7,18 @@ const PaymentCancel = () => {
   const navigate = useNavigate();
 
   const ticketId = searchParams.get("ticketId");
-
+const type = searchParams.get("type");
+const getMessage = () => {
+  if (type === "MOVING_REMAINING") {
+    return "Đơn hàng vẫn chưa được thanh toán đầy đủ.";
+  }
+  return "Đơn hàng vẫn đang chờ đặt cọc.";
+};
   return (
     <Result
       status="warning"
       title="Bạn đã hủy thanh toán"
-      subTitle={`Đơn hàng ${ticketId} vẫn đang chờ đặt cọc.`}
+    subTitle={`Đơn hàng ${ticketId}. ${getMessage()}`}
       extra={[
         <Button key="home" onClick={() => navigate("/")}>
           Trang chủ

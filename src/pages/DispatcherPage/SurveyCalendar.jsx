@@ -112,7 +112,7 @@ const SurveyCalendar = () => {
                 {dayjs(date).format('HH:mm')} - {item.code}
               </strong>
               <div style={{ fontSize: '12px', color: '#666' }}>
-                <Tag color={type === 'ONLINE' ? 'cyan' : 'orange'}>{type}</Tag>
+                <Tag color={type === 'ONLINE' ? 'cyan' : 'orange'}>{type === 'ONLINE' ? 'Trực tuyến' : 'Trực tiếp'}</Tag>
                 <span>NV: {item.dispatcherId?.fullName || 'Chưa gán'}</span>
               </div>
               <span style={{ fontSize: '11px', color: '#888', fontStyle: 'italic' }}>
@@ -213,7 +213,16 @@ const SurveyCalendar = () => {
                 <strong>{selectedTicket.code}</strong>
               </Descriptions.Item>
               <Descriptions.Item label="Trạng thái">
-                <Badge status={getStatusColor(selectedTicket.status)} text={selectedTicket.status} />
+                <Badge 
+                  status={getStatusColor(selectedTicket.status)} 
+                  text={
+                    selectedTicket.status === 'WAITING_SURVEY' ? 'Chờ khảo sát' :
+                    selectedTicket.status === 'SURVEYED' ? 'Đã khảo sát' :
+                    selectedTicket.status === 'QUOTED' ? 'Đã báo giá' : 
+                    selectedTicket.status === 'ACCEPTED' ? 'Đã chốt đơn' :
+                    selectedTicket.status === 'CONVERTED' ? 'Đã tạo HĐ' : selectedTicket.status
+                  } 
+                />
               </Descriptions.Item>
 
               <Descriptions.Item label="Khách hàng">
@@ -229,7 +238,7 @@ const SurveyCalendar = () => {
                   const { date, type } = extractSurveyInfo(selectedTicket);
                   return (
                     <div>
-                      <Tag color={type === 'ONLINE' ? 'cyan' : 'orange'}>{type}</Tag>
+                      <Tag color={type === 'ONLINE' ? 'cyan' : 'orange'}>{type === 'ONLINE' ? 'Trực tuyến' : 'Trực tiếp'}</Tag>
                       <strong>{date ? dayjs(date).format('DD/MM/YYYY HH:mm') : 'Chưa rõ'}</strong>
                     </div>
                   );

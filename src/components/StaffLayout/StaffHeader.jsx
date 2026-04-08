@@ -1,13 +1,13 @@
 import React from 'react';
 import { Layout, Button, Breadcrumb, Badge } from 'antd';
-import { BellOutlined, SettingOutlined, UserOutlined, LogoutOutlined } from '@ant-design/icons';
+import { BellOutlined, SettingOutlined, UserOutlined, LogoutOutlined, MenuUnfoldOutlined, MenuFoldOutlined } from '@ant-design/icons';
 import { useLocation, useNavigate } from 'react-router-dom';
 import useUser from '../../contexts/UserContext';
 import { clearAccessToken } from '../../services/authService';
 
 const { Header } = Layout;
 
-const StaffHeader = () => {
+const StaffHeader = ({ collapsed, onCollapse }) => {
     const location = useLocation();
     const navigate = useNavigate();
     const { logout } = useUser();
@@ -30,18 +30,31 @@ const StaffHeader = () => {
     return (
         <Header style={{
             background: '#fff',
-            padding: '0 24px',
+            padding: '0 16px',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
             borderBottom: '1px solid #f0f0f0',
-            height: '70px',
+            height: '64px',
             position: 'sticky',
             top: 0,
             zIndex: 100,
         }}>
-            <div>
-                <Breadcrumb items={[{ title: 'Staff' }, ...breadcrumbItems.slice(1)]} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Button 
+                    type="text" 
+                    icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />} 
+                    onClick={() => onCollapse(!collapsed)}
+                    style={{ fontSize: '18px' }}
+                />
+                <div className="staff-breadcrumb-wrapper">
+                    <Breadcrumb items={[{ title: 'Staff' }, ...breadcrumbItems.slice(1)]} />
+                </div>
+                <style>{`
+                    @media (max-width: 576px) {
+                        .staff-breadcrumb-wrapper { display: none; }
+                    }
+                `}</style>
             </div>
             <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
                 <Button type="text" icon={<SettingOutlined style={{ fontSize: 16 }} />} />

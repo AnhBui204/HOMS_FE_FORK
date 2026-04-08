@@ -330,8 +330,12 @@ const LandingPage = () => {
                 {/* Services Section */}
                 <section id="services-section" className="services-section">
                     <div className="section-container">
-                        <h2 className="section-title">Dịch Vụ Vận Chuyển Tận Tâm</h2>
-                        <h2 className="section-title">Giải Pháp Giọn Nhà Thông Minh</h2>
+                        <div className="section-heading-group">
+                            <span className="section-badge">Dịch Vụ</span>
+                            <h2 className="section-title">Giải Pháp Chuyển Nhà Thông Minh</h2>
+                            <div className="section-divider"></div>
+                            <p className="section-subtitle">Đội ngũ chuyên nghiệp, giá cạnh tranh và bảo hiểm toàn diện cho mọi nhu cầu vận chuyển của bạn.</p>
+                        </div>
 
                         <Row gutter={[24, 24]}>
                             {servicesData.map((service) => (
@@ -339,26 +343,13 @@ const LandingPage = () => {
                                     <Card
                                         className="service-card"
                                         hoverable
-                                        style={{
-                                            borderRadius: '12px',
-                                            border: '1px solid #E0E0E0',
-                                            textAlign: 'center',
-                                            transition: 'all 0.3s ease'
-                                        }}
+                                        bodyStyle={{ padding: '32px 28px', textAlign: 'center' }}
                                     >
-                                        <div className="service-icon" style={{
-                                            fontSize: '48px',
-                                            color: '#2D4F36',
-                                            marginBottom: '16px'
-                                        }}>
+                                        <div className="service-icon-wrapper">
                                             {service.icon}
                                         </div>
-                                        <h3 style={{ color: '#2D4F36', marginBottom: '12px' }}>
-                                            {service.title}
-                                        </h3>
-                                        <p style={{ color: '#666', fontSize: '14px' }}>
-                                            {service.description}
-                                        </p>
+                                        <h3>{service.title}</h3>
+                                        <p>{service.description}</p>
                                     </Card>
                                 </Col>
                             ))}
@@ -369,35 +360,25 @@ const LandingPage = () => {
                 {/* Why Choose Us Section */}
                 <section className="why-choose-us-section">
                     <div className="section-container">
-                        <h2 className="section-title">Tại Sao Chọn Chúng Tôi?</h2>
+                        <div className="section-heading-group">
+                            <span className="section-badge">Cam Kết</span>
+                            <h2 className="section-title">Tại Sao Chọn Chúng Tôi?</h2>
+                            <div className="section-divider"></div>
+                        </div>
 
                         <Row gutter={[24, 24]}>
                             {whyChooseUsData.map((item) => (
                                 <Col key={item.id} xs={24} sm={12} md={6}>
                                     <Card
                                         className="why-card"
-                                        style={{
-                                            textAlign: 'center',
-                                            border: 'none',
-                                            borderRadius: '12px',
-                                            background: '#F5F5F5',
-                                            transition: 'all 0.3s ease',
-                                            height: '100%'
-                                        }}
+                                        hoverable
+                                        bodyStyle={{ padding: '32px 24px', textAlign: 'center' }}
                                     >
-                                        <div style={{
-                                            fontSize: '40px',
-                                            color: '#2D4F36',
-                                            marginBottom: '16px'
-                                        }}>
+                                        <div className="why-icon-wrapper">
                                             {item.icon}
                                         </div>
-                                        <h3 style={{ color: '#2D4F36', marginBottom: '12px' }}>
-                                            {item.title}
-                                        </h3>
-                                        <p style={{ color: '#666', fontSize: '14px', margin: 0 }}>
-                                            {item.description}
-                                        </p>
+                                        <h3>{item.title}</h3>
+                                        <p>{item.description}</p>
                                     </Card>
                                 </Col>
                             ))}
@@ -406,74 +387,30 @@ const LandingPage = () => {
                 </section>
 
                 {/* Process Section */}
-                {/* Process Section */}
                 <section id="process-section" className="process-section">
                     <div className="section-container">
-                        <h2 className="section-title">Các Bước Vận Chuyển</h2>
+                        <div className="section-heading-group">
+                            <span className="section-badge">Quy Trình</span>
+                            <h2 className="section-title">Các Bước Vận Chuyển</h2>
+                            <div className="section-divider"></div>
+                        </div>
 
                         {/* Mảng màu nền cho 4 bước */}
-                        <div className="process-grid">
-                            {processData.map((step, index) => {
-                                // Logic màu sắc
-                                const bgColors = ['#FFFFFF', '#C0CFB2', '#8BA888', '#44624A'];
-                                const textColors = ['#2D4F36', '#2D4F36', '#fff', '#fff']; // 2 bước cuối nền đậm nên chữ trắng
-                                const numberColors = ['#2D4F36', '#2D4F36', '#2D4F36', '#fff']; // Màu số thứ tự
-                                const numberBg = ['#F5F5F5', '#fff', '#fff', '#2D4F36']; // Nền của vòng tròn số
-
-                                return (
-                                    <React.Fragment key={step.id}>
-                                        <div className="process-item-wrapper">
-                                            {/* Thẻ Card */}
-                                            <div
-                                                className="process-card-horizontal"
-                                                style={{
-                                                    backgroundColor: bgColors[index],
-                                                    color: textColors[index]
-                                                }}
-                                            >
-                                                {/* Số thứ tự bên trái */}
-                                                <div
-                                                    className="process-number-left"
-                                                    style={{
-                                                        color: index === 3 ? '#2D4F36' : '#fff', // Riêng bước 4 đảo màu
-                                                        backgroundColor: index === 3 ? '#fff' : '#2D4F36'
-                                                    }}
-                                                >
-                                                    {step.number}
-                                                </div>
-
-                                                {/* Nội dung bên phải (Title & Des) */}
-                                                <div className="process-content-right">
-                                                    <h3 style={{
-                                                        color: textColors[index],
-                                                        marginBottom: '4px'
-                                                    }}>
-                                                        {step.title}
-                                                    </h3>
-                                                    <p style={{
-                                                        color: textColors[index],
-                                                        opacity: 0.9,
-                                                        fontSize: '13px',
-                                                        margin: 0
-                                                    }}>
-                                                        {step.description}
-                                                    </p>
-                                                </div>
-                                            </div>
-
-                                            {/* Nét đứt (---) chỉ hiện ở giữa cột 1 và 2 */}
-                                            {(index === 0 || index === 2) && (
-                                                <div className="process-dash">
-                                                    ---
-                                                </div>
-                                            )}
-
-                                            {/* Nét đứt dọc (giả lập kết nối xuống) - Hiện sau phần tử thứ 2 */}
-                                            {index === 1 && <div className="vertical-dash-connector">|</div>}
+                        <div className="process-steps-container">
+                            {processData.map((step, index) => (
+                                <div key={step.id} className="process-step-item">
+                                    <div className="process-card-modern">
+                                        <div className="process-icon-badge">
+                                            {step.number}
                                         </div>
-                                    </React.Fragment>
-                                );
-                            })}
+                                        <div className="process-text-content">
+                                            <h3>{step.title}</h3>
+                                            <p>{step.description}</p>
+                                        </div>
+                                    </div>
+                                    {index < processData.length - 1 && <div className="process-connector"></div>}
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </section>
@@ -481,66 +418,41 @@ const LandingPage = () => {
                 {/* Testimonials Section */}
                 <section id="testimonials-section" className="testimonials-section">
                     <div className="section-container">
-                        <h2 className="section-title" style={{ color: 'white', marginBottom: '60px' }}>Đánh Giá Từ Khách Hàng</h2>
+                        <div className="section-heading-group" style={{ marginBottom: '48px' }}>
+                            <span className="section-badge" style={{ background: 'rgba(255,255,255,0.18)', color: '#fff', border: '1px solid rgba(255,255,255,0.35)' }}>Khách Hàng Nói Gì</span>
+                            <h2 className="section-title section-title--white">Đánh Giá Từ Khách Hàng</h2>
+                            <div className="section-divider" style={{ background: 'linear-gradient(90deg, rgba(255,255,255,0.4), rgba(255,255,255,0.9))' }}></div>
+                        </div>
 
                         <Row gutter={[24, 24]}>
                             {testimonialsData.map((testimonial) => (
                                 <Col key={testimonial.id} xs={24} sm={12} md={8}>
                                     <Card
                                         className="testimonial-card"
-                                        style={{
-                                            borderRadius: '12px',
-                                            border: 'none', // Bỏ viền để nền xanh liền mạch hơn
-                                            overflow: 'hidden', // Để phần nền xanh bo góc theo Card
-                                            padding: 0, // Reset padding mặc định nếu cần
-                                            transition: 'all 0.3s ease',
-                                        }}
-                                        bodyStyle={{ padding: '24px 24px 0 24px' }} // Padding cho phần nội dung trên
+                                        bodyStyle={{ padding: 0 }}
                                     >
-                                        {/* Phần nội dung đánh giá */}
-                                        <div style={{ marginBottom: '20px' }}>
-                                            <div style={{ marginBottom: '12px' }}>
-                                                <Rate disabled value={testimonial.rating} style={{ color: '#FFC069' }} />
+                                        {/* Review content */}
+                                        <div style={{ padding: '24px 24px 16px', marginBottom: '4px' }}>
+                                            <div style={{ fontSize: '2.2rem', color: '#C0CFB2', lineHeight: 1, marginBottom: '8px', fontFamily: 'Georgia, serif' }}>“</div>
+                                            <div style={{ marginBottom: '10px' }}>
+                                                <Rate disabled value={testimonial.rating} style={{ color: '#F7C948', fontSize: '14px' }} />
                                             </div>
-                                            <p style={{ color: '#666', fontSize: '14px', fontStyle: 'italic', minHeight: '60px' }}>
-                                                "{testimonial.text}"
+                                            <p style={{ color: '#555', fontSize: '14px', fontStyle: 'italic', lineHeight: '1.65', minHeight: '60px', margin: 0 }}>
+                                                {testimonial.text}
                                             </p>
                                         </div>
 
-                                        {/* Phần thông tin tài khoản (Footer màu xanh) */}
-                                        <div style={{
-                                            backgroundColor: '#8BA888', // Màu nền yêu cầu
-                                            margin: '0 -24px', // Margin âm để tràn viền (bù lại padding của Card)
-                                            padding: '15px 24px',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '15px'
-                                        }}>
-                                            {/* Avatar */}
+                                        {/* Gradient footer */}
+                                        <div className="testimonial-footer">
                                             <Avatar
                                                 size={48}
                                                 src={testimonial.avatar}
                                                 icon={<UserOutlined />}
-                                                style={{ border: '2px solid #fff' }}
+                                                style={{ border: '2px solid rgba(255,255,255,0.8)', flexShrink: 0 }}
                                             />
-
-                                            {/* Tên và Dịch vụ */}
-                                            <div style={{ textAlign: 'left' }}>
-                                                <p style={{
-                                                    color: '#fff', // Chữ trắng cho nổi trên nền xanh
-                                                    fontWeight: 'bold',
-                                                    fontSize: '16px',
-                                                    margin: 0
-                                                }}>
-                                                    {testimonial.name}
-                                                </p>
-                                                <p style={{
-                                                    color: 'rgba(255, 255, 255, 0.8)',
-                                                    fontSize: '12px',
-                                                    margin: 0
-                                                }}>
-                                                    {testimonial.service}
-                                                </p>
+                                            <div>
+                                                <p style={{ color: '#fff', fontWeight: 700, fontSize: '15px', margin: 0 }}>{testimonial.name}</p>
+                                                <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '12px', margin: 0 }}>{testimonial.service}</p>
                                             </div>
                                         </div>
                                     </Card>

@@ -1,933 +1,101 @@
-/* LandingPage Optimized Styles */
+/* ====================================================
+   LandingPage — Premium Redesign
+   Color Tokens:
+     Primary Dark   : #2D4F36
+     Primary Mid    : #44624A
+     Accent Green   : #8BA888
+     Light Green    : #C0CFB2
+     Off-White      : #F7F8F6
+     White          : #FFFFFF
+   ==================================================== */
 
-* {
+/* ---------- Reset / Base ---------- */
+*,
+*::before,
+*::after {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- Google Font (Inter) via system stack ---------- */
 .landing-page {
   min-height: 100vh;
   background: #fff;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Inter', 'Segoe UI', Roboto, -apple-system, sans-serif;
 }
 
-/* Header */
-.landing-header {
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  height: 70px;
-  padding: 0 40px;
-}
-
-.landing-header .logo {
-  cursor: pointer;
-}
-
-.ant-menu-horizontal {
-  gap: 24px;
-}
-
-.ant-menu-item {
-  color: #2D4F36 !important;
-  font-weight: 500;
-  border-bottom: none !important;
-}
-
-.ant-menu-item:hover {
-  color: #2D4F36 !important;
-  border-bottom: 2px solid #2D4F36 !important;
-}
-
-.ant-menu-item-selected {
-  color: #2D4F36 !important;
-  border-bottom: 2px solid #2D4F36 !important;
-}
-
-/* Content Styles */
-.landing-content {
-  background: #ffffff;
-}
-
-/* Hero Section */
+/* ====================================================
+   HERO SECTION
+   ==================================================== */
 .hero-section {
-  background: linear-gradient(rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.35)),
-    url('../../../../public/images/landingPageImg.png') center/cover no-repeat;
-  height: 550px;
+  background:
+    linear-gradient(135deg, rgba(0, 0, 0, 0.45) 0%, rgba(45, 79, 54, 0.35) 100%),
+    url('../../../../public/images/landingPageImg.png') center / cover no-repeat;
+  min-height: 580px;
   position: relative;
   display: flex;
   align-items: center;
+  overflow: hidden;
 }
 
-.hero-container {
-  max-width: 1200px;
-  margin: 0 auto;
+/* Subtle animated particle overlay */
+.hero-section::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 20% 80%, rgba(139, 168, 136, 0.18) 0%, transparent 55%),
+    radial-gradient(ellipse at 80% 20%, rgba(45, 79, 54, 0.15) 0%, transparent 55%);
+  pointer-events: none;
+}
+
+.hero-overlay {
+  display: none;
+  /* handled by background gradient above */
+}
+
+/* Container */
+.container {
   width: 100%;
+  max-width: 1260px;
+  margin: 0 auto;
+  padding: 0 40px;
 }
 
 .hero-text {
   text-align: left;
-  background-color: transparent;
-  /* Không màu nền */
-  backdrop-filter: none;
-  box-shadow: none;
-  padding: 0;
-  max-width: 700px;
+  max-width: 780px;
 }
 
-/* 2. STYLE MỚI CHO RIÊNG PHẦN TEXT (.hero-text-content) - HIỆU ỨNG KÍNH MỜ */
+/* ---- Glassmorphism content card ---- */
 .hero-text-content {
-  background-color: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 15px;
-  padding: 30px;
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-  margin-bottom: 30px;
-  display: inline-block;
-
-  /* --- CẬP NHẬT MỚI --- */
-  width: 100%;
-  /* Cho phép mở rộng tối đa */
-  max-width: 800px;
-  /* Giới hạn chiều rộng 800px */
-  margin-left: -15%;
-  /* Đẩy nhẹ sang trái (Negative Margin) */
-}
-
-/* Các màu chữ bên trong giữ nguyên màu Xanh */
-.hero-title {
-  font-size: 4rem;
-  font-weight: 800;
-  margin-bottom: 0;
-  color: #2D4F36;
-  /* Xanh đậm */
-  line-height: 1.1;
-}
-
-.hero-subtitle {
-  font-size: 2.2rem;
-  font-weight: 700;
-  color: #2D4F36;
-  /* Xanh đậm */
-  line-height: 1.3;
-  margin-bottom: 15px;
-}
-
-.hero-description {
-  font-size: 1.1rem;
-  color: #44624A;
-  /* Xanh vừa */
-  font-weight: 500;
-  /* Tăng độ đậm một chút */
-  margin-bottom: 0;
-}
-
-.input-group {
-  /* Sửa: Đổi nền sang màu xanh #8BA888 */
-  background: #8BA888;
-  border: 1px solid #7A9678;
-  border-radius: 8px;
-  padding: 8px 15px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  height: 70px;
-  /* Chiều cao cố định */
-  transition: all 0.3s;
-}
-
-.input-group:hover,
-.input-group:focus-within {
-  background: #7e997b;
-  /* Sửa: Hover đổi màu nền xanh đậm hơn chút */
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-}
-
-/* --- CẬP NHẬT: DÒNG LABEL + ICON --- */
-/* Thêm class mới để căn chỉnh Icon và Label nằm cùng 1 dòng */
-.label-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 2px;
-}
-
-.label-icon {
-  color: #fff;
-  /* Sửa: Icon màu trắng */
-  font-size: 14px;
-}
-
-.input-label {
-  font-size: 12px;
-  color: #fff;
-  /* Sửa: Label màu trắng */
-  font-weight: 600;
-  text-transform: uppercase;
-  margin: 0;
-  /* Reset margin cũ */
-}
-
-.arrow-wrapper .anticon {
-  font-size: 20px;
-  color: #2D4F36;
-  background: rgba(255, 255, 255, 0.9);
-  padding: 10px;
-  border-radius: 50%;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-/* --- CẬP NHẬT: INPUT FIELD --- */
-/* Tùy chỉnh Antd Input để trong suốt và chữ trắng */
-.custom-input-field.ant-input-affix-wrapper {
-  background: transparent;
-  border: none !important;
-  box-shadow: none !important;
-  padding: 0;
-}
-
-.custom-input-field input {
-  background: transparent !important;
-  font-size: 14px;
-  /* Sửa: Cỡ chữ nhỏ lại */
-  color: #000 !important;
-  /* Sửa: Text nhập vào màu đen */
-  font-weight: 500;
-}
-
-/* Sửa: Màu Placeholder (text gợi ý) thành trắng mờ */
-.custom-input-field input::placeholder {
-  color: rgba(255, 255, 255, 0.7) !important;
-}
-
-/* Sửa: Đổi màu nút X (Clear icon) thành trắng */
-.custom-input-field .ant-input-clear-icon {
-  color: rgba(255, 255, 255, 0.9) !important;
-  font-size: 14px;
-}
-
-/* --- CẬP NHẬT: THANH BAR CHỨA INPUT --- */
-.quick-quote-bar {
-  background: rgba(255, 255, 255, 0.25);
-  backdrop-filter: blur(15px);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-
-  padding: 20px 30px;
-  max-width: 1000px;
-  margin-left: -15%;
-  /* Đẩy sang trái */
-}
-
-@media (max-width: 768px) {
-  .quick-quote-bar {
-    margin-left: 0;
-    max-width: 100%;
-  }
-}
-
-/* --- CẬP NHẬT: NÚT "XEM GIÁ DỰ KIẾN" (NHỎ LẠI) --- */
-/* Class đổi tên thành quote-btn-small để tránh nhầm lẫn */
-.quote-btn-small {
-  background-color: #2D4F36 !important;
-  border-color: #2D4F36 !important;
-  font-weight: 600;
-  border-radius: 6px;
-
-  /* Sửa: Làm nút nhỏ hơn ô nhập liệu (45px so với 70px) */
-  height: 45px;
-  font-size: 14px;
-  /* Chữ nhỏ lại */
-  padding: 0 25px;
-  min-width: 160px;
-  width: fit-content;
-}
-
-.quote-btn-small:hover {
-  background-color: #3d6b4a !important;
-  transform: translateY(-2px);
-}
-
-/* Icon mũi tên ở giữa giữ nguyên */
-.quick-quote-bar .anticon-arrow-right {
-  color: #2D4F36 !important;
-  background: rgba(255, 255, 255, 0.8);
-  padding: 8px;
-  border-radius: 50%;
-}
-
-/* Text ghi chú nhỏ bên dưới giữ nguyên */
-.price-disclaimer {
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 0.85rem;
-  margin-top: 10px;
-  font-style: italic;
-}
-
-/* Quick Form */
-.quick-form-container {
-  max-width: 1200px;
-  margin: 60px auto 0;
-  padding: 0 40px;
-}
-
-.quick-form-card {
-  background: #ffffff;
-  padding: 32px;
-}
-
-.quick-form-card .ant-form-item {
-  margin-bottom: 0;
-}
-
-/* Services Section */
-.services-section {
-  background: #f7f8f6;
-  padding: 80px 40px;
-  margin-top: 80px;
-}
-
-.section-container {
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.section-title {
-  font-size: 36px;
-  font-weight: 700;
-  color: #2D4F36;
-  text-align: center;
-  margin-bottom: 12px;
-}
-
-.section-subtitle {
-  font-size: 16px;
-  color: #666;
-  text-align: center;
-  margin-bottom: 48px;
-}
-
-.service-card {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  background: #ffffff;
-}
-
-.service-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 12px 24px rgba(45, 79, 54, 0.12);
-  border-color: #2D4F36 !important;
-}
-
-/* Why Choose Us Section */
-.why-choose-us-section {
-  background: #ffffff;
-  padding: 80px 40px;
-}
-
-.why-card {
-  transition: all 0.3s ease;
-}
-
-.why-card:hover {
-  transform: translateY(-4px);
-  background: #E8F2EA !important;
-}
-
-/* Process Section */
-.process-section {
-  background: #f7f8f6;
-  padding: 80px 40px;
-}
-
-.process-row {
-  background-color: #F1EBE1;
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 20px;
-}
-
-.process-item-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  flex: 1;
-  min-width: 200px;
-  max-width: 280px;
-}
-
-.process-card {
-  transition: all 0.3s ease;
-  width: 100%;
-}
-
-.process-card:hover {
-  transform: translateY(-4px);
-  background: #D4E8DC !important;
-  box-shadow: 0 8px 16px rgba(45, 79, 54, 0.12);
-}
-
-.process-number {
-  transition: all 0.3s ease;
-}
-
-.process-card:hover .process-number {
-  transform: scale(1.1);
-}
-
-.process-arrow {
-  min-width: 40px;
-  display: none;
-}
-
-.process-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  /* 2 cột bằng nhau */
-  gap: 30px 40px;
-  /* Khoảng cách hàng và cột */
-  max-width: 1000px;
-  margin: 0 auto;
-  position: relative;
-}
-
-/* Wrapper cho từng item để xử lý vị trí nét đứt */
-.process-item-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-/* Style cho Card nằm ngang */
-.process-card-horizontal {
-  display: flex;
-  /* Flex ngang: Số bên trái, Chữ bên phải */
-  align-items: center;
-  padding: 20px 25px;
-  border-radius: 16px;
-  width: 100%;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  transition: transform 0.3s ease;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  /* Viền mờ cho ô màu trắng */
-}
-
-.process-card-horizontal:hover {
-  transform: translateY(-3px);
-}
-
-/* Số thứ tự tròn bên trái */
-.process-number-left {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  font-weight: 800;
-  margin-right: 20px;
-  /* Khoảng cách với text */
-  flex-shrink: 0;
-  /* Không bị co lại */
-}
-
-/* Cột chứa Title và Description */
-.process-content-right {
-  display: flex;
-  flex-direction: column;
-  text-align: left;
-  /* Canh trái text */
-}
-
-.process-content-right h3 {
-  font-size: 18px;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-
-/* Nét đứt ngang (---) */
-.process-dash {
-  position: absolute;
-  right: -25px;
-  /* Đẩy ra giữa khe 2 cột */
-  color: #2D4F36;
-  font-weight: 900;
-  font-size: 20px;
-  letter-spacing: -2px;
-  z-index: 1;
-}
-
-.process-item-wrapper:nth-child(3) {
-  order: 4;
-  /* Đẩy bước 3 xuống vị trí cuối (Góc dưới phải) */
-}
-
-.process-item-wrapper:nth-child(4) {
-  order: 3;
-  /* Đẩy bước 4 lên vị trí kế cuối (Góc dưới trái) */
-}
-
-/* Nét đứt dọc giả lập (kết nối bước 2 xuống 3) */
-.vertical-dash-connector {
-  position: absolute;
-  bottom: -35px;
-  /* Nằm dưới ô số 2 */
-  left: 50%;
-  transform: translateX(-50%);
-  color: #2D4F36;
-  font-weight: 900;
-  font-size: 20px;
-  /* Dùng ký tự | và css dashed border để tạo nét đứt dọc nếu muốn */
-  border-left: 3px dashed #2D4F36;
-  height: 30px;
-  width: 0;
-  color: transparent;
-  /* Ẩn chữ |, chỉ hiện border */
-}
-
-.process-item-wrapper:nth-child(3) .process-dash {
-  right: auto;
-  left: -30px;
-}
-
-/* --- RESPONSIVE: Về 1 cột trên điện thoại --- */
-@media (max-width: 768px) {
-  .process-grid {
-    grid-template-columns: 1fr;
-    /* 1 cột */
-    gap: 20px;
-  }
-
-  /* Ẩn nét đứt ngang trên mobile */
-  .process-dash {
-    display: none;
-  }
-
-  /* Hiện nét đứt dọc giữa tất cả các bước trên mobile */
-  .process-item-wrapper::after {
-    content: '';
-    position: absolute;
-    bottom: -22px;
-    left: 50%;
-    width: 2px;
-    height: 20px;
-    border-left: 2px dashed #ccc;
-    transform: translateX(-50%);
-  }
-
-  /* Ẩn nét đứt cuối cùng */
-  .process-item-wrapper:last-child::after {
-    display: none;
-  }
-
-  .vertical-dash-connector {
-    display: none;
-    /* Ẩn connector riêng của desktop */
-  }
-}
-
-@media (min-width: 768px) {
-  .process-arrow {
-    display: flex;
-  }
-
-  .process-item-wrapper {
-    max-width: 100%;
-    flex: 0 1 calc(25% - 15px);
-  }
-}
-
-/* Testimonials Section */
-.testimonials-section {
-  background-image: url('../../../../public/images/reviewImg.png');
-  background-size: cover;
-  background-position: center;
-  width: 100%;
-  height: 500px;
-  padding: 80px 40px;
-}
-
-.testimonial-card {
-  transition: all 0.3s ease;
-  background: #ffffff;
-}
-
-.testimonial-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 24px rgba(45, 79, 54, 0.12);
-  border-color: #2D4F36 !important;
-}
-
-/* Contact Section */
-/* --- CONTACT SECTION --- */
-.contact-section {
-  padding-bottom: 80px;
-  margin-top: 30px;
-}
-
-/* KHUNG BAO NGOÀI: CHIA MÀU NỀN 7:3 TẠI ĐÂY */
-.contact-box-wrapper {
-  /* Tạo hiệu ứng nền chia đôi: 70% Trắng - 30% Xanh */
-  background: linear-gradient(to right, #ffffff 70%, #C0CFB2 70%);
-
+  background: rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(18px) saturate(180%);
+  -webkit-backdrop-filter: blur(18px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.28);
   border-radius: 20px;
-  overflow: hidden;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
-}
-
-/* Cột trái: Nền trong suốt để thấy màu trắng của wrapper */
-.contact-left {
-  background-color: transparent;
-  padding: 40px 50px;
-}
-
-/* Cột phải: Nền trong suốt để thấy màu xanh/trắng của wrapper */
-.contact-right {
-  background-color: transparent;
-  min-height: 500px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 30px;
-  /* Thêm padding để map không dính sát lề */
-}
-
-/* Bản đồ */
-.map-container {
+  padding: 36px 40px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.22);
+  margin-bottom: 24px;
+  display: inline-block;
   width: 100%;
-  height: 100%;
-  min-height: 450px;
-  border-radius: 15px;
-  overflow: hidden;
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
-  /* Tăng bóng đổ cho map nổi bật */
-  background: white;
-  /* Nền trắng đỡ map */
+  max-width: 680px;
+  animation: heroFadeIn 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-/* --- Style thông tin công ty --- */
-.company-contact-info {
-  margin-top: 30px;
-  padding-top: 20px;
-  border-top: 1px dashed #e0e0e0;
-}
-
-.info-item {
-  display: flex;
-  align-items: center;
-}
-
-/* --- RESPONSIVE --- */
-@media (max-width: 992px) {
-  .contact-box-wrapper {
-    /* Trên tablet/mobile: Chuyển gradient thành dọc (Trên trắng, dưới xanh) hoặc 1 màu */
-    background: linear-gradient(to bottom, #ffffff 60%, #C0CFB2 60%);
-  }
-
-  .contact-left {
-    padding: 30px 20px;
-  }
-
-  .contact-right {
-    padding: 20px;
-    min-height: 400px;
-  }
-}
-
-@media (max-width: 768px) {
-  .contact-box-wrapper {
-    /* Mobile: Bỏ gradient phức tạp, chia khối rõ ràng */
-    background: #ffffff;
-  }
-
-  .contact-right {
-    background: #C0CFB2;
-    /* Mobile thì tô xanh hẳn phần map */
-    padding: 20px;
-  }
-}
-
-/* Footer */
-.landing-footer {
-  background: #2D4F36;
-  color: #ffffff;
-  padding: 60px 40px 20px;
-  margin-top: 80px;
-}
-
-.landing-footer h3,
-.landing-footer h4 {
-  color: #ffffff;
-}
-
-.landing-footer a {
-  transition: all 0.3s ease;
-}
-
-.landing-footer a:hover {
-  color: #D4E8DC !important;
-  transform: translateX(4px);
-}
-
-.footer-content {
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-/* Responsive Design */
-@media (max-width: 992px) {
-  .landing-header {
-    padding: 0 24px;
-  }
-
-  .hero-section {
-    padding: 60px 24px;
-  }
-
-  .hero-title {
-    font-size: 48px;
-  }
-
-  .hero-subtitle {
-    font-size: 24px;
-  }
-
-  .hero-text {
-    padding-right: 0;
-    margin-bottom: 32px;
-  }
-
-  .hero-image {
-    padding-left: 0;
-  }
-
-  .services-section,
-  .why-choose-us-section,
-  .process-section,
-  .testimonials-section,
-  .contact-section {
-    padding: 60px 24px;
-  }
-
-  .section-title {
-    font-size: 28px;
-  }
-
-  .process-item-wrapper {
-    max-width: calc(50% - 10px);
-    flex: 0 1 calc(50% - 10px);
-  }
-
-  .contact-form-col {
-    padding-right: 0;
-    margin-bottom: 32px;
-  }
-
-  .contact-map-col {
-    padding-left: 0;
-  }
-
-  .landing-footer {
-    padding: 40px 24px 20px;
-  }
-}
-
-@media (max-width: 768px) {
-  .landing-header {
-    padding: 0 16px;
-  }
-
-  .hero-section {
-    padding: 40px 16px;
-    min-height: auto;
-  }
-
-  .hero-title {
-    font-size: 36px;
-  }
-
-  .hero-subtitle {
-    font-size: 20px;
-    margin-bottom: 16px;
-  }
-
-  .hero-description {
-    font-size: 14px;
-    margin-bottom: 24px;
-  }
-
-  .quick-form-container {
-    margin-top: 40px;
-    padding: 0 16px;
-  }
-
-  .quick-form-card {
-    padding: 16px;
-  }
-
-  .quick-form-card .ant-form-item {
-    margin-bottom: 16px;
-  }
-
-  .quick-form-card .ant-col {
-    margin-bottom: 0;
-  }
-
-  .services-section,
-  .why-choose-us-section,
-  .process-section,
-  .testimonials-section,
-  .contact-section {
-    padding: 40px 16px;
-    margin-top: 40px;
-  }
-
-  .section-title {
-    font-size: 24px;
-    margin-bottom: 8px;
-  }
-
-  .section-subtitle {
-    font-size: 14px;
-    margin-bottom: 32px;
-  }
-
-  .process-item-wrapper {
-    max-width: 100%;
-    flex: 0 1 100%;
-    margin-bottom: 24px;
-  }
-
-  .process-row {
-    gap: 0;
-  }
-
-  .service-card .ant-card-body {
-    padding: 16px;
-  }
-
-  .contact-section {
-    max-width: 100%;
-  }
-
-  .landing-footer {
-    padding: 32px 16px 16px;
-  }
-
-  .landing-footer h3,
-  .landing-footer h4 {
-    font-size: 16px;
-  }
-
-  .footer-content {
-    max-width: 100%;
-  }
-}
-
-@media (max-width: 576px) {
-  .landing-header {
-    height: 60px;
-    padding: 0 12px;
-  }
-
-  .logo h2 {
-    font-size: 20px !important;
-  }
-
-  .hero-section {
-    padding: 32px 12px;
-  }
-
-  .hero-title {
-    font-size: 28px;
-  }
-
-  .hero-subtitle {
-    font-size: 18px;
-  }
-
-  .hero-description {
-    font-size: 13px;
-  }
-
-  .hero-image-placeholder {
-    height: 300px;
-    font-size: 36px;
-  }
-
-  .quick-form-container {
-    padding: 0 12px;
-    margin-top: 32px;
-  }
-
-  .quick-form-card {
-    padding: 12px;
-  }
-
-  .ant-form-item {
-    margin-bottom: 12px;
-  }
-
-  .services-section,
-  .why-choose-us-section,
-  .process-section,
-  .testimonials-section,
-  .contact-section {
-    padding: 32px 12px;
-  }
-
-  .section-title {
-    font-size: 20px;
-  }
-
-  .section-subtitle {
-    font-size: 13px;
-    margin-bottom: 24px;
-  }
-
-  .ant-card {
-    border-radius: 8px !important;
-  }
-
-  .process-number {
-    width: 48px !important;
-    height: 48px !important;
-    font-size: 20px !important;
-  }
-
-  .map-placeholder {
-    height: 300px !important;
-    font-size: 32px !important;
-  }
-
-  .landing-footer {
-    padding: 24px 12px 12px;
-  }
-
-  .landing-footer h3 {
-    font-size: 14px;
-  }
-
-  .landing-footer h4 {
-    font-size: 13px;
-  }
-
-  .footer-content ul li {
-    font-size: 12px;
-  }
-}
-
-/* Animation for cards */
-@keyframes slideInUp {
+@keyframes heroFadeIn {
   from {
     opacity: 0;
-    transform: translateY(30px);
+    transform: translateY(28px);
   }
 
   to {
@@ -936,43 +104,905 @@
   }
 }
 
-.service-card,
-.why-card,
-.process-card,
-.testimonial-card {
-  animation: slideInUp 0.6s ease-out forwards;
+.hero-title {
+  font-size: 4.5rem;
+  font-weight: 900;
+  letter-spacing: -2px;
+  color: #fff;
+  line-height: 1;
+  margin-bottom: 6px;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
 }
 
-/* Button hover effects */
-.ant-btn-primary:hover {
-  transform: translateY(-2px);
+.hero-subtitle {
+  font-size: 2rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.95);
+  line-height: 1.3;
+  margin-bottom: 12px;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.25);
+}
+
+.hero-description {
+  font-size: 1.05rem;
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 400;
+  line-height: 1.65;
+  margin-bottom: 0;
+}
+
+/* ---- Quick-Quote Bar ---- */
+.quick-quote-bar {
+  background: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.38);
+  border-radius: 18px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  padding: 22px 30px;
+  max-width: 780px;
+  animation: heroFadeIn 1.1s 0.15s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Input group inside bar */
+.input-group {
+  background: rgba(139, 168, 136, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 10px;
+  padding: 8px 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 68px;
+  transition: background 0.25s, box-shadow 0.25s;
+}
+
+.input-group:hover,
+.input-group:focus-within {
+  background: rgba(68, 98, 74, 0.82);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.14);
+}
+
+.label-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 3px;
+}
+
+.label-icon {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 13px;
+}
+
+.input-label {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* Transparent Ant input inside group */
+.custom-input-field.ant-input-number {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  width: 100%;
+}
+
+.custom-input-field .ant-input-number-input {
+  background: transparent !important;
+  color: #fff !important;
+  font-size: 15px;
+  font-weight: 600;
+  padding: 0 !important;
+  height: auto;
+}
+
+.custom-input-field .ant-input-number-input::placeholder {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.custom-input-field .ant-input-number-handler-wrap {
+  display: none;
+}
+
+/* Select inside bar */
+.custom-select-field .ant-select-selector {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  height: auto !important;
+  color: #fff !important;
+}
+
+.custom-select-field .ant-select-selection-item {
+  color: #fff !important;
+  font-weight: 600;
+  font-size: 15px;
+  line-height: normal !important;
+  padding: 0 !important;
+}
+
+.custom-select-field .ant-select-arrow {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Arrow wrapper between inputs */
+.arrow-wrapper .anticon {
+  font-size: 18px;
+  color: #2D4F36;
+  background: rgba(255, 255, 255, 0.92);
+  padding: 10px;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  transition: transform 0.2s;
+}
+
+.arrow-wrapper .anticon:hover {
+  transform: translateX(3px);
+}
+
+/* Estimate button */
+.quote-btn-small {
+  background: linear-gradient(135deg, #2D4F36 0%, #44624A 100%) !important;
+  border: none !important;
+  font-weight: 700 !important;
+  border-radius: 10px !important;
+  height: 50px !important;
+  font-size: 14px !important;
+  letter-spacing: 0.03em;
+  padding: 0 28px !important;
+  min-width: 170px;
+  box-shadow: 0 4px 14px rgba(45, 79, 54, 0.45) !important;
+  transition: transform 0.22s, box-shadow 0.22s !important;
+}
+
+.quote-btn-small:hover {
+  transform: translateY(-3px) !important;
+  box-shadow: 0 8px 24px rgba(45, 79, 54, 0.55) !important;
+}
+
+.price-disclaimer {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.82rem;
+  margin-top: 10px;
+  font-style: italic;
+}
+
+/* ====================================================
+   SHARED SECTION STYLES
+   ==================================================== */
+.section-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.section-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, #C0CFB2 0%, #8BA888 100%);
+  color: #2D4F36;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 5px 16px;
+  border-radius: 50px;
+  margin-bottom: 14px;
+}
+
+.section-heading-group {
+  text-align: center;
+  margin-bottom: 52px;
+}
+
+.section-title {
+  font-size: 2.4rem;
+  font-weight: 800;
+  color: #2D4F36;
+  text-align: center;
+  margin-bottom: 14px;
+  letter-spacing: -0.5px;
+  line-height: 1.2;
+}
+
+.section-title--white {
+  color: #fff;
+}
+
+.section-divider {
+  width: 52px;
+  height: 4px;
+  background: linear-gradient(90deg, #8BA888, #2D4F36);
+  border-radius: 4px;
+  margin: 0 auto 16px;
+}
+
+.section-subtitle {
+  font-size: 1.05rem;
+  color: #666;
+  text-align: center;
+  max-width: 560px;
+  margin: 0 auto;
+  line-height: 1.65;
+}
+
+/* Scroll-reveal utility */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.65s ease, transform 0.65s ease;
+}
+
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ====================================================
+   SERVICES SECTION
+   ==================================================== */
+.services-section {
+  background: #F7F8F6;
+  padding: 90px 40px;
+}
+
+.service-card {
+  border-radius: 18px !important;
+  border: 1.5px solid #E8EDEA !important;
+  background: #fff !important;
+  text-align: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease !important;
+  height: 100%;
+}
+
+.service-card:hover {
+  transform: translateY(-10px) !important;
+  box-shadow: 0 20px 48px rgba(45, 79, 54, 0.14) !important;
+  border-color: #8BA888 !important;
+}
+
+.service-icon-wrapper {
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #C0CFB2 0%, #8BA888 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  font-size: 34px;
+  color: #2D4F36;
+  transition: transform 0.3s ease;
+}
+
+.service-card:hover .service-icon-wrapper {
+  transform: scale(1.1) rotate(-5deg);
+  background: linear-gradient(135deg, #2D4F36 0%, #44624A 100%);
+  color: #fff;
+}
+
+.service-card h3 {
+  color: #2D4F36 !important;
+  font-size: 1.1rem !important;
+  font-weight: 700 !important;
+  margin-bottom: 10px !important;
+}
+
+.service-card p {
+  color: #777 !important;
+  font-size: 0.92rem !important;
+  line-height: 1.6 !important;
+}
+
+/* ====================================================
+   WHY CHOOSE US SECTION
+   ==================================================== */
+.why-choose-us-section {
+  background: #fff;
+  padding: 90px 40px;
+}
+
+.why-card {
+  border-radius: 18px !important;
+  border: 1.5px solid #E8EDEA !important;
+  background: #F7F8F6 !important;
+  text-align: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease !important;
+  overflow: hidden;
+  position: relative;
+  height: 100%;
+}
+
+.why-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, transparent 60%, rgba(139, 168, 136, 0.12) 100%);
+  pointer-events: none;
+}
+
+.why-card:hover {
+  transform: translateY(-8px) !important;
+  box-shadow: 0 16px 40px rgba(45, 79, 54, 0.12) !important;
+  background: linear-gradient(135deg, #edf4ee 0%, #deeadf 100%) !important;
+}
+
+.why-icon-wrapper {
+  width: 68px;
+  height: 68px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #C0CFB2 0%, rgba(139, 168, 136, 0.5) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 18px;
+  font-size: 30px;
+  color: #2D4F36;
+  transition: transform 0.3s ease, background 0.3s ease;
+}
+
+.why-card:hover .why-icon-wrapper {
+  transform: scale(1.12);
+  background: linear-gradient(135deg, #2D4F36 0%, #44624A 100%);
+  color: #fff;
+}
+
+.why-card h3 {
+  color: #2D4F36 !important;
+  font-size: 1rem !important;
+  font-weight: 700 !important;
+  margin-bottom: 8px !important;
+}
+
+.why-card p {
+  color: #666 !important;
+  font-size: 0.88rem !important;
+  margin: 0 !important;
+  line-height: 1.6 !important;
+}
+
+/* ====================================================
+   PROCESS SECTION (MODERN)
+   ==================================================== */
+.process-section {
+  background: #F7F8F6;
+  padding: 100px 40px;
+}
+
+.process-steps-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1100px;
+  margin: 0 auto;
+  gap: 20px;
+  position: relative;
+}
+
+.process-step-item {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.process-card-modern {
+  background: #fff;
+  border-radius: 20px;
+  padding: 30px 24px;
+  text-align: center;
+  width: 100%;
+  box-shadow: 0 10px 30px rgba(45, 79, 54, 0.08);
+  border: 1px solid rgba(224, 235, 226, 0.8);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  z-index: 2;
+  position: relative;
+}
+
+.process-card-modern:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 40px rgba(45, 79, 54, 0.15);
+}
+
+.process-icon-badge {
+  width: 50px;
+  height: 50px;
+  background: linear-gradient(135deg, #2D4F36 0%, #44624A 100%);
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 800;
+  margin: 0 auto 20px;
   box-shadow: 0 4px 12px rgba(45, 79, 54, 0.3);
 }
 
-/* Form input styles */
+.process-text-content h3 {
+  color: #2D4F36;
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.process-text-content p {
+  color: #666;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Horizontal Connector Line */
+.process-connector {
+  position: absolute;
+  top: 55px;
+  /* Alignment with badges */
+  right: -10px;
+  width: 20px;
+  height: 2px;
+  background: #C0CFB2;
+  z-index: 1;
+}
+
+.process-connector::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 6px;
+  height: 6px;
+  background: #8BA888;
+  border-radius: 50%;
+}
+
+@media (max-width: 992px) {
+  .process-steps-container {
+    flex-direction: column;
+    gap: 40px;
+  }
+
+  .process-step-item {
+    width: 100%;
+    max-width: 400px;
+  }
+
+  .process-connector {
+    right: auto;
+    left: 50%;
+    top: auto;
+    bottom: -30px;
+    width: 2px;
+    height: 30px;
+    transform: translateX(-50%);
+  }
+
+  .process-connector::after {
+    top: auto;
+    bottom: 0;
+    right: auto;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+}
+
+/* ====================================================
+   TESTIMONIALS SECTION
+   ==================================================== */
+.testimonials-section {
+  background-image: url('../../../../public/images/reviewImg.png');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  position: relative;
+  padding: 90px 40px;
+  min-height: 560px;
+}
+
+.testimonials-section::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(45, 79, 54, 0.72) 0%, rgba(0, 0, 0, 0.55) 100%);
+}
+
+.testimonials-section .section-container {
+  position: relative;
+  z-index: 1;
+}
+
+.testimonials-section .section-title {
+  color: #fff;
+  margin-bottom: 12px;
+}
+
+.testimonials-section .section-divider {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.9));
+}
+
+.testimonial-card {
+  border-radius: 18px !important;
+  border: none !important;
+  overflow: hidden !important;
+  background: rgba(255, 255, 255, 0.97) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18) !important;
+  transition: transform 0.3s ease, box-shadow 0.3s ease !important;
+  height: 100%;
+}
+
+.testimonial-card:hover {
+  transform: translateY(-8px) !important;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.22) !important;
+}
+
+.testimonial-quote-icon {
+  font-size: 2.4rem;
+  color: #C0CFB2;
+  line-height: 1;
+  margin-bottom: 8px;
+  font-family: Georgia, serif;
+}
+
+.testimonial-footer {
+  background: linear-gradient(135deg, #8BA888 0%, #44624A 100%);
+  margin: 0 -24px -1px;
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+/* ====================================================
+   CONTACT SECTION
+   ==================================================== */
+.contact-section {
+  padding: 80px 40px;
+}
+
+.contact-box-wrapper {
+  background: linear-gradient(to right, #ffffff 58%, #C0CFB2 58%);
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.1);
+}
+
+.contact-left {
+  background-color: transparent;
+  padding: 48px 52px;
+}
+
+.contact-left h2 {
+  font-size: 1.9rem !important;
+  font-weight: 800 !important;
+  color: #2D4F36 !important;
+  letter-spacing: -0.5px;
+  margin-bottom: 8px !important;
+}
+
+.contact-left>div>p {
+  color: #777;
+  margin-bottom: 28px;
+}
+
+/* Form inputs styling */
+.contact-left .ant-input,
+.contact-left .ant-select-selector,
+.contact-left .ant-input-affix-wrapper {
+  border-radius: 10px !important;
+  border-color: #dde4df !important;
+  transition: border-color 0.25s, box-shadow 0.25s !important;
+}
+
+.contact-left .ant-input:hover,
+.contact-left .ant-select-selector:hover {
+  border-color: #8BA888 !important;
+}
+
+.contact-left .ant-input:focus,
+.contact-left .ant-select-selector:focus {
+  border-color: #2D4F36 !important;
+  box-shadow: 0 0 0 3px rgba(45, 79, 54, 0.14) !important;
+}
+
+.contact-right {
+  background-color: transparent;
+  min-height: 500px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 36px;
+}
+
+.map-container {
+  width: 100%;
+  height: 100%;
+  min-height: 460px;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+}
+
+/* Company info */
+.company-contact-info {
+  margin-top: 28px;
+  padding-top: 22px;
+  border-top: 1px dashed #d4dfd6;
+}
+
+.company-contact-info h4 {
+  color: #2D4F36 !important;
+  margin-bottom: 14px !important;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px !important;
+  font-weight: 700 !important;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+}
+
+/* ====================================================
+   GLOBAL ANT BUTTON PRIMARY
+   ==================================================== */
+.ant-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(45, 79, 54, 0.32);
+}
+
+/* ====================================================
+   GLOBAL ANT FORM INPUTS
+   ==================================================== */
 .ant-input,
 .ant-input-number,
 .ant-select-selector,
 .ant-picker {
-  border-radius: 6px !important;
-  border-color: #D9D9D9 !important;
-  transition: all 0.3s ease;
+  border-radius: 8px !important;
+  border-color: #d9e2db !important;
+  transition: all 0.25s ease !important;
 }
 
 .ant-input:hover,
 .ant-select-selector:hover,
 .ant-picker:hover {
-  border-color: #2D4F36 !important;
+  border-color: #8BA888 !important;
 }
 
 .ant-input:focus,
 .ant-select-selector:focus,
-.ant-picker:focus {
+.ant-picker-focused {
   border-color: #2D4F36 !important;
-  box-shadow: 0 0 0 2px rgba(45, 79, 54, 0.2);
+  box-shadow: 0 0 0 3px rgba(45, 79, 54, 0.16) !important;
 }
 
-/* Smooth scrolling */
-html {
-  scroll-behavior: smooth;
+/* ====================================================
+   KEYFRAME ANIMATIONS
+   ==================================================== */
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(32px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* Staggered card entrance */
+.service-card {
+  animation: slideInUp 0.6s ease-out both;
+}
+
+.service-card:nth-child(1) {
+  animation-delay: 0.05s;
+}
+
+.service-card:nth-child(2) {
+  animation-delay: 0.12s;
+}
+
+.service-card:nth-child(3) {
+  animation-delay: 0.19s;
+}
+
+.service-card:nth-child(4) {
+  animation-delay: 0.26s;
+}
+
+.why-card {
+  animation: slideInUp 0.6s ease-out both;
+}
+
+.why-card:nth-child(1) {
+  animation-delay: 0.05s;
+}
+
+.why-card:nth-child(2) {
+  animation-delay: 0.12s;
+}
+
+.why-card:nth-child(3) {
+  animation-delay: 0.19s;
+}
+
+.why-card:nth-child(4) {
+  animation-delay: 0.26s;
+}
+
+.testimonial-card {
+  animation: slideInUp 0.6s ease-out both;
+}
+
+.testimonial-card:nth-child(1) {
+  animation-delay: 0.05s;
+}
+
+.testimonial-card:nth-child(2) {
+  animation-delay: 0.12s;
+}
+
+.testimonial-card:nth-child(3) {
+  animation-delay: 0.19s;
+}
+
+/* ====================================================
+   RESPONSIVE — TABLET (≤992px)
+   ==================================================== */
+@media (max-width: 992px) {
+  .hero-section {
+    min-height: 500px;
+    padding: 60px 24px;
+  }
+
+  .hero-title {
+    font-size: 3.2rem;
+  }
+
+  .hero-subtitle {
+    font-size: 1.65rem;
+  }
+
+  .hero-text-content {
+    max-width: 100%;
+  }
+
+  .quick-quote-bar {
+    max-width: 100%;
+  }
+
+  .services-section,
+  .why-choose-us-section,
+  .process-section,
+  .contact-section {
+    padding: 70px 24px;
+  }
+
+  .testimonials-section {
+    padding: 70px 24px;
+    min-height: auto;
+  }
+
+  .section-title {
+    font-size: 2rem;
+  }
+
+  .contact-box-wrapper {
+    background: linear-gradient(to bottom, #ffffff 55%, #C0CFB2 55%);
+  }
+
+  .contact-left {
+    padding: 36px 28px;
+  }
+
+  .contact-right {
+    padding: 24px;
+    min-height: 400px;
+  }
+}
+
+/* ====================================================
+   RESPONSIVE — MOBILE (≤768px)
+   ==================================================== */
+@media (max-width: 768px) {
+  .hero-section {
+    min-height: auto;
+    padding: 48px 16px 56px;
+    background-attachment: scroll;
+  }
+
+  .hero-title {
+    font-size: 2.6rem;
+    letter-spacing: -1px;
+  }
+
+  .hero-subtitle {
+    font-size: 1.4rem;
+  }
+
+  .hero-description {
+    font-size: 0.95rem;
+  }
+
+  .hero-text-content {
+    padding: 24px 22px;
+  }
+
+  .quick-quote-bar {
+    padding: 24px 20px;
+  }
+
+  .input-group {
+    height: auto;
+    padding: 12px 16px;
+    margin-bottom: 8px;
+  }
+
+  .input-label {
+    font-size: 12px;
+  }
+
+  .custom-input-field .ant-input-number-input,
+  .custom-select-field .ant-select-selection-item {
+    font-size: 16px !important;
+  }
+
+  .quote-btn-small {
+    margin-top: 12px;
+    width: 100% !important;
+    height: 56px !important;
+    font-size: 16px !important;
+  }
+}
+
+/* ====================================================
+   RESPONSIVE — SMALL MOBILE (≤576px)
+   ==================================================== */
+@media (max-width: 576px) {
+  .hero-title {
+    font-size: 2.1rem;
+  }
+
+  .hero-subtitle {
+    font-size: 1.2rem;
+  }
+
+  .section-title {
+    font-size: 1.5rem;
+  }
+
+  .ant-card {
+    border-radius: 12px !important;
+  }
+
+  .map-container {
+    min-height: 300px;
+  }
+
+  .contact-left {
+    padding: 24px 16px;
+  }
+
+  .service-card {
+    margin-bottom: 16px;
+  }
 }

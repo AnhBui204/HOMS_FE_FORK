@@ -11,6 +11,7 @@ const Favorites = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [messageApi, contextHolder] = antMessage.useMessage();
+  const API_BASE = (process.env.REACT_APP_API_URL && process.env.REACT_APP_API_URL.replace(/\/api$/, '')) || 'http://localhost:5000';
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 6;
 
@@ -94,7 +95,7 @@ const Favorites = () => {
                       <Link to={`/customer/property/${house._id}`}>
                         <img
                           alt={house.name} // ✅ Sửa alt text
-                          src={house.photos?.[0] ? `http://localhost:5000${house.photos[0]}` : "/default-image.jpg"}
+                          src={house.photos?.[0] ? `${API_BASE}${house.photos[0]}` : "/default-image.jpg"}
                           style={{ height: "200px", objectFit: "cover", width: '100%' }}
                         />
                       </Link>

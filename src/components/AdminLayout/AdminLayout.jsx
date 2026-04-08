@@ -6,13 +6,15 @@ import AdminHeader from './AdminHeader';
 const { Content } = Layout;
 
 const AdminLayout = ({ children }) => {
+    const [collapsed, setCollapsed] = React.useState(false);
+
     return (
         <Layout style={{ minHeight: '100vh', background: '#f5f7fa' }}>
-            <AdminSidebar />
-            <Layout style={{ marginLeft: 250 }}>
-                <AdminHeader />
-                <Content style={{ margin: '24px 24px 0', overflow: 'initial' }}>
-                    <div style={{ padding: 24, textAlign: 'center', background: '#fff', borderRadius: '8px', minHeight: 'calc(100vh - 120px)' }}>
+            <AdminSidebar collapsed={collapsed} onCollapse={setCollapsed} />
+            <Layout style={{ marginLeft: collapsed ? 0 : 250, transition: 'margin-left 0.2s', minWidth: 0 }}>
+                <AdminHeader collapsed={collapsed} onCollapse={setCollapsed} />
+                <Content style={{ margin: '16px 16px 0', overflow: 'initial' }}>
+                    <div style={{ padding: 24, background: '#fff', borderRadius: '8px', minHeight: 'calc(100vh - 120px)' }}>
                         {children}
                     </div>
                 </Content>

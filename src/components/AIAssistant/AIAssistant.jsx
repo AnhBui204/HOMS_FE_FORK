@@ -42,7 +42,7 @@ function AIAssistant() {
     setMessages((prev) => [...prev, { from: "bot", text: "Đang suy nghĩ...", completed: false }]);
 
     try {
-      const response = await fetch("http://localhost:5000/api/ai/chat", {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/ai/chat`, {
         method: "POST",
         body: JSON.stringify({ message: userMessage }),
         headers: { "Content-Type": "application/json" },

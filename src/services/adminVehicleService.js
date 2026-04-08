@@ -33,7 +33,7 @@ const adminVehicleService = {
         type: payload.type,
         capacity: payload.capacity,
       };
-      const res = await api.post('/admin/vehicles', body);
+  const res = await api.post('/admin/vehicles', body);
       return transform(res.data);
     } catch (err) {
       console.error('Error creating vehicle', err);
@@ -50,7 +50,7 @@ const adminVehicleService = {
         status: payload.status,
         isActive: payload.isActive,
       };
-      const res = await api.put(`/admin/vehicles/${vehicleId}`, body);
+  const res = await api.put(`/admin/vehicles/${vehicleId}`, body);
       return transform(res.data);
     } catch (err) {
       console.error('Error updating vehicle', err);
@@ -60,7 +60,7 @@ const adminVehicleService = {
 
   deleteVehicle: async (vehicleId) => {
     try {
-      const res = await api.delete(`/admin/vehicles/${vehicleId}`);
+  const res = await api.delete(`/admin/vehicles/${vehicleId}`);
       return res.data;
     } catch (err) {
       console.error('Error deleting vehicle', err);

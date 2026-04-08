@@ -7,7 +7,7 @@ const SocketContext = createContext(null);
 export const useSocket = () => useContext(SocketContext);
 
 // === CONFIG ===
-const SOCKET_URL = process.env.REACT_APP_SOCKET_URL || "http://localhost:5000";
+const SOCKET_URL = process.env.REACT_APP_SOCKET_URL || (process.env.REACT_APP_API_URL && process.env.REACT_APP_API_URL.replace(/\/api$/, '')) || "http://localhost:5000";
 const SOCKET_OPTIONS = {
   autoConnect: false,
   transports: ["websocket", "polling"],

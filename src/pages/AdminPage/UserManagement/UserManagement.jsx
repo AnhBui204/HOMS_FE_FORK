@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Table, Input, Select, Button, Tag, Space, Typography, Tooltip, Avatar, notification, Modal } from 'antd';
-import { SearchOutlined, FilterOutlined, ExportOutlined, EyeOutlined, EditOutlined, LockOutlined, UnlockOutlined, UserOutlined } from '@ant-design/icons';
+import { Card, Table, Input, Select, Button, Tag, Space, Typography, Tooltip, Avatar, notification, Modal, Row, Col, Statistic, Progress } from 'antd';
+import { SearchOutlined, FilterOutlined, ExportOutlined, EyeOutlined, EditOutlined, LockOutlined, UnlockOutlined, UserOutlined, TeamOutlined, CheckCircleOutlined, UserAddOutlined, ApartmentOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import adminUserService from '../../../services/adminUserService';
 import UserModal from './components/UserModal';
@@ -11,8 +11,8 @@ const { Option } = Select;
 const UserManagement = () => {
     const [loading, setLoading] = useState(false);
     const [users, setUsers] = useState([]);
-    const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
-    const [filters, setFilters] = useState({ search: '', role: undefined, gender: undefined });
+    const [pagination, setPagination] = useState({ current: 1, pageSize: 7, total: 0 });
+    const [filters, setFilters] = useState({ search: '', role: undefined });
 
     // Modal state
     const [isModalVisible, setIsModalVisible] = useState(false);
@@ -24,15 +24,21 @@ const UserManagement = () => {
 
     const navigate = useNavigate();
 
-    const fetchUsers = async (page = 1, pageSize = 10, currentFilters = filters) => {
+    // quick metrics for dashboard cards (aggregate totals across all users)
+    const [totalUsers, setTotalUsers] = useState(0);
+    const [activeUsers, setActiveUsers] = useState(0);
+    const [staffUsers, setStaffUsers] = useState(0);
+    const [dispatcherUsers, setDispatcherUsers] = useState(0);
+    const [lockedUsers, setLockedUsers] = useState(0);
+
+    const fetchUsers = async (page = 1, pageSize = 7, currentFilters = filters) => {
         try {
             setLoading(true);
             const params = {
                 page,
                 limit: pageSize,
                 search: currentFilters.search || undefined,
-                role: currentFilters.role || undefined,
-                gender: currentFilters.gender || undefined
+                role: currentFilters.role || undefined
             };
             const response = await adminUserService.getAllUsers(params);
 
@@ -74,7 +80,45 @@ const UserManagement = () => {
 
     useEffect(() => {
         fetchUsers();
+        fetchMetrics();
     }, []);
+
+    // fetch aggregate metrics from the backend (not paginated)
+    const fetchMetrics = async () => {
+        try {
+            // request a large limit to get all users for metrics
+            const params = { page: 1, limit: 10000 };
+            const res = await adminUserService.getAllUsers(params);
+
+            let payload = res;
+            if (res && res.data) payload = res.data;
+
+            let data = [];
+            if (Array.isArray(payload)) data = payload;
+            else if (Array.isArray(payload.users)) data = payload.users;
+            else if (Array.isArray(payload.docs)) data = payload.docs;
+            else if (Array.isArray(payload.data)) data = payload.data;
+            else if (payload.users) data = payload.users;
+            else if (payload.docs) data = payload.docs;
+
+            const total = data.length;
+            const active = data.filter(u => (u.status || '').toString().toLowerCase() === 'active').length;
+            const staff = data.filter(u => (u.role || '').toString().toLowerCase() === 'staff').length;
+            const dispatchers = data.filter(u => (u.role || '').toString().toLowerCase() === 'dispatcher').length;
+            const locked = data.filter(u => {
+                const s = (u.status || '').toString().toLowerCase();
+                return s === 'inactive' || s === 'locked' || s === 'banned';
+            }).length;
+
+            setTotalUsers(total);
+            setActiveUsers(active);
+            setStaffUsers(staff);
+            setDispatcherUsers(dispatchers);
+            setLockedUsers(locked);
+        } catch (err) {
+            console.error('Failed to fetch metrics', err);
+        }
+    };
 
     const handleTableChange = (newPagination) => {
         fetchUsers(newPagination.current, newPagination.pageSize);
@@ -96,7 +140,7 @@ const UserManagement = () => {
         try {
             setLoading(true);
             // request a large limit to get all users (backend supports limit)
-            const params = { page: 1, limit: 10000, search: filters.search || undefined, role: filters.role || undefined, gender: filters.gender || undefined };
+            const params = { page: 1, limit: 10000, search: filters.search || undefined, role: filters.role || undefined };
             const res = await adminUserService.getAllUsers(params);
 
             // adminUserService returns response.data (which has { success, data })
@@ -197,7 +241,8 @@ const UserManagement = () => {
             const res = await adminUserService.updateUser(userToToggle._id, { status: newStatus });
             const returnedStatus = res?.data?.status || (res?.data ? res.data.status : null) || newStatus;
             notification.success({ message: `Trạng thái người dùng đã được thay đổi thành: ${returnedStatus || newStatus}` });
-            fetchUsers(pagination.current, pagination.pageSize);
+            await fetchUsers(pagination.current, pagination.pageSize);
+            fetchMetrics();
         } catch (error) {
             console.error('Failed to update status', error);
             notification.error({ message: 'Lỗi khi cập nhật trạng thái người dùng' });
@@ -224,7 +269,22 @@ const UserManagement = () => {
             title: 'Avatar',
             dataIndex: 'avatar',
             key: 'avatar',
-            render: (avatar) => <Avatar src={avatar} icon={<UserOutlined />} />
+            render: (_, record) => {
+                const src = record?.avatar || record?.avatarUrl || record?.profilePicture || null;
+                const name = record?.fullName || '';
+                const initials = name
+                    ? name.split(' ').filter(Boolean).slice(-2).map(n => n[0]).join('').toUpperCase()
+                    : '';
+                return (
+                    <Avatar
+                        src={src}
+                        icon={!src ? <UserOutlined /> : undefined}
+                        style={{ backgroundColor: !src ? '#f0f0f0' : undefined, color: !src ? '#8c8c8c' : undefined }}
+                    >
+                        {!src && initials}
+                    </Avatar>
+                );
+            }
         },
         {
             title: 'Full Name',
@@ -237,11 +297,7 @@ const UserManagement = () => {
             dataIndex: 'email',
             key: 'email',
         },
-        {
-            title: 'Gender',
-            dataIndex: 'gender',
-            key: 'gender',
-        },
+        // Gender column removed as requested
         {
             title: 'Role',
             dataIndex: 'role',
@@ -328,6 +384,87 @@ const UserManagement = () => {
                 <Title level={4} style={{ margin: 0 }}>Quản Lý người dùng</Title>
             </div>
 
+            {/* Top metrics - compact horizontal cards */}
+            <div style={{ marginBottom: 18 }}>
+                <Row gutter={[16, 16]}>
+                    <Col xs={24} sm={12} md={6}>
+                        <Card bodyStyle={{ padding: 18 }} style={{ borderRadius: 12, boxShadow: '0 6px 18px rgba(0,0,0,0.04)', minHeight: 112, background: 'linear-gradient(180deg,#eef8ff, #ffffff)' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: '100%' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                                    <div style={{ width: 40, height: 40, borderRadius: 10, background: '#e6f4ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <UserOutlined style={{ color: '#1677ff', fontSize: 18 }} />
+                                    </div>
+                                    <div>
+                                        <div style={{ color: '#4c6ef5', fontSize: 12, fontWeight: 700 }}>Total Users</div>
+                                        <div style={{ fontSize: 20, fontWeight: 700, color: '#111' }}>{totalUsers}</div>
+                                    </div>
+                                </div>
+                                <div style={{ textAlign: 'right' }}>
+                                    <div style={{ fontSize: 13, color: '#8c8c8c' }}>All</div>
+                                </div>
+                            </div>
+                        </Card>
+                    </Col>
+
+                    <Col xs={24} sm={12} md={6}>
+                        <Card bodyStyle={{ padding: 18 }} style={{ borderRadius: 12, boxShadow: '0 6px 18px rgba(0,0,0,0.04)', minHeight: 112, background: 'linear-gradient(180deg,#f1fbf1,#ffffff)' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: '100%' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                                    <div style={{ width: 40, height: 40, borderRadius: 10, background: '#eaf4ea', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <CheckCircleOutlined style={{ color: '#2D4F36', fontSize: 18 }} />
+                                    </div>
+                                    <div>
+                                        <div style={{ color: '#3e6b3e', fontSize: 12, fontWeight: 700 }}>Active Users</div>
+                                        <div style={{ fontSize: 20, fontWeight: 700, color: '#111' }}>{activeUsers} <span style={{ fontSize: 11, color: '#8c8c8c', fontWeight: 600 }}>/{totalUsers || 0}</span></div>
+                                    </div>
+                                </div>
+                                <div style={{ width: 140 }}>
+                                    <Progress percent={totalUsers ? Math.round((activeUsers / totalUsers) * 100) : 0} showInfo={false} strokeColor="#88c48a" strokeWidth={8} />
+                                </div>
+                            </div>
+                        </Card>
+                    </Col>
+
+                    <Col xs={24} sm={12} md={6}>
+                        <Card bodyStyle={{ padding: 18 }} style={{ borderRadius: 12, boxShadow: '0 6px 18px rgba(0,0,0,0.04)', minHeight: 112, background: 'linear-gradient(180deg,#fff6f6,#ffffff)' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: '100%' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                                    <div style={{ width: 40, height: 40, borderRadius: 10, background: '#fff1f2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <LockOutlined style={{ color: '#ff6b6b', fontSize: 18 }} />
+                                    </div>
+                                    <div>
+                                        <div style={{ color: '#6b6b6b', fontSize: 12, fontWeight: 700 }}>Locked Accounts</div>
+                                        <div style={{ fontSize: 20, fontWeight: 700, color: '#111' }}>{lockedUsers} <span style={{ fontSize: 11, color: '#8c8c8c', fontWeight: 600 }}>/{totalUsers || 0}</span></div>
+                                    </div>
+                                </div>
+                                <div style={{ width: 140 }}>
+                                    <Progress percent={totalUsers ? Math.round((lockedUsers / totalUsers) * 100) : 0} showInfo={false} strokeColor="#ffb3b8" strokeWidth={8} />
+                                </div>
+                            </div>
+                        </Card>
+                    </Col>
+
+                    <Col xs={24} sm={12} md={6}>
+                        <Card bodyStyle={{ padding: 18 }} style={{ borderRadius: 12, boxShadow: '0 6px 18px rgba(0,0,0,0.04)', minHeight: 112, background: 'linear-gradient(180deg,#f6f4ff,#ffffff)' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: '100%' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                                    <div style={{ width: 40, height: 40, borderRadius: 10, background: '#f3eeff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <TeamOutlined style={{ color: '#722ed1', fontSize: 18 }} />
+                                    </div>
+                                    <div>
+                                        <div style={{ color: '#6b6b6b', fontSize: 12, fontWeight: 700 }}>Dispatchers</div>
+                                        <div style={{ fontSize: 20, fontWeight: 700, color: '#111' }}>{dispatcherUsers}</div>
+                                    </div>
+                                </div>
+                                <div style={{ textAlign: 'right' }}>
+                                    <div style={{ fontSize: 13, color: '#8c8c8c' }}>{staffUsers} staff</div>
+                                </div>
+                            </div>
+                        </Card>
+                    </Col>
+                </Row>
+            </div>
+
             <Card style={{ borderRadius: '12px', border: 'none' }}>
                 {/* Header Controls */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, flexWrap: 'wrap', gap: '16px' }}>
@@ -353,11 +490,43 @@ const UserManagement = () => {
                             <Option value="staff">Staff</Option>
                         </Select>
 
-                        <Button icon={<ExportOutlined />} style={{ borderRadius: '8px' }} onClick={exportUsers} disabled={loading}>
+                        <Tooltip title="Refresh">
+                            <Button
+                                icon={<ReloadOutlined />}
+                                style={{
+                                    borderRadius: '8px',
+                                    border: '1px solid #2D4F36',
+                                    color: '#2D4F36',
+                                    background: 'transparent'
+                                }}
+                                onClick={async () => { await fetchUsers(pagination.current, pagination.pageSize); fetchMetrics(); }}
+                                disabled={loading}
+                            />
+                        </Tooltip>
+
+                        <Button
+                            icon={<ExportOutlined />}
+                            style={{
+                                borderRadius: '8px',
+                                border: '1px solid #2D4F36',
+                                color: '#2D4F36',
+                                background: 'transparent'
+                            }}
+                            onClick={exportUsers}
+                            disabled={loading}
+                        >
                             Export
                         </Button>
 
-                        <Button type="primary" onClick={openCreateModal} style={{ borderRadius: '8px' }}>
+                        <Button
+                            onClick={openCreateModal}
+                            style={{
+                                borderRadius: '8px',
+                                backgroundColor: '#2D4F36',
+                                borderColor: '#2D4F36',
+                                color: '#ffffff'
+                            }}
+                        >
                             + Add User
                         </Button>
                     </Space>
@@ -378,7 +547,7 @@ const UserManagement = () => {
                 visible={isModalVisible}
                 onClose={() => setIsModalVisible(false)}
                 user={editingUser}
-                onSuccess={() => fetchUsers(pagination.current, pagination.pageSize)}
+                onSuccess={() => { fetchUsers(pagination.current, pagination.pageSize); fetchMetrics(); }}
             />
 
             {/* Confirm modal (activate / deactivate) - decorated */}

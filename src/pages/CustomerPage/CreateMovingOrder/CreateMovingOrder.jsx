@@ -275,10 +275,14 @@ const MovingInformationPage = () => {
             movingDate: movingDate.toISOString()
         };
 
-        console.log('📦 Passing order data to confirmation:', orderData);
+        console.log('📦 Passing order data to confirmation/analysis:', orderData);
 
-        // Navigate to confirmation page with order data
-        navigate('/customer/confirm-order', { state: { orderData } });
+        // Navigate based on service type
+        if (orderData.serviceId === 3) {
+            navigate('/customer/item-moving-analysis', { state: { orderData } });
+        } else {
+            navigate('/customer/confirm-order', { state: { orderData } });
+        }
     };
 
     return (
@@ -290,9 +294,9 @@ const MovingInformationPage = () => {
                 {/* HERO */}
                 <section className="moving-hero" style={{ position: 'relative' }}>
                     <h1>{selectedService.title}</h1>
-                    <Button 
-                        type="primary" 
-                        icon={<QuestionCircleOutlined />} 
+                    <Button
+                        type="primary"
+                        icon={<QuestionCircleOutlined />}
                         onClick={() => setTourOpen(true)}
                         style={{ position: 'absolute', right: 40, top: '50%', transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.2)', borderColor: 'white', color: 'white' }}
                     >
@@ -309,9 +313,8 @@ const MovingInformationPage = () => {
                             items={[
                                 { title: 'Chọn dịch vụ' },
                                 { title: 'Địa điểm & Thông tin đồ đạc' },
-                                { title: 'Xác nhận' },
+                                { title: 'Xác nhận lịch khảo sát' },
                                 { title: 'Thỏa thuận' },
-                                { title: 'Thanh toán' },
                             ]}
                         />
                     </Card>
@@ -557,20 +560,20 @@ const MovingInformationPage = () => {
                         <Col md={14} xs={24}>
                             <div ref={refMap} style={{ height: '100%' }}>
                                 <LocationPicker
-                                onLocationChange={handleLocationChange}
-                                initialPosition={
-                                    activeLocation === 'pickup'
-                                        ? (pickupLocation ? { lat: pickupLocation.lat, lng: pickupLocation.lng } : null)
-                                        : (dropoffLocation ? { lat: dropoffLocation.lat, lng: dropoffLocation.lng } : null)
-                                }
-                                currentLocationData={
-                                    activeLocation === 'pickup' ? pickupLocation : dropoffLocation
-                                }
-                                otherLocation={
-                                    activeLocation === 'pickup' ? dropoffLocation : pickupLocation
-                                }
-                                locationType={activeLocation}
-                            />
+                                    onLocationChange={handleLocationChange}
+                                    initialPosition={
+                                        activeLocation === 'pickup'
+                                            ? (pickupLocation ? { lat: pickupLocation.lat, lng: pickupLocation.lng } : null)
+                                            : (dropoffLocation ? { lat: dropoffLocation.lat, lng: dropoffLocation.lng } : null)
+                                    }
+                                    currentLocationData={
+                                        activeLocation === 'pickup' ? pickupLocation : dropoffLocation
+                                    }
+                                    otherLocation={
+                                        activeLocation === 'pickup' ? dropoffLocation : pickupLocation
+                                    }
+                                    locationType={activeLocation}
+                                />
                             </div>
                         </Col>
                     </Row>

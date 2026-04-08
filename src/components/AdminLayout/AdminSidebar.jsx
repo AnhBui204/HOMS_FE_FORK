@@ -1,12 +1,12 @@
 import React from 'react';
 import { Layout, Menu } from 'antd';
-import { AreaChartOutlined, UserOutlined, CarOutlined, FileTextOutlined, DollarOutlined, FileDoneOutlined, StarOutlined, GiftOutlined, EnvironmentOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import { AreaChartOutlined, UserOutlined, CarOutlined, FileTextOutlined, DollarOutlined, FileDoneOutlined, StarOutlined, GiftOutlined, EnvironmentOutlined, ExclamationCircleOutlined, ToolOutlined } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import logo from '../../assets/images/logo.png'; // Using standard logo if available, or just text
 
 const { Sider } = Layout;
 
-const AdminSidebar = () => {
+const AdminSidebar = ({ collapsed, onCollapse }) => {
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -60,15 +60,36 @@ const AdminSidebar = () => {
             key: '/admin/promotions',
             icon: <GiftOutlined />,
             label: 'Khuyến mãi & Ưu đãi',
+        },
+        {
+            key: '/admin/maintenance',
+            icon: <ToolOutlined />,
+            label: 'Bảo trì & Sửa chữa',
         }
     ];
 
     return (
-        <Sider width={250} theme="light" style={{ borderRight: '1px solid #f0f0f0', height: '100vh', position: 'fixed', left: 0, top: 0, bottom: 0 }}>
+        <Sider 
+            breakpoint="lg"
+            collapsedWidth="0"
+            onCollapse={(c) => onCollapse(c)}
+            collapsed={collapsed}
+            width={250} 
+            theme="light" 
+            style={{ 
+                borderRight: '1px solid #f0f0f0', 
+                height: '100vh', 
+                position: 'fixed', 
+                left: 0, 
+                top: 0, 
+                bottom: 0,
+                zIndex: 1001 
+            }}
+        >
             <div style={{ padding: '24px', display: 'flex', alignItems: 'center', gap: '12px' }}>
                 {/* Fallback to text if logo has issues, but trying to use image */}
                 <img src={logo} alt="HOMS Logo" style={{ height: '40px', width: 'auto' }} onError={(e) => { e.target.style.display = 'none'; }} />
-                <h2 style={{ margin: 0, fontWeight: 'bold', color: '#1890ff' }}>HOMS</h2>
+                <h2 style={{ margin: 0, fontWeight: 'bold', color: '#44624A' }}>HOMS</h2>
             </div>
             {/* Scoped styles to make the selected menu item match Figma color #8BA888 */}
             <style>{`.admin-sider-menu .ant-menu-item-selected, .admin-sider-menu .ant-menu-item-active {

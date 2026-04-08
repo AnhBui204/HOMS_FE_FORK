@@ -13,7 +13,7 @@ import InvoiceManagement from '../../pages/AdminPage/Invoice/InvoiceManagement';
 import RouteManagement from '../../pages/AdminPage/RouteManagement/RouteManagement';
 import ProtectedRoute from "../../components/ProtectRoute/ProtectedRoute";
 import PromotionManagement from '../../pages/AdminPage/Promotion/PromotionManagement';
-
+import MaintenanceManagement from '../../pages/AdminPage/Maintenance/MaintenanceManagement';
 const RoutesAdmin = () => {
   return (
     <ProtectedRoute allowedRoles={["admin"]}>
@@ -31,6 +31,7 @@ const RoutesAdmin = () => {
           <Route path="contracts" element={<ContractManagement />} />
           <Route path="routes" element={<RouteManagement />} />
           <Route path="promotions" element={<PromotionManagement />} />
+          <Route path="maintenance" element={<MaintenanceManagement />} />
           <Route path="*" element={<Navigate to="dashboard" />} />
         </Routes>
       </AdminLayout>

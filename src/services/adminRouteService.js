@@ -59,6 +59,56 @@ const adminRouteService = {
             console.error('Error adding traffic rule', error);
             throw error;
         }
+    },
+
+    updateTrafficRule: async (routeId, ruleId, ruleData) => {
+        try {
+            const response = await api.put(`/admin/routes/${routeId}/rules/${ruleId}`, ruleData);
+            return response.data;
+        } catch (error) {
+            console.error('Error updating traffic rule', error);
+            throw error;
+        }
+    },
+
+    addRoadRestriction: async (id, restrictionData) => {
+        try {
+            const response = await api.post(`/admin/routes/${id}/road-restrictions`, restrictionData);
+            return response.data;
+        } catch (error) {
+            console.error('Error adding road restriction', error);
+            throw error;
+        }
+    },
+
+    updateRoadRestriction: async (routeId, resId, restrictionData) => {
+        try {
+            const response = await api.put(`/admin/routes/${routeId}/road-restrictions/${resId}`, restrictionData);
+            return response.data;
+        } catch (error) {
+            console.error('Error updating road restriction', error);
+            throw error;
+        }
+    },
+
+    deleteTrafficRule: async (routeId, ruleId) => {
+        try {
+            const response = await api.delete(`/admin/routes/${routeId}/rules/${ruleId}`);
+            return response.data;
+        } catch (error) {
+            console.error('Error deleting traffic rule', error);
+            throw error;
+        }
+    },
+
+    deleteRoadRestriction: async (routeId, resId) => {
+        try {
+            const response = await api.delete(`/admin/routes/${routeId}/road-restrictions/${resId}`);
+            return response.data;
+        } catch (error) {
+            console.error('Error deleting road restriction', error);
+            throw error;
+        }
     }
 };
 

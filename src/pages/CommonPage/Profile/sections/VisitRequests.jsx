@@ -34,6 +34,7 @@ const getStatusTag = (status) => {
 };
 
 const VisitRequests = () => {
+    const API_BASE = (process.env.REACT_APP_API_URL && process.env.REACT_APP_API_URL.replace(/\/api$/, '')) || 'http://localhost:5000';
     const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -92,7 +93,7 @@ const VisitRequests = () => {
                                 item.boardingHouseId?.photos?.[0] && (
                                     <img
                                         alt="boardingHouse"
-                                        src={`http://localhost:5000${item.boardingHouseId.photos[0]}`}
+                                        src={`${API_BASE}${item.boardingHouseId.photos[0]}`}
                                         style={{ height: 200, objectFit: 'cover' }}
                                     />
                                 )

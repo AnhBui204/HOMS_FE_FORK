@@ -11,7 +11,7 @@ const PRIMARY = '#1f4f29';
 
 const ReportManagement = () => {
     // API base: prefer env var REACT_APP_API_BASE_URL, otherwise default to localhost:5000
-    const API_BASE = (process.env.REACT_APP_API_BASE_URL && process.env.REACT_APP_API_BASE_URL.replace(/\/+$/, '')) || 'http://localhost:5000';
+    const API_BASE = (process.env.REACT_APP_API_URL && process.env.REACT_APP_API_URL.replace(/\/api$/, '')) || (process.env.REACT_APP_API_BASE_URL && process.env.REACT_APP_API_BASE_URL.replace(/\/+$/, '')) || 'http://localhost:5000';
     const [loading, setLoading] = useState(false);
     const [incidents, setIncidents] = useState([]);
 
@@ -334,21 +334,21 @@ const ReportManagement = () => {
                                 {selectedIncident.resolution.compensationAmount > 0 && (
                                     <p><strong>Tiền bồi thường:</strong> <span style={{ color: PRIMARY, fontWeight: 600 }}>{formatCurrency(selectedIncident.resolution.compensationAmount)}</span></p>
                                 )}
-                                    {selectedIncident.resolution.note && (
-                                        <p><strong>Ghi chú:</strong> <span style={{ whiteSpace: 'pre-wrap' }}>{selectedIncident.resolution.note}</span></p>
-                                    )}
+                                {selectedIncident.resolution.note && (
+                                    <p><strong>Ghi chú:</strong> <span style={{ whiteSpace: 'pre-wrap' }}>{selectedIncident.resolution.note}</span></p>
+                                )}
                                 <p><strong>Thời gian giải quyết:</strong> {dayjs(selectedIncident.resolution.resolvedAt).format('DD/MM/YYYY HH:mm')}</p>
                             </Card>
                         ) : (
                             <div style={{ backgroundColor: '#fafafa', padding: 16, borderRadius: 8, border: '1px solid #f0f0f0' }}>
                                 <div style={{ marginBottom: 12 }}>
                                     <Text strong>Chuyển trạng thái</Text>
-                                                <Select value={resolveStatus} onChange={val => setResolveStatus(val)} style={{ width: '100%', marginTop: 8 }}>
-                                                    <Option value="Open">Mở</Option>
-                                                    <Option value="Investigating">Đang điều tra</Option>
-                                                    <Option value="Resolved">Đã giải quyết</Option>
-                                                    <Option value="Dismissed">Bỏ qua</Option>
-                                                </Select>
+                                    <Select value={resolveStatus} onChange={val => setResolveStatus(val)} style={{ width: '100%', marginTop: 8 }}>
+                                        <Option value="Open">Mở</Option>
+                                        <Option value="Investigating">Đang điều tra</Option>
+                                        <Option value="Resolved">Đã giải quyết</Option>
+                                        <Option value="Dismissed">Bỏ qua</Option>
+                                    </Select>
                                 </div>
                                 <div style={{ marginBottom: 12 }}>
                                     <Text strong>Hành động</Text>
@@ -363,38 +363,38 @@ const ReportManagement = () => {
                                     <Text strong>Ghi chú</Text>
                                     <TextArea value={internalNote} onChange={e => setInternalNote(e.target.value)} rows={3} placeholder="Ghi chú..." style={{ marginTop: 8 }} />
                                 </div>
-                                    <Button type="primary" block style={{ backgroundColor: PRIMARY, borderColor: PRIMARY, fontWeight: 'bold' }} onClick={async () => {
-                                        // prepare payload and call resolve endpoint
-                                        if (!selectedIncident) return;
-                                        const payload = {
-                                            status: resolveStatus,
-                                            action: resolveAction,
-                                            compensationAmount: compensationAmount || 0,
-                                            resolvedAt: resolveStatus === 'Resolved' ? new Date().toISOString() : undefined,
-                                            note: internalNote
-                                        };
-                                        try {
-                                            setLoading(true);
-                                            const res = await fetch(`${API_BASE}/api/admin/incidents/${selectedIncident._id}/resolve`, {
-                                                method: 'PATCH',
-                                                credentials: 'include',
-                                                headers: { 'Content-Type': 'application/json' },
-                                                body: JSON.stringify(payload)
-                                            });
-                                            if (!res.ok) throw new Error(`Server error ${res.status}`);
-                                            const body = await res.json();
-                                            if (!body.success) throw new Error(body.message || 'Failed to update incident');
-                                            message.success('Cập nhật thành công');
-                                            setSelectedIncident(body.data);
-                                            // refresh list
-                                            loadData({ page, limit, search: searchText, type: filterType, status: filterStatus });
-                                        } catch (err) {
-                                            console.error('Resolve failed', err);
-                                            message.error('Không thể cập nhật phiếu');
-                                        } finally {
-                                            setLoading(false);
-                                        }
-                                    }}>Lưu</Button>
+                                <Button type="primary" block style={{ backgroundColor: PRIMARY, borderColor: PRIMARY, fontWeight: 'bold' }} onClick={async () => {
+                                    // prepare payload and call resolve endpoint
+                                    if (!selectedIncident) return;
+                                    const payload = {
+                                        status: resolveStatus,
+                                        action: resolveAction,
+                                        compensationAmount: compensationAmount || 0,
+                                        resolvedAt: resolveStatus === 'Resolved' ? new Date().toISOString() : undefined,
+                                        note: internalNote
+                                    };
+                                    try {
+                                        setLoading(true);
+                                        const res = await fetch(`${API_BASE}/api/admin/incidents/${selectedIncident._id}/resolve`, {
+                                            method: 'PATCH',
+                                            credentials: 'include',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify(payload)
+                                        });
+                                        if (!res.ok) throw new Error(`Server error ${res.status}`);
+                                        const body = await res.json();
+                                        if (!body.success) throw new Error(body.message || 'Failed to update incident');
+                                        message.success('Cập nhật thành công');
+                                        setSelectedIncident(body.data);
+                                        // refresh list
+                                        loadData({ page, limit, search: searchText, type: filterType, status: filterStatus });
+                                    } catch (err) {
+                                        console.error('Resolve failed', err);
+                                        message.error('Không thể cập nhật phiếu');
+                                    } finally {
+                                        setLoading(false);
+                                    }
+                                }}>Lưu</Button>
                             </div>
                         )}
                     </div>
@@ -468,7 +468,7 @@ const ReportManagement = () => {
                                     <div onClick={() => setDriversOpen(!driversOpen)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 10px', borderRadius: 8, backgroundColor: 'rgba(139,168,136,0.06)', cursor: 'pointer' }}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                                             <UserOutlined style={{ color: PRIMARY }} />
-                                            <div style={{ fontWeight: 600 }}>Lái xe <span style={{ color: '#999', fontWeight: 500 }}>({(invoiceDetail.assignedDrivers||[]).length})</span></div>
+                                            <div style={{ fontWeight: 600 }}>Lái xe <span style={{ color: '#999', fontWeight: 500 }}>({(invoiceDetail.assignedDrivers || []).length})</span></div>
                                         </div>
                                         <div style={{ color: PRIMARY }}>{driversOpen ? <DownOutlined /> : <RightOutlined />}</div>
                                     </div>
@@ -493,7 +493,7 @@ const ReportManagement = () => {
                                     <div onClick={() => setStaffOpen(!staffOpen)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 10px', borderRadius: 8, backgroundColor: 'rgba(139,168,136,0.06)', cursor: 'pointer' }}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                                             <UserOutlined style={{ color: PRIMARY }} />
-                                            <div style={{ fontWeight: 600 }}>Nhân viên phụ trợ <span style={{ color: '#999', fontWeight: 500 }}>({(invoiceDetail.assignedStaff||[]).length})</span></div>
+                                            <div style={{ fontWeight: 600 }}>Nhân viên phụ trợ <span style={{ color: '#999', fontWeight: 500 }}>({(invoiceDetail.assignedStaff || []).length})</span></div>
                                         </div>
                                         <div style={{ color: PRIMARY }}>{staffOpen ? <DownOutlined /> : <RightOutlined />}</div>
                                     </div>

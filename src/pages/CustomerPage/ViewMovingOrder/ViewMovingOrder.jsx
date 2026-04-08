@@ -31,7 +31,9 @@ import ReportIncidentModal from "../../../components/MovingOrder/ReportIncidentM
 import ViewIncidentModal from "../../../components/MovingOrder/ViewIncidentModal";
 import SurveyPricingModal from "../../../components/MovingOrder/SurveyPricingModal";
 import SurveyTimeModal from "../../../components/MovingOrder/SurveyTimeModal";
-import RateServiceModal from "../../../components/ServiceRating/RateServiceModal"; 
+import RateServiceModal from "../../../components/ServiceRating/RateServiceModal";
+import CancelTicketModal from "../../../components/MovingOrder/CancelTicketModal";
+import RescheduleSurveyModal from "../../../components/MovingOrder/RescheduleSurveyModal";
 import "./style.css";
 
 const { Content } = Layout;
@@ -41,57 +43,64 @@ const { confirm } = Modal;
 const fmtDate = (d) =>
   d
     ? new Date(d).toLocaleString("vi-VN", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      })
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
     : null;
 
 /* ─── status maps ─────────────────────────────────────────── */
 const TICKET_STATUS = {
-  CREATED:        { label: "Chờ xác nhận lịch",               cls: "mo-tag--blue" },
-  WAITING_SURVEY: { label: "Đã phân công nhân viên khảo sát",  cls: "mo-tag--orange" },
-  SURVEYED:       { label: "Đã khảo sát",                      cls: "mo-tag--cyan" },
-  QUOTED:         { label: "Đã báo giá",                       cls: "mo-tag--orange" },
-  ACCEPTED:       { label: "Đã chấp nhận báo giá",             cls: "mo-tag--geekblue" },
-  CONVERTED:      { label: "Đã tạo HĐ",                        cls: "mo-tag--purple" },
-  IN_PROGRESS:    { label: "Đang vận chuyển",                   cls: "mo-tag--processing" },
-  COMPLETED:      { label: "Hoàn thành",                        cls: "mo-tag--green" },
-  CANCELLED:      { label: "Đã hủy",                           cls: "mo-tag--red" },
+  CREATED: { label: "Chờ xác nhận lịch", cls: "mo-tag--blue" },
+  WAITING_SURVEY: { label: "Đã phân công nhân viên khảo sát", cls: "mo-tag--orange" },
+  SURVEYED: { label: "Đã khảo sát", cls: "mo-tag--cyan" },
+  QUOTED: { label: "Đã báo giá", cls: "mo-tag--orange" },
+  ACCEPTED: { label: "Đã chấp nhận báo giá", cls: "mo-tag--geekblue" },
+  CONVERTED: { label: "Đã tạo HĐ", cls: "mo-tag--purple" },
+  IN_PROGRESS: { label: "Đang vận chuyển", cls: "mo-tag--processing" },
+  COMPLETED: { label: "Hoàn thành", cls: "mo-tag--green" },
+  CANCELLED: { label: "Đã hủy", cls: "mo-tag--red" },
 };
 
 const INVOICE_STATUS = {
-  DRAFT:       { label: "Nháp hóa đơn",    cls: "mo-tag--purple" },
-  CONFIRMED:   { label: "Đã xác nhận",      cls: "mo-tag--blue" },
-  ASSIGNED:    { label: "Đã phân công xe",   cls: "mo-tag--cyan" },
-  IN_PROGRESS: { label: "Đang vận chuyển",   cls: "mo-tag--processing" },
-  COMPLETED:   { label: "Hoàn thành",        cls: "mo-tag--green" },
-  CANCELLED:   { label: "Đã hủy",           cls: "mo-tag--red" },
+  DRAFT: { label: "Nháp hóa đơn", cls: "mo-tag--purple" },
+  CONFIRMED: { label: "Đã xác nhận", cls: "mo-tag--blue" },
+  ASSIGNED: { label: "Đã phân công xe", cls: "mo-tag--cyan" },
+  IN_PROGRESS: { label: "Đang vận chuyển", cls: "mo-tag--processing" },
+  COMPLETED: { label: "Hoàn thành", cls: "mo-tag--green" },
+  CANCELLED: { label: "Đã hủy", cls: "mo-tag--red" },
 };
 
 const PAYMENT_STATUS = {
-  UNPAID:  { label: "Chưa thanh toán", cls: "mo-tag--orange" },
-  PARTIAL: { label: "Đã đặt cọc",      cls: "mo-tag--cyan" },
-  PAID:    { label: "Đã thanh toán",    cls: "mo-tag--green" },
+  UNPAID: { label: "Chưa thanh toán", cls: "mo-tag--orange" },
+  PARTIAL: { label: "Đã đặt cọc", cls: "mo-tag--cyan" },
+  PAID: { label: "Đã thanh toán", cls: "mo-tag--green" },
 };
 
 const INCIDENT_STATUS = {
-  Open:          { label: "Đã báo cáo",    cls: "mo-tag--orange" },
-  Investigating: { label: "Đang xử lý",    cls: "mo-tag--processing" },
-  Resolved:      { label: "Đã giải quyết", cls: "mo-tag--green" },
-  Dismissed:     { label: "Từ chối xử lý", cls: "mo-tag--red" },
+  Open: { label: "Đã báo cáo", cls: "mo-tag--orange" },
+  Investigating: { label: "Đang xử lý", cls: "mo-tag--processing" },
+  Resolved: { label: "Đã giải quyết", cls: "mo-tag--green" },
+  Dismissed: { label: "Từ chối xử lý", cls: "mo-tag--red" },
+};
+
+const MOVE_TYPE = {
+  FULL_HOUSE: { label: "Chuyển Nhà Trọn Gói", cls: "mo-tag--geekblue" },
+  SPECIFIC_ITEMS: { label: "Chuyển Đồ Đạc", cls: "mo-tag--cyan" },
+  TRUCK_RENTAL: { label: "Thuê Xe Tải", cls: "mo-tag--purple" },
+  OFFICE_MOVING: { label: "Chuyển Văn Phòng", cls: "mo-tag--orange" },
 };
 
 /* ─── filter tabs config ──────────────────────────────────── */
 const FILTERS = [
-  { key: "ALL",         label: "Tất cả" },
-  { key: "QUOTED",      label: "Chờ chấp nhận báo giá" },
-  { key: "PROCESSING",  label: "Đang xử lý" },
+  { key: "ALL", label: "Tất cả" },
+  { key: "QUOTED", label: "Chờ chấp nhận báo giá" },
+  { key: "PROCESSING", label: "Đang xử lý" },
   { key: "IN_PROGRESS", label: "Đang vận chuyển" },
-  { key: "COMPLETED",   label: "Hoàn thành" },
-  { key: "CANCELLED",   label: "Đã hủy" },
+  { key: "COMPLETED", label: "Hoàn thành" },
+  { key: "CANCELLED", label: "Đã hủy" },
 ];
 
 /* ─── StatusTag ───────────────────────────────────────────── */
@@ -119,7 +128,6 @@ const IncidentTag = ({ incident, status, onClick }) => {
     </StatusTag>
   );
 };
-
 /* ─── OrderCard ───────────────────────────────────────────── */
 const OrderCard = ({
   ticket,
@@ -128,30 +136,38 @@ const OrderCard = ({
   onViewIncident,
   onCancelQuote,
   onRateService,    // [RATING] handler mở modal đánh giá
-  tourRefs,         // Refs for Ant Design Tour
+  tourRefs,
+  onDepositPayment,      // Refs for Ant Design Tour
+  onPayRemaining,
+  onCancelTicketRequest,
+  onRescheduleSurveyRequest,
 }) => {
   const [expanded, setExpanded] = useState(false);
 
   // Status mapping
-  const invoiceSt  = ticket.invoice ? INVOICE_STATUS[ticket.invoice.status] : null;
-  const ticketSt   = TICKET_STATUS[ticket.status] || { label: ticket.status, cls: "mo-tag--gray" };
-  const displaySt  = invoiceSt || ticketSt;
-  const paymentSt  = ticket.invoice?.paymentStatus ? PAYMENT_STATUS[ticket.invoice.paymentStatus] : null;
-  const incident   = ticket.invoice?.incident;
+  const invoiceSt = ticket.invoice ? INVOICE_STATUS[ticket.invoice.status] : null;
+  const ticketSt = TICKET_STATUS[ticket.status] || { label: ticket.status, cls: "mo-tag--gray" };
+  const displaySt = invoiceSt || ticketSt;
+  const paymentSt = ticket.invoice?.paymentStatus ? PAYMENT_STATUS[ticket.invoice.paymentStatus] : null;
+  const incident = ticket.invoice?.incident;
   const incidentSt = incident ? INCIDENT_STATUS[incident.status] : null;
 
   // Conditions
-  const isQuoted        = ticket.status === "QUOTED";
+  const isQuoted = ticket.status === "QUOTED";
   const isAcceptedUnpaid = ticket.status === "ACCEPTED" && ticket.invoice?.paymentStatus === "UNPAID";
-  const canReport       = ["COMPLETED", "IN_PROGRESS"].includes(ticket.invoice?.status) && !incident;
-  const hasPricing      = ticket.pricing?.totalPrice > 0;
-  const shortCode       = `#${(ticket.code || "").slice(-14).toUpperCase() || "N/A"}`;
+  const canReport = ["COMPLETED", "IN_PROGRESS"].includes(ticket.invoice?.status) && !incident;
+  const hasPricing = ticket.pricing?.totalPrice > 0;
+  const shortCode = `#${(ticket.code || "").slice(-14).toUpperCase() || "N/A"}`;
 
   // [RATING] Kiểm tra điều kiện hiển thị nút đánh giá
   const isInvoiceCompleted = ticket.invoice?.status === "COMPLETED";
-  const isRated            = ticket.invoice?.isRated === true;
-  const canRate            = isInvoiceCompleted && !isRated;
-
+  const isPaid = ticket.invoice?.paymentStatus === "PAID";
+  const isRated = ticket.invoice?.isRated === true;
+  const canRate = isInvoiceCompleted && isPaid && !isRated;
+  const canPayRemaining =
+    ["IN_PROGRESS", "COMPLETED"].includes(ticket.invoice?.status) &&
+    ticket.invoice?.paymentStatus === "PARTIAL";
+  const moveType = ticket.moveType ? (MOVE_TYPE[ticket.moveType] || { label: ticket.moveType, cls: "mo-tag--gray" }) : null;
   return (
     <div className={`mo-card ${isQuoted ? "mo-card--highlight" : ""}`}>
       {/* ── QUOTED: Action notice banner ── */}
@@ -181,13 +197,16 @@ const OrderCard = ({
           )}
         </div>
         <div className="mo-card__head-right" ref={tourRefs?.refStatus} style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+          {moveType && (
+            <StatusTag cls={moveType.cls}>{moveType.label}</StatusTag>
+          )}
           {incidentSt && (
             <IncidentTag incident={incident} status={incidentSt} onClick={() => onViewIncident(incident)} />
           )}
           {/* [RATING] Badge "Đã đánh giá" ở header nếu isRated */}
           {isRated && (
-            <span className="mo-tag mo-tag--rated"style={{ cursor: 'pointer' }} 
-    onClick={() => onRateService(ticket)}>
+            <span className="mo-tag mo-tag--rated" style={{ cursor: 'pointer' }}
+              onClick={() => onRateService(ticket)}>
               <StarFilled style={{ marginRight: 4, color: '#f59e0b' }} />
               Đã đánh giá
             </span>
@@ -254,9 +273,31 @@ const OrderCard = ({
               </button>
             </>
           )}
+
+          {/* New Actions for Created / Waiting Survey */}
+          {(ticket.status === "CREATED" || ticket.status === "WAITING_SURVEY") && (
+            <button className="mo-btn mo-btn--reject" onClick={() => onCancelTicketRequest(ticket)}>
+              <CloseCircleOutlined /> Hủy yêu cầu
+            </button>
+          )}
+
+          {(ticket.status === "WAITING_SURVEY" && ticket.scheduledTime) && (
+            <button className="mo-btn mo-btn--deposit" style={{backgroundColor: '#e67e22', color: '#fff'}} onClick={() => onRescheduleSurveyRequest(ticket)}>
+              <CalendarOutlined /> Đổi giờ khảo sát
+            </button>
+          )}
+
           {isAcceptedUnpaid && (
             <button className="mo-btn mo-btn--deposit" onClick={() => (window.location.href = `/customer/sign-contract/${ticket._id}`)}>
               <CreditCardOutlined /> Thanh toán cọc
+            </button>
+          )}
+          {canPayRemaining && (
+            <button
+              className="mo-btn mo-btn--deposit"
+              onClick={() => onPayRemaining(ticket)}
+            >
+              <CreditCardOutlined /> Tất toán
             </button>
           )}
           {hasPricing && !isQuoted && (
@@ -280,7 +321,7 @@ const OrderCard = ({
 
         <div className="mo-card__btns-secondary">
           {ticket.status !== "QUOTED" && (
-            <button 
+            <button
               className="mo-btn mo-btn--contact"
               onClick={() => window.open(`/customer/video-chat?room=${ticket.code}`, '_blank')}
             >
@@ -324,8 +365,12 @@ const OrderCard = ({
                   <span style={{ color: '#f59e0b', fontWeight: 600 }}>
                     <StarFilled style={{ marginRight: 4 }} />Đã đánh giá
                   </span>
-                ) : (
+                ) : isPaid ? (
                   <span style={{ color: '#64748b' }}>Chưa đánh giá</span>
+                ) : (
+                  <span style={{ color: '#ef4444' }}>
+                    Cần thanh toán đủ để đánh giá
+                  </span>
                 )}
               </span>
             </div>
@@ -341,22 +386,27 @@ const ViewMovingOrder = () => {
   const location = useLocation();
   const { user, isAuthenticated } = useUser();
 
-  const [tickets,                    setTickets]                    = useState([]);
-  const [loading,                    setLoading]                    = useState(true);
-  const [activeFilter,               setActiveFilter]               = useState("ALL");
-  const [isSurveyModalVisible,       setIsSurveyModalVisible]       = useState(false);
-  const [selectedSurvey,             setSelectedSurvey]             = useState(null);
-  const [selectedTicket,             setSelectedTicket]             = useState(null);
-  const [selectedTicketPricing,      setSelectedTicketPricing]      = useState(null);
-  const [isSurveyTimeModalVisible,   setIsSurveyTimeModalVisible]   = useState(false);
-  const [selectedTicketForTime,      setSelectedTicketForTime]      = useState(null);
-  const [isIncidentModalVisible,     setIsIncidentModalVisible]     = useState(false);
-  const [selectedIncident,           setSelectedIncident]           = useState(null);
-  const [isReportModalVisible,       setIsReportModalVisible]       = useState(false);
+  const [tickets, setTickets] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [activeFilter, setActiveFilter] = useState("ALL");
+  const [isSurveyModalVisible, setIsSurveyModalVisible] = useState(false);
+  const [selectedSurvey, setSelectedSurvey] = useState(null);
+  const [selectedTicket, setSelectedTicket] = useState(null);
+  const [selectedTicketPricing, setSelectedTicketPricing] = useState(null);
+  const [isSurveyTimeModalVisible, setIsSurveyTimeModalVisible] = useState(false);
+  const [selectedTicketForTime, setSelectedTicketForTime] = useState(null);
+  const [isIncidentModalVisible, setIsIncidentModalVisible] = useState(false);
+  const [selectedIncident, setSelectedIncident] = useState(null);
+  const [isReportModalVisible, setIsReportModalVisible] = useState(false);
 
   // [RATING] State cho modal đánh giá
-  const [isRateModalVisible,         setIsRateModalVisible]         = useState(false);
-  const [ticketToRate,               setTicketToRate]               = useState(null);
+  const [isRateModalVisible, setIsRateModalVisible] = useState(false);
+  const [ticketToRate, setTicketToRate] = useState(null);
+
+  // States for Cancel / Reschedule Modals
+  const [isCancelModalVisible, setIsCancelModalVisible] = useState(false);
+  const [isRescheduleModalVisible, setIsRescheduleModalVisible] = useState(false);
+  const [actionTicket, setActionTicket] = useState(null);
 
   // [TOUR] State & Refs
   const refStatus = useRef(null);
@@ -364,6 +414,35 @@ const ViewMovingOrder = () => {
   const refMeta = useRef(null);
   const refPricing = useRef(null);
   const refActions = useRef(null);
+
+  const handleRemainingPayment = (ticket) => {
+    confirm({
+      title: "Xác nhận thanh toán phần còn lại",
+      content: (
+        <>
+          <p>Bạn sắp thanh toán <b>phần còn lại của đơn hàng</b>.</p>
+          <p>
+            Số tiền:{" "}
+            <b style={{ color: "#d9363e" }}>
+              {(ticket.pricing.totalPrice / 2).toLocaleString()} ₫
+            </b>
+          </p>
+        </>
+      ),
+      onOk: async () => {
+        try {
+          const res = await orderService.createMovingRemaining(ticket._id);
+          if (res?.data?.checkoutUrl) {
+            window.location.href = res.data.checkoutUrl;
+          } else {
+            message.error("Không tạo được link thanh toán");
+          }
+        } catch (err) {
+          message.error("Lỗi thanh toán: " + (err.response?.data?.message || err.message));
+        }
+      },
+    });
+  };
 
   // Modal Refs
   const refModalSurvey = useRef(null);
@@ -373,10 +452,10 @@ const ViewMovingOrder = () => {
   const [tourOpen, setTourOpen] = useState(false);
 
   useEffect(() => {
-      if (!localStorage.getItem('hasSeenViewOrderTour')) {
-          setTimeout(() => setTourOpen(true), 800);
-          localStorage.setItem('hasSeenViewOrderTour', 'true');
-      }
+    if (!localStorage.getItem('hasSeenViewOrderTour')) {
+      setTimeout(() => setTourOpen(true), 800);
+      localStorage.setItem('hasSeenViewOrderTour', 'true');
+    }
   }, []);
 
   const tourSteps = [
@@ -431,7 +510,7 @@ const ViewMovingOrder = () => {
     code: "MOK-99999999",
     createdAt: new Date().toISOString(),
     scheduledTime: new Date(Date.now() + 86400000).toISOString(),
-    status: "QUOTED", 
+    status: "QUOTED",
     pickup: { address: "123 Đường Bắt Đầu, Phường 1, Quận 10" },
     delivery: { address: "456 Đường Kết Thúc, Quận 7, TP.HCM" },
     pricing: { totalPrice: 1850000 },
@@ -440,31 +519,31 @@ const ViewMovingOrder = () => {
   };
 
   const mockSurveyForTour = {
-     distanceKm: 15, floors: 2, hasElevator: false, carryMeter: 50, needsPacking: true, needsAssembling: true,
-     insuranceRequired: true, declaredValue: 50000000, estimatedHours: 4, notes: "Ghi chú: Đồ đạc cồng kềnh, cần bọc lót kỹ.",
-     suggestedVehicle: "Xe tải 1.5 Tấn", suggestedStaffCount: 4, 
-     items: [
-       {name: "Sofa góc L", condition: "GOOD", actualWeight: 80},
-       {name: "Tủ lạnh 400L", condition: "FRAGILE"},
-       {name: "⚠️ Tủ kính trang trí", condition: "FRAGILE"}
-     ]
+    distanceKm: 15, floors: 2, hasElevator: false, carryMeter: 50, needsPacking: true, needsAssembling: true,
+    insuranceRequired: true, declaredValue: 50000000, estimatedHours: 4, notes: "Ghi chú: Đồ đạc cồng kềnh, cần bọc lót kỹ.",
+    suggestedVehicle: "Xe tải 1.5 Tấn", suggestedStaffCount: 4,
+    items: [
+      { name: "Sofa góc L", condition: "GOOD", actualWeight: 80 },
+      { name: "Tủ lạnh 400L", condition: "FRAGILE" },
+      { name: "⚠️ Tủ kính trang trí", condition: "FRAGILE" }
+    ]
   };
 
   const mockPricingBreakdownForTour = {
-     totalPrice: 1850000, subtotal: 1850000, discountAmount: 0, tax: 0,
-     breakdown: { baseTransportFee: 300000, vehicleFee: 400000, laborFee: 600000, distanceSurcharge: 100000, floorFee: 250000, carryFee: 200000, serviceFee: 0 }
+    totalPrice: 1850000, subtotal: 1850000, discountAmount: 0, tax: 0,
+    breakdown: { baseTransportFee: 300000, vehicleFee: 400000, laborFee: 600000, distanceSurcharge: 100000, floorFee: 250000, carryFee: 200000, serviceFee: 0 }
   };
 
   const handleTourChange = (currentStep) => {
-      // Steps 4, 5, 6 require the modal to be open
-      if (currentStep >= 4) {
-          setSelectedTicket(mockTicketForTour);
-          setSelectedSurvey(mockSurveyForTour);
-          setSelectedTicketPricing(mockPricingBreakdownForTour);
-          setIsSurveyModalVisible(true);
-      } else {
-          setIsSurveyModalVisible(false);
-      }
+    // Steps 4, 5, 6 require the modal to be open
+    if (currentStep >= 4) {
+      setSelectedTicket(mockTicketForTour);
+      setSelectedSurvey(mockSurveyForTour);
+      setSelectedTicketPricing(mockPricingBreakdownForTour);
+      setIsSurveyModalVisible(true);
+    } else {
+      setIsSurveyModalVisible(false);
+    }
   };
 
   /* ── handlers ── */
@@ -486,7 +565,7 @@ const ViewMovingOrder = () => {
     } catch (error) {
       message.error(
         "Không thể tải thông tin khảo sát: " +
-          (error.response?.data?.message || error.message)
+        (error.response?.data?.message || error.message)
       );
     }
   };
@@ -552,7 +631,7 @@ const ViewMovingOrder = () => {
         } catch (err) {
           message.error(
             "Không thể tạo thanh toán: " +
-              (err.response?.data?.message || err.message)
+            (err.response?.data?.message || err.message)
           );
         }
       },
@@ -584,6 +663,24 @@ const ViewMovingOrder = () => {
         }
       },
     });
+  };
+
+  const handleCancelTicketRequest = (ticket) => {
+    setActionTicket(ticket);
+    setIsCancelModalVisible(true);
+  };
+
+  const handleRescheduleSurveyRequest = (ticket) => {
+    setActionTicket(ticket);
+    setIsRescheduleModalVisible(true);
+  };
+
+  const handleActionSuccess = (ticketId, updatedFields) => {
+    setTickets((prev) =>
+      prev.map((t) =>
+        t._id === ticketId ? { ...t, ...updatedFields } : t
+      )
+    );
   };
 
   /* ── fetch ── */
@@ -625,24 +722,24 @@ const ViewMovingOrder = () => {
 
   /* ── filter logic ── */
   const matchFilter = (t, key) => {
-    const ticketStatus  = t.status;
+    const ticketStatus = t.status;
     const invoiceStatus = t.invoice?.status;
-    const hasInvoice    = !!invoiceStatus;
+    const hasInvoice = !!invoiceStatus;
 
     if (key === "ALL") return true;
     if (key === "QUOTED") return ticketStatus === "QUOTED";
     if (key === "PROCESSING") {
-      if (!hasInvoice) return ["CREATED","WAITING_SURVEY","SURVEYED","ACCEPTED"].includes(ticketStatus);
+      if (!hasInvoice) return ["CREATED", "WAITING_SURVEY", "SURVEYED", "ACCEPTED"].includes(ticketStatus);
       return ["DRAFT", "CONFIRMED"].includes(invoiceStatus);
     }
-    if (key === "IN_PROGRESS")  return ["ASSIGNED","IN_PROGRESS"].includes(invoiceStatus);
-    if (key === "COMPLETED")    return invoiceStatus === "COMPLETED";
-    if (key === "CANCELLED")    return ticketStatus === "CANCELLED" || invoiceStatus === "CANCELLED";
+    if (key === "IN_PROGRESS") return ["ASSIGNED", "IN_PROGRESS"].includes(invoiceStatus);
+    if (key === "COMPLETED") return invoiceStatus === "COMPLETED";
+    if (key === "CANCELLED") return ticketStatus === "CANCELLED" || invoiceStatus === "CANCELLED";
     return false;
   };
 
-  const filtered  = tickets.filter((t) => matchFilter(t, activeFilter));
-  const countFor  = (key) => tickets.filter((t) => matchFilter(t, key)).length;
+  const filtered = tickets.filter((t) => matchFilter(t, activeFilter));
+  const countFor = (key) => tickets.filter((t) => matchFilter(t, key)).length;
 
   const displayTickets = tourOpen && tickets.length === 0 ? [mockTicketForTour] : (tourOpen ? [mockTicketForTour, ...filtered] : filtered);
 
@@ -655,9 +752,9 @@ const ViewMovingOrder = () => {
         <section className="order-hero" style={{ position: 'relative' }}>
           <div className="overlay" />
           <h1>Thông Tin Chi Tiết</h1>
-          <Button 
-            type="primary" 
-            icon={<QuestionCircleOutlined />} 
+          <Button
+            type="primary"
+            icon={<QuestionCircleOutlined />}
             onClick={() => setTourOpen(true)}
             style={{ position: 'absolute', right: 40, top: '50%', transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.2)', borderColor: 'white', color: 'white', zIndex: 2 }}
           >
@@ -704,8 +801,11 @@ const ViewMovingOrder = () => {
                   onReportIncident={ticket.isMock ? () => message.info('Đây là dữ liệu mẫu.') : handleReportIncident}
                   onViewIncident={ticket.isMock ? () => message.info('Đây là dữ liệu mẫu.') : handleViewIncident}
                   onDepositPayment={ticket.isMock ? () => message.info('Đây là dữ liệu mẫu.') : handleDepositPayment}
+                  onPayRemaining={ticket.isMock ? () => message.info('Đây là dữ liệu mẫu.') : handleRemainingPayment}
                   onCancelQuote={ticket.isMock ? () => message.info('Đây là dữ liệu mẫu.') : handleCancelQuote}
                   onRateService={ticket.isMock ? () => message.info('Đây là dữ liệu mẫu.') : handleRateService}
+                  onCancelTicketRequest={ticket.isMock ? () => message.info('Đây là dữ liệu mẫu.') : handleCancelTicketRequest}
+                  onRescheduleSurveyRequest={ticket.isMock ? () => message.info('Đây là dữ liệu mẫu.') : handleRescheduleSurveyRequest}
                 />
               ))}
             </div>
@@ -714,11 +814,11 @@ const ViewMovingOrder = () => {
 
         {/* Tour Component */}
         <ConfigProvider locale={viVN}>
-          <Tour 
-            open={tourOpen} 
+          <Tour
+            open={tourOpen}
             onChange={handleTourChange}
-            onClose={() => { setTourOpen(false); setIsSurveyModalVisible(false); }} 
-            steps={tourSteps} 
+            onClose={() => { setTourOpen(false); setIsSurveyModalVisible(false); }}
+            steps={tourSteps}
             mask={{ color: 'rgba(0, 0, 0, 0.4)' }}
           />
         </ConfigProvider>
@@ -774,6 +874,20 @@ const ViewMovingOrder = () => {
             onSuccess={handleRateSuccess}
           />
         )}
+
+        <CancelTicketModal
+          visible={isCancelModalVisible}
+          onClose={() => setIsCancelModalVisible(false)}
+          ticket={actionTicket}
+          onSuccess={handleActionSuccess}
+        />
+
+        <RescheduleSurveyModal
+          visible={isRescheduleModalVisible}
+          onClose={() => setIsRescheduleModalVisible(false)}
+          ticket={actionTicket}
+          onSuccess={handleActionSuccess}
+        />
       </Content>
 
       <AppFooter />

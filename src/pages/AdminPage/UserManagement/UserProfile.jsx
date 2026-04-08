@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Typography, Button, Input, Select, Row, Col, Avatar, notification } from 'antd';
-import { ArrowLeftOutlined, UserOutlined } from '@ant-design/icons';
+import { Card, Typography, Button, Avatar, notification, Tag, Descriptions, Space } from 'antd';
+import { ArrowLeftOutlined, UserOutlined, PhoneOutlined, GlobalOutlined, ClockCircleOutlined, MailOutlined } from '@ant-design/icons';
 import { useParams, useNavigate } from 'react-router-dom';
 import adminUserService from '../../../services/adminUserService';
 
 const { Title, Text } = Typography;
-const { Option } = Select;
 
-const PRIMARY_GREEN = '#cad5c1';
+const PRIMARY_GREEN = '#2D4F36';
+const PRIMARY_LIGHT = '#eaf3ea';
 
 const UserProfile = () => {
     const { id } = useParams();
@@ -56,64 +56,56 @@ const UserProfile = () => {
     if (!user) return <div style={{ padding: 24 }}>Không tìm thấy người dùng.</div>;
 
     return (
-        <div style={{ textAlign: 'left', maxWidth: '800px', margin: '0 auto' }}>
+        <div style={{ textAlign: 'left', maxWidth: '900px', margin: '0 auto' }}>
             <div style={{ marginBottom: 24 }}>
                 <Text type="secondary" style={{ fontSize: 16 }}>Hồ sơ</Text>
-                <Title level={3} style={{ margin: 0 }}>{user.role === 'staff' ? 'Nhân viên vận chuyển' : user.role === 'customer' ? 'Khách hàng' : user.role}</Title>
+                <Title level={3} style={{ margin: '8px 0 0 0' }}>{user.role === 'staff' ? 'Nhân viên vận chuyển' : user.role === 'customer' ? 'Khách hàng' : user.role}</Title>
             </div>
 
-            <Card style={{ borderRadius: '16px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+            <Card style={{ borderRadius: '16px', border: 'none', boxShadow: '0 8px 30px rgba(0,0,0,0.06)' }}>
                 {/* Header Profile Section */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '24px', marginBottom: '40px' }}>
-                    <Avatar size={80} icon={<UserOutlined />} src={user.avatar} style={{ backgroundColor: PRIMARY_GREEN }} />
-                    <div>
-                        <Title level={4} style={{ margin: 0 }}>{user.fullName || 'Không có tên'}</Title>
-                        <Text type="secondary">{user.email || 'Không có email'}</Text>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '24px', marginBottom: '28px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 16, width: '100%', justifyContent: 'space-between' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                            <Avatar size={88} src={user.avatar} style={{ backgroundColor: PRIMARY_LIGHT, color: PRIMARY_GREEN, fontSize: 28 }}>
+                                {!user.avatar && (user.fullName || 'U').split(' ').slice(-1)[0].charAt(0)}
+                            </Avatar>
+                            <div>
+                                <Title level={4} style={{ margin: 0 }}>{user.fullName || 'Không có tên'}</Title>
+                                <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 6 }}>
+                                    <MailOutlined style={{ color: '#8c8c8c' }} />
+                                    <Text type="secondary">{user.email || 'Chưa có email'}</Text>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                            <Tag color={PRIMARY_LIGHT} style={{ borderRadius: 8, padding: '6px 10px', color: PRIMARY_GREEN, fontWeight: 600, textTransform: 'capitalize' }}>{user.role}</Tag>
+                        </div>
                     </div>
                 </div>
 
-                {/* Form Data Display */}
-                <Row gutter={[32, 24]}>
-                    <Col span={12}>
-                        <div style={{ marginBottom: 8 }}><Text strong>Họ và tên</Text></div>
-                        <Input value={user.fullName} readOnly style={{ backgroundColor: '#f9f9f9', border: 'none', borderRadius: '8px' }} size="large" />
-                    </Col>
-                    <Col span={12}>
-                        <div style={{ marginBottom: 8 }}><Text strong>Tên gọi</Text></div>
-                        <Input placeholder="Tên gọi" readOnly style={{ backgroundColor: '#f9f9f9', border: 'none', borderRadius: '8px' }} size="large" />
-                    </Col>
+                {/* Details */}
+                <Descriptions column={2} bordered size="middle">
+                    <Descriptions.Item label={<Space><UserOutlined />Họ và tên</Space>} span={1}>{user.fullName || '-'}</Descriptions.Item>
+                    <Descriptions.Item label={<Space><UserOutlined />Tên gọi</Space>} span={1}>{user.displayName || '-'}</Descriptions.Item>
+                    <Descriptions.Item label={<Space><PhoneOutlined />Số điện thoại</Space>} span={1}>{user.phoneNumber || user.phone || '-'}</Descriptions.Item>
+                    <Descriptions.Item label={<Space><GlobalOutlined />Quốc gia</Space>} span={1}>{user.country || 'Vietnam'}</Descriptions.Item>
+                    <Descriptions.Item label={<Space><ClockCircleOutlined />Múi giờ</Space>} span={1}>{user.timeZone || 'GMT+7'}</Descriptions.Item>
+                    <Descriptions.Item label={<Space><UserOutlined />Trạng thái</Space>} span={1}>{user.status || '-'}</Descriptions.Item>
+                </Descriptions>
 
-                    <Col span={12}>
-                        <div style={{ marginBottom: 8 }}><Text strong>Giới tính</Text></div>
-                        <Select value={user.gender || 'Select'} style={{ width: '100%' }} size="large" disabled>
-                            <Option value="Male">Nam</Option>
-                            <Option value="Female">Nữ</Option>
-                        </Select>
-                    </Col>
-                    <Col span={12}>
-                        <div style={{ marginBottom: 8 }}><Text strong>Quốc gia</Text></div>
-                        <Input placeholder="Vietnam" value={user.country || 'Vietnam'} readOnly style={{ backgroundColor: '#f9f9f9', border: 'none', borderRadius: '8px' }} size="large" />
-                    </Col>
-
-                    <Col span={12}>
-                        <div style={{ marginBottom: 8 }}><Text strong>Số điện thoại</Text></div>
-                        <Input value={user.phoneNumber || ''} readOnly style={{ backgroundColor: '#f9f9f9', border: 'none', borderRadius: '8px' }} size="large" />
-                    </Col>
-                    <Col span={12}>
-                        <div style={{ marginBottom: 8 }}><Text strong>Múi giờ</Text></div>
-                        <Input placeholder="GMT+7" value={user.timeZone || 'GMT+7'} readOnly style={{ backgroundColor: '#f9f9f9', border: 'none', borderRadius: '8px' }} size="large" />
-                    </Col>
-                </Row>
-
-                <div style={{ marginTop: '40px' }}>
+                <div style={{ marginTop: 28, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Button
                         icon={<ArrowLeftOutlined />}
                         size="large"
-                        style={{ backgroundColor: PRIMARY_GREEN, color: '#333', border: 'none', borderRadius: '24px', fontWeight: 'bold', padding: '0 32px' }}
+                        style={{ backgroundColor: PRIMARY_LIGHT, color: PRIMARY_GREEN, border: 'none', borderRadius: '24px', fontWeight: '600', padding: '0 28px' }}
                         onClick={() => navigate('/admin/users')}
                     >
                         Quay lại
                     </Button>
+
+                    <div />
                 </div>
             </Card>
         </div>

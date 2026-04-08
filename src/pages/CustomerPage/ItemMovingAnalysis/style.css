@@ -1,0 +1,545 @@
+/* Import hero + steps tokens from CreateMovingOrder */
+@import url('../CreateMovingOrder/style.css');
+
+/* ─── Color palette ──────────────────────────────────────────────────────────
+   #44624a  dark green
+   #8ba888  medium green
+   #c0cfb2  light green
+   #f1ebe1  warm cream
+   #ffffff  white
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* ─── Page wrapper ───────────────────────────────────────────────────────── */
+.ima-page {
+  min-height: 100vh;
+  background: #ffffff;
+}
+
+.ima-body {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 32px 100px;
+}
+
+/* ─── UPLOAD SCREEN ──────────────────────────────────────────────────────── */
+.ima-upload-screen {
+  display: flex;
+  justify-content: center;
+  padding: 20px 0;
+}
+
+.ima-upload-card {
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1px solid #c0cfb2;
+  box-shadow: 0 8px 32px rgba(68, 98, 74, 0.10);
+  padding: 48px 56px;
+  width: 100%;
+  max-width: 680px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.ima-upload-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+}
+
+.ima-upload-icon {
+  font-size: 48px;
+  color: #44624a;
+  background: #c0cfb2;
+  padding: 18px;
+  border-radius: 50%;
+}
+
+.ima-dragger {
+  background: #ffffff !important;
+  border-radius: 14px !important;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.ima-dragger:hover {
+  border-color: #44624a !important;
+  background: #f8fafc !important;
+}
+
+.ima-dragger-content {
+  padding: 32px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.ima-dragger-icon {
+  font-size: 44px !important;
+  color: #8ba888 !important;
+}
+
+.ima-dragger-text {
+  font-size: 15px;
+  font-weight: 600;
+  color: #44624a;
+  margin: 0;
+}
+
+.ima-dragger-hint {
+  font-size: 13px;
+  color: #8ba888;
+  margin: 0;
+}
+
+.ima-upload-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.ima-ai-btn {
+  width: 100%;
+  max-width: 360px;
+  height: 52px;
+  font-size: 16px;
+  font-weight: 700;
+  border-radius: 26px;
+  background: #44624a !important;
+  border-color: #44624a !important;
+  box-shadow: 0 4px 16px rgba(68, 98, 74, 0.30);
+  transition: all 0.25s;
+}
+
+.ima-ai-btn:not(:disabled):hover {
+  background: #2d4f36 !important;
+  border-color: #2d4f36 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(68, 98, 74, 0.40);
+}
+
+.ima-ai-btn:disabled {
+  background: #c0cfb2 !important;
+  border-color: #c0cfb2 !important;
+}
+
+.ima-divider-or {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 360px;
+  gap: 12px;
+  color: #8ba888;
+  font-size: 13px;
+}
+
+.ima-divider-or::before,
+.ima-divider-or::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #c0cfb2;
+}
+
+.ima-manual-btn {
+  width: 100%;
+  max-width: 360px;
+  height: 46px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 23px;
+  color: #44624a !important;
+  border-color: #8ba888 !important;
+  background: #ffffff !important;
+  transition: all 0.2s;
+}
+
+.ima-manual-btn:hover {
+  border-color: #44624a !important;
+  background: #f8fafc !important;
+}
+
+/* ─── TOP BAR (result & manual modes) ────────────────────────────────────── */
+.ima-result-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #ffffff;
+  border: 1px solid #c0cfb2;
+  border-radius: 12px;
+  padding: 12px 20px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(68, 98, 74, 0.06);
+}
+
+/* ─── AI RESULT: Two-panel layout ────────────────────────────────────────── */
+.ima-result-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 24px;
+  align-items: stretch;
+  /* Match heights */
+}
+
+@media (max-width: 768px) {
+  .ima-result-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* LEFT: media panel */
+.ima-media-panel {
+  background: #ffffff;
+  border: 1px solid #c0cfb2;
+  border-radius: 14px;
+  padding: 16px;
+  height: 780px;
+  /* Increased from 600 to fit items better */
+  display: flex;
+  flex-direction: column;
+}
+
+.ima-media-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+  overflow-y: auto;
+  /* Scroll media if too many */
+  flex-grow: 1;
+}
+
+.ima-media-thumb {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #ffffff;
+  border: 1px solid #c0cfb2;
+  display: flex;
+  flex-direction: column;
+}
+
+.ima-media-thumb img {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  display: block;
+}
+
+.ima-media-video {
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  color: #8ba888;
+  font-weight: 600;
+}
+
+.ima-media-label {
+  font-size: 12px;
+  color: #8ba888;
+  padding: 6px 12px;
+  background: #f8fafc;
+  word-break: break-all;
+}
+
+.ima-ai-suggestion {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.ima-suggestion-chip {
+  font-size: 14px;
+  color: #44624a;
+  background: #ffffff;
+  border: 1px solid #c0cfb2;
+  border-radius: 20px;
+  padding: 6px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+/* RIGHT: table panel */
+.ima-table-panel {
+  background: #ffffff;
+  border: 1px solid #c0cfb2;
+  border-radius: 14px;
+  padding: 16px 20px;
+  height: 780px;
+  /* Increased from 600 to fit 7+ items and extras */
+  display: flex;
+  flex-direction: column;
+}
+
+/* ─── MANUAL: Full-width layout ──────────────────────────────────────────── */
+.ima-manual-layout {
+  background: #ffffff;
+  border: 1px solid #c0cfb2;
+  border-radius: 14px;
+  padding: 16px 20px;
+}
+
+/* ─── Item panel internals ───────────────────────────────────────────────── */
+.ima-item-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Picker bar */
+.ima-picker-bar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  background: #ffffff;
+  border: 1px solid #c0cfb2;
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.ima-btn-primary {
+  background: #44624a !important;
+  border-color: #44624a !important;
+  color: #fff !important;
+}
+
+.ima-btn-primary:hover {
+  background: #2d4f36 !important;
+  border-color: #2d4f36 !important;
+}
+
+/* Table */
+.ima-table {
+  border: 1px solid #c0cfb2;
+  border-radius: 10px;
+  overflow: hidden;
+  min-height: 400px;
+}
+
+.ima-table-header {
+  background: #8ba888;
+  padding: 12px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.5px;
+}
+
+.ima-table-body {
+  background: #ffffff;
+  flex-grow: 1;
+  /* Allow to expand within fixed container, scroll after ~7-8 items */
+  max-height: 400px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.ima-table-row {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f8fafc;
+  transition: background 0.12s;
+}
+
+.ima-table-row:last-child {
+  border-bottom: none;
+}
+
+.ima-table-row:hover {
+  background: #fafff9;
+}
+
+.ima-table-row--ai {
+  background: #f4faf5;
+}
+
+.ima-table-row--ai:hover {
+  background: #edfaed;
+}
+
+.ima-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 36px 20px;
+  color: #c0cfb2;
+  font-size: 13px;
+}
+
+/* Extras row (secondary + critical) */
+.ima-extras {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ima-extras-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 10px 12px;
+  border: 1px solid #c0cfb2;
+}
+
+/* ─── Summary bar ────────────────────────────────────────────────────────── */
+.ima-summary-bar {
+  margin-top: 16px;
+  margin-bottom: 24px;
+  background: linear-gradient(135deg, #44624a 0%, #2d4f36 100%);
+  border-radius: 14px;
+  padding: 18px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  box-shadow: 0 6px 20px rgba(68, 98, 74, 0.25);
+}
+
+.ima-summary-stats {
+  display: flex;
+  gap: 32px;
+}
+
+.ima-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ima-stat-label {
+  font-size: 11px;
+  color: #c0cfb2;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.ima-stat-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.ima-summary-price {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+}
+
+.ima-price-label {
+  font-size: 12px;
+  color: #c0cfb2;
+}
+
+.ima-price-value {
+  font-size: 26px;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.ima-price-note {
+  font-size: 10px;
+  color: #8ba888;
+}
+
+/* ─── Agreement card ─────────────────────────────────────────────────────── */
+.ima-agreement-card {
+  margin-top: 16px;
+  background: #ffffff;
+  border: 1px solid #c0cfb2;
+  border-radius: 14px;
+  padding: 24px 28px;
+}
+
+.ima-agreement-text {
+  background: #f8fafc;
+  border: 1px solid #c0cfb2;
+  border-radius: 10px;
+  padding: 20px 24px;
+  margin-bottom: 18px;
+  font-size: 13.5px;
+  color: #4b5563;
+  line-height: 1.8;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.ima-agreement-section {
+  margin-bottom: 20px;
+}
+
+.ima-agreement-section:last-child {
+  margin-bottom: 0;
+}
+
+.ima-agreement-text strong {
+  color: #44624a;
+}
+
+.ima-agreement-text ul {
+  padding-left: 18px;
+  margin: 8px 0 0;
+}
+
+.ima-agreement-text li {
+  margin-bottom: 6px;
+}
+
+.ima-agreement-text li:last-child {
+  margin-bottom: 0;
+}
+
+.ima-agreement-text p {
+  margin: 0 0 6px;
+}
+
+.ima-agreement-text p:last-child {
+  margin: 0;
+}
+
+.ima-agree-check .ant-checkbox+span {
+  color: #44624a;
+  font-weight: 600;
+}
+
+/* ─── Submit button ──────────────────────────────────────────────────────── */
+.ima-submit-btn {
+  height: 52px;
+  min-width: 300px;
+  border-radius: 26px;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  background: #c0cfb2 !important;
+  border-color: #c0cfb2 !important;
+  color: #8ba888 !important;
+  cursor: not-allowed;
+  transition: all 0.3s;
+}
+
+.ima-submit-btn--active {
+  background: #44624a !important;
+  border-color: #44624a !important;
+  color: #ffffff !important;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(68, 98, 74, 0.35);
+}
+
+.ima-submit-btn--active:hover {
+  background: #2d4f36 !important;
+  border-color: #2d4f36 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 22px rgba(68, 98, 74, 0.45);
+}

@@ -1,11 +1,11 @@
 import React from 'react';
 import { Layout, Button, Breadcrumb } from 'antd';
-import { LogoutOutlined, BellOutlined, SettingOutlined, UserOutlined } from '@ant-design/icons';
+import { LogoutOutlined, BellOutlined, SettingOutlined, UserOutlined, MenuUnfoldOutlined, MenuFoldOutlined } from '@ant-design/icons';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 const { Header } = Layout;
 
-const AdminHeader = () => {
+const AdminHeader = ({ collapsed, onCollapse }) => {
     const location = useLocation();
     const navigate = useNavigate();
 
@@ -30,15 +30,31 @@ const AdminHeader = () => {
     return (
         <Header style={{
             background: '#fff',
-            padding: '0 24px',
+            padding: '0 16px',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
             borderBottom: '1px solid #f0f0f0',
-            height: '70px'
+            height: '70px',
+            position: 'sticky',
+            top: 0,
+            zIndex: 1000
         }}>
-            <div>
-                <Breadcrumb items={[{ title: 'Admin' }, ...breadcrumbItems.slice(1)]} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Button 
+                    type="text" 
+                    icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />} 
+                    onClick={() => onCollapse(!collapsed)}
+                    style={{ fontSize: '18px' }}
+                />
+                <div className="admin-breadcrumb-wrapper">
+                    <Breadcrumb items={[{ title: 'Admin' }, ...breadcrumbItems.slice(1)]} />
+                </div>
+                <style>{`
+                    @media (max-width: 576px) {
+                        .admin-breadcrumb-wrapper { display: none; }
+                    }
+                `}</style>
             </div>
             <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
                 <Button type="text" icon={<SettingOutlined />} />

@@ -11,6 +11,7 @@ import dayjs from "dayjs";
 const BookingHistory = () => {
   const [messageApi, contextHolder] = message.useMessage();
   const { user } = useUser();
+  const API_BASE = (process.env.REACT_APP_API_URL && process.env.REACT_APP_API_URL.replace(/\/api$/, '')) || 'http://localhost:5000';
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState(null);
@@ -212,6 +213,7 @@ const BookingHistory = () => {
           onCancel={() => setIsModalVisible(false)}
           footer={null}
           width={800}
+          style={{ top: 20 }}
           className="booking-history-modal"
         >
           {selectedBooking && (
@@ -240,7 +242,7 @@ const BookingHistory = () => {
                           {selectedBooking.boardinghouse.photos.map((photo, index) => (
                             <div key={index}>
                               <img
-                                src={`http://localhost:5000${photo}`}
+                                src={`${API_BASE}${photo}`}
                                 alt={`boardinghouse-${index}`}
                                 style={{
                                   width: "100%",

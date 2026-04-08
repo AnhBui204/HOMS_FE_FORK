@@ -77,7 +77,7 @@ function VideoChat() {
       if (!roomId) return;
       try {
         const token = await getValidAccessToken();
-        const BASE_URL = process.env.REACT_APP_SOCKET_URL || 'http://localhost:5000';
+        const BASE_URL = process.env.REACT_APP_SOCKET_URL || (process.env.REACT_APP_API_URL && process.env.REACT_APP_API_URL.replace(/\/api$/, '')) || 'http://localhost:5000';
         // Connect to the specialized /video-chat namespace
         newSocket = io(`${BASE_URL}/video-chat`, {
           auth: { token },

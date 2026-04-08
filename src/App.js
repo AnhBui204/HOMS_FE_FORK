@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { GoogleOAuthProvider } from "@react-oauth/google";
+import { useState,useEffect } from "react";
 import LandingPage from "./pages/CommonPage/LandingPage/LandingPage";
 import HomeRedirect from "./pages/CommonPage/LandingPage/HomeRedirect";
 import About from "./pages/CommonPage/About/About";
@@ -16,12 +17,22 @@ import RoutesCus from "./routes/CustomerRoutes/RoutesCus";
 import RoutesAdmin from "./routes/AdminRoutes/RoutesAdmin";
 import RoutesDispatcher from './routes/DispatcherRoutes/DispatcherRoutes';
 import RoutesStaff from "./routes/StaffRoutes/RoutesStaff";
+import { initCsrfToken } from './services/api';
+import ScrollToTop from "./components/common/ScrollToTop";
 
 function App() {
+   const [csrfReady, setCsrfReady] = useState(false);
+
+  useEffect(() => {
+    initCsrfToken().finally(() => setCsrfReady(true));
+  }, []);
+
+  if (!csrfReady) return null; 
   const googleClientId = process.env.REACT_APP_GOOGLE_CLIENT_ID;
   return (
     <GoogleOAuthProvider clientId={googleClientId}>
       <BrowserRouter>
+        <ScrollToTop />
         <UserProvider>
           <Routes>
             <Route path="/" element={<HomeRedirect />} />

@@ -10,10 +10,13 @@ import SurveyAgreement from "../../pages/CustomerPage/SurveyAgreement/SurveyAgre
 import Deposit from "../../pages/CustomerPage/Deposit/Deposit";
 import Dashboard from "../../pages/CustomerPage/Dashboard/Dashboard";
 import SignContract from "../../pages/CustomerPage/SignContract/SignContract";
+import MyContract from "../../pages/CustomerPage/Contract/MyContract";
+import ItemMovingAnalysis from "../../pages/CustomerPage/ItemMovingAnalysis/ItemMovingAnalysis";
 // import CustomerLayout from "../../pages/CustomerPage/components/layout/CustomerLayout";
 import ProtectedRoute from "../../components/ProtectRoute/ProtectedRoute";
 import VideoChat from "../../pages/VideoChat/VideoChat";
 import AIAssistant from "../../components/AIAssistant/AIAssistant";
+import NotificationPage from "../../pages/CommonPage/Notifications/NotificationPage";
 
 const RoutesCus = () => {
   return (
@@ -75,6 +78,15 @@ const RoutesCus = () => {
         />
 
         <Route
+          path="/item-moving-analysis"
+          element={
+            <ProtectedRoute allowedRoles={["customer"]}>
+              <ItemMovingAnalysis />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
           path="/survey-agreement"
           element={
             <ProtectedRoute allowedRoles={["customer"]}>
@@ -106,6 +118,22 @@ const RoutesCus = () => {
           element={
             <ProtectedRoute allowedRoles={["customer"]}>
               <VideoChat />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/contracts"
+          element={
+            <ProtectedRoute allowedRoles={["customer"]}>
+              <MyContract />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/notifications"
+          element={
+            <ProtectedRoute allowedRoles={["customer"]}>
+              <NotificationPage />
             </ProtectedRoute>
           }
         />
