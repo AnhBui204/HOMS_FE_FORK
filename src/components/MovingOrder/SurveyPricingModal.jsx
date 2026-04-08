@@ -1,5 +1,5 @@
-import React from "react";
-import { Modal, Button, Row, Col, Tag, Divider, Typography, Tooltip, Empty, message } from "antd";
+import React, { useState, useEffect } from "react";
+import { Modal, Button, Row, Col, Tag, Divider, Typography, Tooltip, Empty, message, Input, Space, Select } from "antd";
 import {
     EyeOutlined, CheckCircleOutlined, FileTextOutlined, EnvironmentOutlined,
     AppstoreOutlined, ArrowRightOutlined, InboxOutlined, ToolOutlined,
@@ -16,7 +16,85 @@ const InfoRow = ({ icon, label, value }) => (
     </div>
 );
 
-const SurveyPricingModal = ({ visible, onClose, ticket, survey, pricing, tourRefs }) => {
+const SurveyPricingModal = ({ visible, onClose, ticket, survey, pricing, tourRefs, onPromotionApplied }) => {
+    const [promoCode, setPromoCode] = useState('');
+    const [applying, setApplying] = useState(false);
+    const [localPricing, setLocalPricing] = useState(pricing || {});
+    const [promotions, setPromotions] = useState([]);
+
+    // Initialize local pricing when the modal opens or when the ticket changes.
+    // Avoid re-writing localPricing on every `pricing` prop change so that
+    // an applied promotion (which updates localPricing) isn't immediately
+    // overwritten by a parent re-render.
+    useEffect(() => {
+        if (visible) setLocalPricing(pricing || {});
+    }, [visible, ticket?._id]);
+
+    useEffect(() => {
+        let mounted = true;
+        const fetchPromos = async () => {
+            if (!ticket || !ticket._id) {
+                setPromotions([]);
+                return;
+            }
+            try {
+                    // Fetch all active promotions (do not pass requestTicketId here)
+                    // This ensures the UI can display available promos even if
+                    // server-side filtering (by area/amount) would exclude them.
+                    const res = await api.get('/promotions/available');
+                if (res.data && res.data.success && Array.isArray(res.data.data) && mounted) {
+                    setPromotions(res.data.data);
+                }
+            } catch (err) {
+                console.warn('Failed to load promotions', err);
+                setPromotions([]);
+            }
+        };
+        fetchPromos();
+        return () => { mounted = false; };
+    }, [ticket]);
+
+    const handleApplyPromotion = async () => {
+        if (!promoCode || !promoCode.trim()) {
+            message.warning('Vui lòng nhập mã khuyến mãi');
+            return;
+        }
+        if (!ticket || !ticket._id) {
+            message.error('Không tìm thấy đơn hàng để áp dụng khuyến mãi');
+            return;
+        }
+        setApplying(true);
+        try {
+            const res = await api.post('/promotions/apply', { code: promoCode.trim(), requestTicketId: ticket._id });
+            if (res.data && res.data.success) {
+                const returned = res.data.data || {};
+                // returned.pricing contains updated pricing snapshot
+                if (returned.pricing) {
+                    // ensure discountAmount and totalAfterPromotion are present
+                    const updated = {
+                        ...returned.pricing,
+                        discountAmount: returned.pricing.discountAmount || returned.discountAmount || 0,
+                        totalAfterPromotion: returned.pricing.totalAfterPromotion || returned.totalAfter
+                    };
+                    setLocalPricing(updated);
+                } else {
+                    // fallback: set promotion object and discount info
+                    setLocalPricing(prev => ({
+                        ...(prev || {}),
+                        promotion: { code: promoCode.trim(), discountAmount: returned.discountAmount || 0 },
+                        discountAmount: returned.discountAmount || 0,
+                        totalAfterPromotion: returned.totalAfter
+                    }));
+                }
+                message.success('Áp dụng khuyến mãi thành công');
+                if (typeof onPromotionApplied === 'function') onPromotionApplied(ticket._id, (returned.pricing || { promotion: { code: promoCode.trim(), discountAmount: returned.discountAmount || 0 }, totalAfterPromotion: returned.totalAfter }));
+            }
+        } catch (err) {
+            message.error(err.response?.data?.message || err.message || 'Áp dụng khuyến mãi thất bại');
+        } finally {
+            setApplying(false);
+        }
+    };
     return (
         <Modal
             title={
@@ -177,6 +255,8 @@ const SurveyPricingModal = ({ visible, onClose, ticket, survey, pricing, tourRef
 
                         {(() => {
                             const bd = pricing?.breakdown || {};
+                            // determine applied discount from returned pricing snapshot
+                            const appliedDiscount = (localPricing?.discountAmount || localPricing?.promotion?.discountAmount || 0);
                             const lines =[
                                 { icon: <ArrowRightOutlined />, label: 'Phí vận chuyển cơ bản', value: bd.baseTransportFee, always: true },
                                 { icon: <CarOutlined />, label: 'Phí xe tải (theo km)', value: bd.vehicleFee, always: true },
@@ -206,25 +286,55 @@ const SurveyPricingModal = ({ visible, onClose, ticket, survey, pricing, tourRef
                                         <span style={{ fontWeight: 600, color: '#444' }}>{(pricing.subtotal || 0).toLocaleString()} ₫</span>
                                     </div>
 
-                                    {pricing.discountAmount > 0 && (
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0', color: '#cf1322' }}>
-                                            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><GiftOutlined /> Khuyến mãi (trước thuế)</span>
-                                            <span style={{ fontWeight: 500 }}>− {pricing.discountAmount.toLocaleString()} ₫</span>
-                                        </div>
-                                    )}
-
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0 10px', color: '#888', borderBottom: '2px dashed #e8e8e8' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0 10px', color: '#888' }}>
                                         <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><PercentageOutlined /> Thuế VAT</span>
                                         <span>{(pricing.tax || 0).toLocaleString()} ₫</span>
                                     </div>
+
+                                    {appliedDiscount > 0 && (
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0', color: '#cf1322' }}>
+                                            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><GiftOutlined /> Khuyến mãi {localPricing?.promotion?.code ? `(${localPricing.promotion.code})` : '(sau thuế)'}</span>
+                                            <span style={{ fontWeight: 500 }}>− {appliedDiscount.toLocaleString()} ₫</span>
+                                        </div>
+                                    )}
+
+                                    <div style={{ borderBottom: '2px dashed #e8e8e8', marginTop: 6 }} />
 
                                     {pricing.minimumChargeApplied && (
                                         <Tag icon={<WarningOutlined />} color="orange" style={{ marginTop: 10, width: '100%', textAlign: 'center', borderRadius: 6 }}>Áp dụng phí tối thiểu</Tag>
                                     )}
 
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', marginTop: 12, background: 'linear-gradient(135deg, #f6ffed, #d9f7be)', borderRadius: 8, border: '1.5px solid #73d13d' }}>
+                                    {/* Promotion input */}
+                                    <div style={{ display: 'flex', gap: 10, marginTop: 12, alignItems: 'center' }}>
+                                        <Select
+                                            placeholder="Chọn mã khuyến mãi"
+                                            style={{ width: 320 }}
+                                            value={promoCode || undefined}
+                                            onChange={(val) => setPromoCode(val)}
+                                            allowClear
+                                        >
+                                            {promotions.map((p) => (
+                                                <Select.Option key={p.code} value={p.code}>
+                                                    {p.code} — {p.description || (p.discountType === 'Percentage' ? `${p.discountValue}%` : `${p.discountValue.toLocaleString()}₫`)}
+                                                </Select.Option>
+                                            ))}
+                                        </Select>
+                                        <Button
+                                            onClick={handleApplyPromotion}
+                                            loading={applying}
+                                            type="default"
+                                            style={{ background: '#fff', color: '#2D4F36', borderColor: '#2D4F36' }}
+                                        >
+                                            Áp dụng
+                                        </Button>
+                                        {localPricing?.promotion?.code && (
+                                            <Tag color="green" icon={<GiftOutlined />}>{localPricing.promotion.code} — −{(localPricing.promotion.discountAmount || 0).toLocaleString()}₫</Tag>
+                                        )}
+                                    </div>
+
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', marginTop: 8, background: 'linear-gradient(135deg, #f6ffed, #d9f7be)', borderRadius: 8, border: '1.5px solid #73d13d' }}>
                                         <span style={{ fontSize: 16, fontWeight: 700, color: '#237804', display: 'flex', alignItems: 'center', gap: 8 }}><DollarOutlined /> TỔNG CỘNG</span>
-                                        <span style={{ fontSize: 24, fontWeight: 800, color: '#237804' }}>{(pricing.totalPrice || 0).toLocaleString()} ₫</span>
+                                        <span style={{ fontSize: 24, fontWeight: 800, color: '#237804' }}>{((localPricing.totalAfterPromotion != null) ? localPricing.totalAfterPromotion : (Math.max(0, (localPricing.totalPrice || 0) - appliedDiscount))).toLocaleString()} ₫</span>
                                     </div>
                                 </>
                             );

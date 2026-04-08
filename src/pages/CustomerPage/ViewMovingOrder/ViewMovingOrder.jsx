@@ -830,6 +830,11 @@ const ViewMovingOrder = () => {
           ticket={selectedTicket}
           survey={selectedSurvey}
           pricing={selectedTicketPricing}
+          onPromotionApplied={(ticketId, pricingUpdate) => {
+            setTickets(prev => prev.map(t => t._id === ticketId ? { ...t, pricing: { ...(t.pricing || {}), ...(pricingUpdate || {}) } } : t));
+            // also update selectedTicketPricing for modal view
+            setSelectedTicketPricing(prev => ({ ...(prev || {}), ...(pricingUpdate || {}) }));
+          }}
           tourRefs={{ refModalSurvey, refModalResources, refModalPricing }}
         />
         <SurveyTimeModal
