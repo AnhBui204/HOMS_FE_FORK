@@ -24,7 +24,9 @@ const PUBLIC_ENDPOINTS = [
   '/ai/chat',
   '/auth/google-login',
   '/orders/validate',
-  '/csrf-token'
+  '/public/estimate-price',
+  '/public/best-moving-time',
+  '/csrf-token',
 ];
 let csrfToken = null;
 
