@@ -23,7 +23,9 @@ const PUBLIC_ENDPOINTS = [
   '/reset-password',
   '/ai/chat',
   '/auth/google-login',
-  '/orders/validate'
+  '/orders/validate',
+  '/public/estimate-price',
+  '/public/best-moving-time'
 ];
 // Hàm gắn interceptor
 export const setupInterceptors = (contextLogout) => {
