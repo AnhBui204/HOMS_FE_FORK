@@ -3,13 +3,15 @@ import { Card, Table, Input, Select, Button, Tag, Space, Typography, Tooltip, no
 import dayjs from 'dayjs';
 import { SearchOutlined, EditOutlined, DeleteOutlined, PlusOutlined, DownloadOutlined, CheckCircleOutlined, CarOutlined, DashboardOutlined, ToolOutlined } from '@ant-design/icons';
 import adminVehicleService from '../../../services/adminVehicleService';
+import VehicleModal from './components/VehicleModal';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
 
 const VehicleManagement = () => {
     const [loading, setLoading] = useState(false);
-    const [vehicles, setVehicles] = useState([]);
+    const [vehiclesRaw, setVehiclesRaw] = useState([]); // full list from BE
+    const [vehicles, setVehicles] = useState([]); // filtered list shown in UI
     const [dashboard, setDashboard] = useState({ total: 0, available: 0, inTransit: 0, maintenance: 0, countsByType: {} });
 
     const [searchText, setSearchText] = useState('');
@@ -38,6 +40,7 @@ const VehicleManagement = () => {
             const params = {};
             if (filterStatus) params.status = filterStatus;
             const list = await adminVehicleService.getAllVehicles(params);
+            setVehiclesRaw(list);
             setVehicles(list);
         } catch (err) {
             console.error('Failed to load vehicles', err);
@@ -61,6 +64,23 @@ const VehicleManagement = () => {
         loadDashboard();
     }, []);
 
+    // Live-filter vehicles when searchText, filterStatus or raw list changes.
+    useEffect(() => {
+        // debounce to avoid filtering on every keystroke immediately
+        const t = setTimeout(() => {
+            const q = (searchText || '').toLowerCase().trim();
+            const filtered = vehiclesRaw.filter(v => {
+                const moveOk = !filterStatus || filterStatus === '' ? true : (v.status === filterStatus);
+                if (!q) return moveOk;
+                const matches = (v.vehicleId || '').toLowerCase().includes(q)
+                    || ((v.licensePlate || 'N/A') !== 'N/A' && (v.licensePlate || '').toLowerCase().includes(q));
+                return moveOk && matches;
+            });
+            setVehicles(filtered);
+        }, 180);
+        return () => clearTimeout(t);
+    }, [searchText, filterStatus, vehiclesRaw]);
+
     const resetFilters = () => {
         setSearchText('');
         setFilterStatus(undefined);
@@ -75,20 +95,11 @@ const VehicleManagement = () => {
     const [vehicleToDelete, setVehicleToDelete] = useState(null);
 
     const [form] = Form.useForm();
+    // Route viewer removed — modal/action for viewing vehicle route was intentionally removed.
 
     const handleSearch = async () => {
-        setLoading(true);
-        try {
-            await loadData();
-            if (searchText) {
-                setVehicles(prev => prev.filter(v => (v.vehicleId || '').toLowerCase().includes(searchText.toLowerCase()) ||
-                    ((v.licensePlate || 'N/A') !== 'N/A' && (v.licensePlate || '').toLowerCase().includes(searchText.toLowerCase()))));
-            }
-        } catch (err) {
-            console.error(err);
-        } finally {
-            setLoading(false);
-        }
+        // Keep for compatibility: refresh remote list
+        await loadData();
     };
 
     const openCreateModal = () => {
@@ -296,6 +307,7 @@ const VehicleManagement = () => {
                     <Tooltip title="Chỉnh sửa">
                         <Button type="text" icon={<EditOutlined />} style={{ color: '#1890ff' }} onClick={() => openEditModal(record)} />
                     </Tooltip>
+                    {/* Route action removed */}
                     <Tooltip title="Xóa">
                         <Button type="text" danger icon={<DeleteOutlined />} onClick={() => confirmDelete(record)} />
                     </Tooltip>
@@ -508,6 +520,8 @@ const VehicleManagement = () => {
                     {/* Current driver is assigned by Dispatcher; admin does not input this */}
                 </Form>
             </Modal>
+
+            {/* Vehicle Route Viewer removed */}
         </div>
     );
 };

@@ -73,6 +73,12 @@ const adminVehicleService = {
       const res = await api.get('/admin/vehicles/dashboard');
       return res.data?.data || {};
     } catch (err) {
+      // If the backend doesn't provide a dashboard endpoint yet, return a safe empty object
+      // so the admin page can render without crashing. Log a warning for visibility.
+      if (err && err.response && err.response.status === 404) {
+        console.warn('Vehicle dashboard endpoint not found (404) — returning empty dashboard.');
+        return {};
+      }
       console.error('Error fetching vehicle dashboard', err);
       throw err;
     }
@@ -80,3 +86,14 @@ const adminVehicleService = {
 };
 
 export default adminVehicleService;
+
+// Fetch assignments for a vehicle by vehicleId with optional start/end ISO dates
+adminVehicleService.getVehicleAssignments = async (vehicleId, params = {}) => {
+  try {
+    const res = await api.get(`/admin/vehicles/${vehicleId}/assignments`, { params });
+    return res.data?.data || [];
+  } catch (err) {
+    console.error('Error fetching vehicle assignments', err);
+    throw err;
+  }
+};
