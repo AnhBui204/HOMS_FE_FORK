@@ -135,42 +135,49 @@ const OrderCard = ({
   onReportIncident,
   onViewIncident,
   onCancelQuote,
-  onRateService,    // [RATING] handler mở modal đánh giá
+  onRateService,
   tourRefs,
-  onDepositPayment,      // Refs for Ant Design Tour
+  onDepositPayment,
   onPayRemaining,
   onCancelTicketRequest,
   onRescheduleSurveyRequest,
 }) => {
   const [expanded, setExpanded] = useState(false);
 
-  // Status mapping
-  const invoiceSt = ticket.invoice ? INVOICE_STATUS[ticket.invoice.status] : null;
-  const ticketSt = TICKET_STATUS[ticket.status] || { label: ticket.status, cls: "mo-tag--gray" };
-  const displaySt = invoiceSt || ticketSt;
-  const paymentSt = ticket.invoice?.paymentStatus ? PAYMENT_STATUS[ticket.invoice.paymentStatus] : null;
-  const incident = ticket.invoice?.incident;
+  const invoiceSt  = ticket.invoice ? INVOICE_STATUS[ticket.invoice.status] : null;
+  const ticketSt   = TICKET_STATUS[ticket.status] || { label: ticket.status, cls: 'mo-tag--gray' };
+  const displaySt  = invoiceSt || ticketSt;
+  const paymentSt  = ticket.invoice?.paymentStatus ? PAYMENT_STATUS[ticket.invoice.paymentStatus] : null;
+  const incident   = ticket.invoice?.incident;
   const incidentSt = incident ? INCIDENT_STATUS[incident.status] : null;
 
-  // Conditions
-  const isQuoted = ticket.status === "QUOTED";
-  const isAcceptedUnpaid = ticket.status === "ACCEPTED" && ticket.invoice?.paymentStatus === "UNPAID";
-  const canReport = ["COMPLETED", "IN_PROGRESS"].includes(ticket.invoice?.status) && !incident;
-  const hasPricing = ticket.pricing?.totalPrice > 0;
-  const shortCode = `#${(ticket.code || "").slice(-14).toUpperCase() || "N/A"}`;
+  const isQuoted       = ticket.status === 'QUOTED';
+  const hasPricing     = ticket.pricing?.totalPrice > 0;
+  const canReport      = ['COMPLETED', 'IN_PROGRESS'].includes(ticket.invoice?.status) && !incident;
+  const shortCode      = `#${(ticket.code || '').slice(-14).toUpperCase() || 'N/A'}`;
+  const isInvoiceCompleted = ticket.invoice?.status === 'COMPLETED';
+  const isPaid         = ticket.invoice?.paymentStatus === 'PAID';
+  const isRated        = ticket.invoice?.isRated === true;
+  const canRate        = isInvoiceCompleted && isPaid && !isRated;
+  const canPayRemaining = ['IN_PROGRESS', 'COMPLETED'].includes(ticket.invoice?.status)
+                       && ticket.invoice?.paymentStatus === 'PARTIAL';
+  const moveType       = ticket.moveType ? (MOVE_TYPE[ticket.moveType] || { label: ticket.moveType, cls: 'mo-tag--gray' }) : null;
 
-  // [RATING] Kiểm tra điều kiện hiển thị nút đánh giá
-  const isInvoiceCompleted = ticket.invoice?.status === "COMPLETED";
-  const isPaid = ticket.invoice?.paymentStatus === "PAID";
-  const isRated = ticket.invoice?.isRated === true;
-  const canRate = isInvoiceCompleted && isPaid && !isRated;
-  const canPayRemaining =
-    ["IN_PROGRESS", "COMPLETED"].includes(ticket.invoice?.status) &&
-    ticket.invoice?.paymentStatus === "PARTIAL";
-  const moveType = ticket.moveType ? (MOVE_TYPE[ticket.moveType] || { label: ticket.moveType, cls: "mo-tag--gray" }) : null;
+  // ✅ FIX: Tách biệt "cần ký" vs "cần thanh toán"
+  const contractStatus  = ticket.contract?.status;   // được populate từ backend
+  const isContractSigned = contractStatus === 'SIGNED';
+
+  // Cần ký hợp đồng: ACCEPTED + chưa có contract hoặc contract chưa ký
+  const needsSignContract = ticket.status === 'ACCEPTED' && !isContractSigned;
+
+  // Cần thanh toán cọc: ACCEPTED + đã ký + invoice UNPAID
+  const needsDepositPayment = ticket.status === 'ACCEPTED'
+    && isContractSigned
+    && ticket.invoice?.paymentStatus === 'UNPAID';
+
   return (
-    <div className={`mo-card ${isQuoted ? "mo-card--highlight" : ""}`}>
-      {/* ── QUOTED: Action notice banner ── */}
+    <div className={`mo-card ${isQuoted ? 'mo-card--highlight' : ''}`}>
+      {/* ── QUOTED notice ── */}
       {isQuoted && (
         <div className="mo-quoted-notice">
           <NotificationOutlined className="mo-quoted-notice-icon mo-shake-animation" />
@@ -196,50 +203,58 @@ const OrderCard = ({
             </span>
           )}
         </div>
-        <div className="mo-card__head-right" ref={tourRefs?.refStatus} style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-          {moveType && (
-            <StatusTag cls={moveType.cls}>{moveType.label}</StatusTag>
-          )}
+        <div
+          className="mo-card__head-right"
+          ref={tourRefs?.refStatus}
+          style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}
+        >
+          {moveType && <StatusTag cls={moveType.cls}>{moveType.label}</StatusTag>}
           {incidentSt && (
             <IncidentTag incident={incident} status={incidentSt} onClick={() => onViewIncident(incident)} />
           )}
-          {/* [RATING] Badge "Đã đánh giá" ở header nếu isRated */}
           {isRated && (
-            <span className="mo-tag mo-tag--rated" style={{ cursor: 'pointer' }}
-              onClick={() => onRateService(ticket)}>
-              <StarFilled style={{ marginRight: 4, color: '#f59e0b' }} />
-              Đã đánh giá
+            <span className="mo-tag mo-tag--rated" style={{ cursor: 'pointer' }} onClick={() => onRateService(ticket)}>
+              <StarFilled style={{ marginRight: 4, color: '#f59e0b' }} />Đã đánh giá
             </span>
+          )}
+          {/* ✅ Badge trạng thái hợp đồng */}
+          {ticket.status === 'ACCEPTED' && (
+            <StatusTag
+              cls={isContractSigned ? 'mo-tag--green' : 'mo-tag--orange'}
+              icon={<FileTextOutlined />}
+            >
+              {isContractSigned ? 'Đã ký HĐ' : 'Chờ ký HĐ'}
+            </StatusTag>
           )}
           <StatusTag cls={displaySt.cls} icon={<CarOutlined />}>{displaySt.label}</StatusTag>
         </div>
       </div>
 
-      {/* ── ROUTE UI ── */}
+      {/* ── ROUTE ── */}
       <div className="mo-card__route-container" ref={tourRefs?.refRoute}>
         <div className="mo-route-timeline">
           <div className="mo-route-point mo-route-point--pickup">
             <div className="mo-route-icon-box"><HomeOutlined /></div>
             <div className="mo-route-info">
               <span className="mo-route-label">Từ (Nơi đi)</span>
-              <span className="mo-route-address">{ticket.pickup?.address || "Chưa cập nhật"}</span>
+              <span className="mo-route-address">{ticket.pickup?.address || 'Chưa cập nhật'}</span>
             </div>
           </div>
           <div className="mo-route-divider">
-            <div className="mo-route-line"></div>
+            <div className="mo-route-line" />
             <div className="mo-route-distance">Chuyển đến</div>
           </div>
           <div className="mo-route-point mo-route-point--delivery">
             <div className="mo-route-icon-box"><EnvironmentOutlined /></div>
             <div className="mo-route-info">
               <span className="mo-route-label">Đến (Nơi đến)</span>
-              <span className="mo-route-address">{ticket.delivery?.address || "Chưa cập nhật"}</span>
+              <span className="mo-route-address">{ticket.delivery?.address || 'Chưa cập nhật'}</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* ── META & PRICE ── */}
+      {/* ── META ── */}
       <div className="mo-card__meta" ref={tourRefs?.refMeta}>
         <div className="mo-card__tags">
           {paymentSt ? (
@@ -251,11 +266,10 @@ const OrderCard = ({
         <div className="mo-card__price-wrapper" ref={tourRefs?.refPricing}>
           <div className="mo-card__price-box">
             <span className="mo-price-label">Tổng chi phí:</span>
-            {hasPricing ? (
-              <span className="mo-price-value">{ticket.pricing.totalPrice.toLocaleString()} ₫</span>
-            ) : (
-              <span className="mo-price-empty">Đang cập nhật...</span>
-            )}
+            {hasPricing
+              ? <span className="mo-price-value">{ticket.pricing.totalPrice.toLocaleString()} ₫</span>
+              : <span className="mo-price-empty">Đang cập nhật...</span>
+            }
           </div>
         </div>
       </div>
@@ -263,6 +277,7 @@ const OrderCard = ({
       {/* ── ACTIONS ── */}
       <div className="mo-card__actions" ref={tourRefs?.refActions}>
         <div className="mo-card__btns-primary">
+          {/* Báo giá */}
           {isQuoted && (
             <>
               <button className="mo-btn mo-btn--accept" onClick={() => onViewSurvey(ticket)}>
@@ -274,44 +289,63 @@ const OrderCard = ({
             </>
           )}
 
-          {/* New Actions for Created / Waiting Survey */}
-          {(ticket.status === "CREATED" || ticket.status === "WAITING_SURVEY") && (
+          {/* Hủy yêu cầu */}
+          {(ticket.status === 'CREATED' || ticket.status === 'WAITING_SURVEY') && (
             <button className="mo-btn mo-btn--reject" onClick={() => onCancelTicketRequest(ticket)}>
               <CloseCircleOutlined /> Hủy yêu cầu
             </button>
           )}
 
-          {(ticket.status === "WAITING_SURVEY" && ticket.scheduledTime) && (
-            <button className="mo-btn mo-btn--deposit" style={{backgroundColor: '#e67e22', color: '#fff'}} onClick={() => onRescheduleSurveyRequest(ticket)}>
+          {/* Đổi giờ khảo sát */}
+          {ticket.status === 'WAITING_SURVEY' && ticket.scheduledTime && (
+            <button
+              className="mo-btn mo-btn--deposit"
+              style={{ backgroundColor: '#e67e22', color: '#fff' }}
+              onClick={() => onRescheduleSurveyRequest(ticket)}
+            >
               <CalendarOutlined /> Đổi giờ khảo sát
             </button>
           )}
 
-          {isAcceptedUnpaid && (
-            <button className="mo-btn mo-btn--deposit" onClick={() => (window.location.href = `/customer/sign-contract/${ticket._id}`)}>
-              <CreditCardOutlined /> Thanh toán cọc
+          {/* ✅ FIX: Ký hợp đồng — chỉ khi CHƯA ký */}
+          {needsSignContract && (
+            <button
+              className="mo-btn mo-btn--accept"
+              onClick={() => (window.location.href = `/customer/sign-contract/${ticket._id}`)}
+            >
+              <FileTextOutlined /> Ký hợp đồng
             </button>
           )}
+
+          {/* ✅ FIX: Thanh toán cọc — chỉ khi ĐÃ ký, gọi API trực tiếp */}
+          {needsDepositPayment && (
+            <button className="mo-btn mo-btn--deposit" onClick={() => onDepositPayment(ticket)}>
+              <CreditCardOutlined /> Thanh toán cọc 50%
+            </button>
+          )}
+
+          {/* Tất toán */}
           {canPayRemaining && (
-            <button
-              className="mo-btn mo-btn--deposit"
-              onClick={() => onPayRemaining(ticket)}
-            >
+            <button className="mo-btn mo-btn--deposit" onClick={() => onPayRemaining(ticket)}>
               <CreditCardOutlined /> Tất toán
             </button>
           )}
+
+          {/* Xem báo giá */}
           {hasPricing && !isQuoted && (
             <button className="mo-btn mo-btn--contact" onClick={() => onViewSurvey(ticket)}>
               <FileTextOutlined /> Xem báo giá
             </button>
           )}
+
+          {/* Báo cáo sự cố */}
           {canReport && (
             <button className="mo-btn mo-btn--report" onClick={() => onReportIncident(ticket)}>
               <WarningOutlined /> Báo cáo sự cố
             </button>
           )}
 
-          {/* [RATING] Nút Đánh giá — vàng cam, nổi bật */}
+          {/* Đánh giá */}
           {canRate && (
             <button className="mo-btn mo-btn--rate" onClick={() => onRateService(ticket)}>
               <StarOutlined /> Đánh giá dịch vụ
@@ -320,7 +354,7 @@ const OrderCard = ({
         </div>
 
         <div className="mo-card__btns-secondary">
-          {ticket.status !== "QUOTED" && (
+          {ticket.status !== 'QUOTED' && (
             <button
               className="mo-btn mo-btn--contact"
               onClick={() => window.open(`/customer/video-chat?room=${ticket.code}`, '_blank')}
@@ -337,7 +371,7 @@ const OrderCard = ({
         </div>
       </div>
 
-      {/* ── EXPAND DETAILS ── */}
+      {/* ── EXPAND ── */}
       <div className={`mo-card__expand ${expanded ? 'mo-card__expand--open' : ''}`}>
         <div className="mo-expand-grid">
           <div className="mo-expand-item">
@@ -356,22 +390,47 @@ const OrderCard = ({
               <span className="mo-expand-val">#{ticket.invoice.code}</span>
             </div>
           )}
-          {/* [RATING] Hiển thị trạng thái đánh giá trong chi tiết */}
+          {/* ✅ Thông tin hợp đồng */}
+          {ticket.status === 'ACCEPTED' && (
+            <div className="mo-expand-item">
+              <span className="mo-expand-label">Hợp đồng</span>
+              <span className="mo-expand-val">
+                {isContractSigned ? (
+                  <span style={{ color: '#52c41a', fontWeight: 600 }}>
+                    <CheckCircleOutlined style={{ marginRight: 4 }} />
+                    Đã ký — {fmtDate(ticket.contract?.signedAt)}
+                  </span>
+                ) : (
+                  <span style={{ color: '#fa8c16' }}>Chưa ký hợp đồng</span>
+                )}
+              </span>
+            </div>
+          )}
+          {ticket.contract?.depositDeadline && ticket.status === 'ACCEPTED' && (
+  <div className="mo-expand-item">
+    <span className="mo-expand-label">Hạn đặt cọc</span>
+    <span className="mo-expand-val">
+      {new Date(ticket.contract.depositDeadline) > new Date() ? (
+        <span style={{ color: '#f59e0b', fontWeight: 600 }}>
+          ⏰ {fmtDate(ticket.contract.depositDeadline)}
+          {' '}— còn {Math.ceil((new Date(ticket.contract.depositDeadline) - new Date()) / 3600000)}h
+        </span>
+      ) : (
+        <span style={{ color: '#ef4444', fontWeight: 600 }}>❌ Đã quá hạn</span>
+      )}
+    </span>
+  </div>
+)}
           {isInvoiceCompleted && (
             <div className="mo-expand-item">
               <span className="mo-expand-label">Đánh giá dịch vụ</span>
               <span className="mo-expand-val">
-                {isRated ? (
-                  <span style={{ color: '#f59e0b', fontWeight: 600 }}>
-                    <StarFilled style={{ marginRight: 4 }} />Đã đánh giá
-                  </span>
-                ) : isPaid ? (
-                  <span style={{ color: '#64748b' }}>Chưa đánh giá</span>
-                ) : (
-                  <span style={{ color: '#ef4444' }}>
-                    Cần thanh toán đủ để đánh giá
-                  </span>
-                )}
+                {isRated
+                  ? <span style={{ color: '#f59e0b', fontWeight: 600 }}><StarFilled style={{ marginRight: 4 }} />Đã đánh giá</span>
+                  : isPaid
+                    ? <span style={{ color: '#64748b' }}>Chưa đánh giá</span>
+                    : <span style={{ color: '#ef4444' }}>Cần thanh toán đủ để đánh giá</span>
+                }
               </span>
             </div>
           )}
@@ -380,7 +439,6 @@ const OrderCard = ({
     </div>
   );
 };
-
 /* ─── main page ───────────────────────────────────────────── */
 const ViewMovingOrder = () => {
   const location = useLocation();
