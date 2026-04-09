@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Table, Input, Select, Button, Tag, Space, Typography, Tooltip, notification, Popconfirm, Row, Col, Avatar, Empty, Modal, Form, InputNumber, DatePicker, Switch } from 'antd';
+import { Card, Table, Input, Select, Button, Tag, Space, Typography, Tooltip, notification, Popconfirm, Row, Col, Avatar, Empty, Modal, Form, InputNumber, DatePicker, Switch, Statistic } from 'antd';
 import dayjs from 'dayjs';
-import { SearchOutlined, EditOutlined, DeleteOutlined, PlusOutlined, DownloadOutlined, CheckCircleOutlined } from '@ant-design/icons';
+import { SearchOutlined, EditOutlined, DeleteOutlined, PlusOutlined, DownloadOutlined, CheckCircleOutlined, CarOutlined, DashboardOutlined, ToolOutlined } from '@ant-design/icons';
 import adminVehicleService from '../../../services/adminVehicleService';
 
 const { Title, Text } = Typography;
@@ -10,6 +10,7 @@ const { Option } = Select;
 const VehicleManagement = () => {
     const [loading, setLoading] = useState(false);
     const [vehicles, setVehicles] = useState([]);
+    const [dashboard, setDashboard] = useState({ total: 0, available: 0, inTransit: 0, maintenance: 0, countsByType: {} });
 
     const [searchText, setSearchText] = useState('');
     const [filterStatus, setFilterStatus] = useState(undefined);
@@ -46,8 +47,18 @@ const VehicleManagement = () => {
         }
     };
 
+    const loadDashboard = async () => {
+        try {
+            const stats = await adminVehicleService.getDashboard();
+            setDashboard(stats || { total: 0, available: 0, inTransit: 0, maintenance: 0, countsByType: {} });
+        } catch (err) {
+            console.error('Failed to load dashboard stats', err);
+        }
+    };
+
     useEffect(() => {
         loadData();
+        loadDashboard();
     }, []);
 
     const resetFilters = () => {
@@ -270,11 +281,7 @@ const VehicleManagement = () => {
             dataIndex: 'licensePlate',
             key: 'licensePlate',
         },
-        {
-            title: 'Tài xế hiện tại',
-            dataIndex: 'currentDriver',
-            key: 'currentDriver',
-        },
+        // 'Tài xế hiện tại' column removed per request
         {
             title: 'Bảo trì gần nhất',
             dataIndex: 'lastMaintenance',
@@ -324,6 +331,65 @@ const VehicleManagement = () => {
             </div>
 
             <div style={{ padding: '0 24px' }}>
+                {/* Dashboard cards + chart */}
+                <div style={{ marginBottom: 18 }}>
+                    <Row gutter={[12, 12]}>
+                        <Col xs={24} sm={12} md={6}>
+                            <Card bordered={false} style={{ borderRadius: 10, background: '#f4fff3', padding: 12, boxShadow: '0 4px 10px rgba(34,60,80,0.04)' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                    <div style={{ background: '#6dbb4f', borderRadius: 8, padding: 8, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <CarOutlined style={{ color: '#fff', fontSize: 16 }} />
+                                    </div>
+                                    <div style={{ flex: 1 }}>
+                                        <div style={{ fontSize: 12, color: '#6b7a6b', marginBottom: 4 }}>Tổng phương tiện</div>
+                                        <div style={{ fontSize: 20, fontWeight: 700, color: '#19692a' }}>{dashboard.total || 0}</div>
+                                    </div>
+                                </div>
+                            </Card>
+                        </Col>
+                        <Col xs={24} sm={12} md={6}>
+                            <Card bordered={false} style={{ borderRadius: 10, background: '#f8f5ff', padding: 12, boxShadow: '0 4px 10px rgba(34,60,80,0.04)' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                    <div style={{ background: '#9b7bff', borderRadius: 8, padding: 8, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <DashboardOutlined style={{ color: '#fff', fontSize: 16 }} />
+                                    </div>
+                                    <div style={{ flex: 1 }}>
+                                        <div style={{ fontSize: 12, color: '#6b5aa6', marginBottom: 4 }}>Sẵn sàng</div>
+                                        <div style={{ fontSize: 20, fontWeight: 600, color: '#5a3db8' }}>{dashboard.available || 0}</div>
+                                    </div>
+                                </div>
+                            </Card>
+                        </Col>
+                        <Col xs={24} sm={12} md={6}>
+                            <Card bordered={false} style={{ borderRadius: 10, background: '#f0f6ff', padding: 12, boxShadow: '0 4px 10px rgba(34,60,80,0.04)' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                    <div style={{ background: '#4f86ff', borderRadius: 8, padding: 8, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <CarOutlined style={{ color: '#fff', fontSize: 16 }} />
+                                    </div>
+                                    <div style={{ flex: 1 }}>
+                                        <div style={{ fontSize: 12, color: '#5b6f8a', marginBottom: 4 }}>Đang vận hành</div>
+                                        <div style={{ fontSize: 20, fontWeight: 600, color: '#165db8' }}>{dashboard.inTransit || 0}</div>
+                                    </div>
+                                </div>
+                            </Card>
+                        </Col>
+                        <Col xs={24} sm={12} md={6}>
+                            <Card bordered={false} style={{ borderRadius: 10, background: '#fff7f0', padding: 12, boxShadow: '0 4px 10px rgba(34,60,80,0.04)' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                    <div style={{ background: '#ff9f43', borderRadius: 8, padding: 8, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <ToolOutlined style={{ color: '#fff', fontSize: 16 }} />
+                                    </div>
+                                    <div style={{ flex: 1 }}>
+                                        <div style={{ fontSize: 12, color: '#7a5b3a', marginBottom: 4 }}>Bảo trì</div>
+                                        <div style={{ fontSize: 20, fontWeight: 600, color: '#a85c12' }}>{dashboard.maintenance || 0}</div>
+                                    </div>
+                                </div>
+                            </Card>
+                        </Col>
+                    </Row>
+
+                    {/* Chart removed per request */}
+                </div>
                 <Card style={{ borderRadius: '10px', border: 'none', boxShadow: '0 4px 16px rgba(0,0,0,0.06)' }}>
                     {/* Filters Row */}
                     <Row gutter={[16, 16]} style={{ marginBottom: 16, alignItems: 'center' }}>

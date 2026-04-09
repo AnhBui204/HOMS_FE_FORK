@@ -3,7 +3,7 @@ import {
   Table, Button, Tag, Modal, Form, Select, message, Space, Card, Typography, Descriptions, DatePicker, Divider
 } from "antd";
 import {
-  CheckCircleOutlined, CloseCircleOutlined, RobotOutlined, UserSwitchOutlined
+  CheckCircleOutlined, CloseCircleOutlined, RobotOutlined, UserSwitchOutlined, CalendarOutlined, ClockCircleOutlined
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import {
@@ -114,6 +114,9 @@ const SurveySchedulingPage = () => {
   const [isRejectModalVisible, setIsRejectModalVisible] = useState(false);
   const [isManualAssignModalVisible, setIsManualAssignModalVisible] = useState(false); // ASSIGNMENT_FAILED fallback
   const [isAcceptProposedModalVisible, setIsAcceptProposedModalVisible] = useState(false);
+
+  // Selected proposed time inside the "Xem đề xuất khách" modal
+  const [selectedProposedTime, setSelectedProposedTime] = useState(null);
 
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [form] = Form.useForm();
@@ -540,26 +543,64 @@ const SurveySchedulingPage = () => {
 
       {/* ── Modal: Chấp nhận giờ khách đề xuất ── */}
       <Modal
-        title={`GIỜ KHẢO SÁT KHÁCH ĐỀ XUẤT — #${selectedTicket?.code}`}
+        title={<span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><CalendarOutlined /> GIỜ KHẢO SÁT KHÁCH ĐỀ XUẤT — <span style={{ color: '#8ba888', marginLeft: 8, fontWeight: 700 }}>{selectedTicket?.code}</span></span>}
         open={isAcceptProposedModalVisible}
-        onCancel={() => setIsAcceptProposedModalVisible(false)}
-        footer={null}
+        onCancel={() => { setIsAcceptProposedModalVisible(false); setSelectedProposedTime(null); }}
+        onOk={() => {
+          if (!selectedProposedTime) { message.warning('Vui lòng chọn một khung giờ trước khi chốt'); return; }
+          handleAcceptProposed(selectedProposedTime);
+          setSelectedProposedTime(null);
+        }}
+        okText="Chốt giờ này"
+        okButtonProps={{ style: { background: '#44624a', borderColor: '#44624a' } }}
+        cancelText="Hủy"
       >
-        <div style={{ marginBottom: 16 }}>
-          <Text strong>Lý do khách đổi lịch:</Text> <br />
-          <Text type="danger">{selectedTicket?.rescheduleReason || "Không có lý do cụ thể"}</Text>
+        <style>{`
+          .proposed-card { transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; cursor: pointer; border: 1px solid #f0f0f0; }
+          .proposed-card:hover { transform: translateY(-6px); box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
+          .proposed-card.selected { border-color: #8ba888; box-shadow: 0 12px 30px rgba(139,168,136,0.18); transform: translateY(-8px); }
+          .proposed-time { font-size: 15px; font-weight: 700; color: #333; }
+          .proposed-sub { color: #666; font-size: 13px; }
+        `}</style>
+
+        <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', marginBottom: 12 }}>
+          <div style={{ background: '#fff7ed', padding: 10, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <ClockCircleOutlined style={{ fontSize: 20, color: '#d46b08' }} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <Text strong>Lý do khách đổi lịch:</Text>
+            <div style={{ marginTop: 6 }}>
+              <Text type="danger">{selectedTicket?.rescheduleReason || "Không có lý do cụ thể"}</Text>
+            </div>
+          </div>
         </div>
+
         <Divider orientation="left">Chọn một khung giờ để chốt</Divider>
-        <Space direction="vertical" style={{ width: '100%' }}>
-          {selectedTicket?.proposedSurveyTimes?.map((time, idx) => (
-            <Card key={idx} size="small" hoverable onClick={() => handleAcceptProposed(time)}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Text strong>{dayjs(time).format("HH:mm - DD/MM/YYYY")}</Text>
-                <Button type="link" icon={<CheckCircleOutlined />}>Chốt giờ này</Button>
-              </div>
-            </Card>
-          ))}
-        </Space>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 12 }}>
+          {selectedTicket?.proposedSurveyTimes?.length ? selectedTicket.proposedSurveyTimes.map((time, idx) => {
+            const isSel = selectedProposedTime === time;
+            return (
+              <Card key={idx} className={`proposed-card ${isSel ? 'selected' : ''}`} bodyStyle={{ padding: 12 }} onClick={() => setSelectedProposedTime(time)}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <div className="proposed-time"><CalendarOutlined style={{ marginRight: 8, color: '#8ba888' }} />{dayjs(time).format('HH:mm - DD/MM/YYYY')}</div>
+                    <div className="proposed-sub">Đề xuất bởi khách hàng</div>
+                  </div>
+                  <div style={{ minWidth: 72, textAlign: 'right' }}>
+                    {isSel ? (
+                      <Button type="primary" style={{ background: '#8ba888', borderColor: '#8ba888' }} icon={<CheckCircleOutlined />}>Đã chọn</Button>
+                    ) : (
+                      <Button type="default" style={{ background: '#ffffff', border: '1px solid #8ba888', color: '#8ba888' }} onClick={() => setSelectedProposedTime(time)}>Chọn</Button>
+                    )}
+                  </div>
+                </div>
+              </Card>
+            );
+          }) : (
+            <div style={{ padding: 18, textAlign: 'center', color: '#666' }}>Không có đề xuất giờ nào từ khách</div>
+          )}
+        </div>
       </Modal>
     </Card>
   );

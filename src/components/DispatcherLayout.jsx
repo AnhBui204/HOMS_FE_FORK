@@ -118,12 +118,32 @@ const DispatcherLayout = () => {
             />
           </div>
 
+          {/* Scoped styles to match admin sidebar primary color (#8BA888) */}
+          <style>{`.dispatcher-sider-menu .ant-menu-item-selected, .dispatcher-sider-menu .ant-menu-item-active {
+                    background-color: #8BA888 !important;
+                    color: #ffffff !important;
+                    border-radius: 8px;
+                }
+                .dispatcher-sider-menu .ant-menu-item-selected .anticon, .dispatcher-sider-menu .ant-menu-item-active .anticon {
+                    color: #ffffff !important;
+                }
+                .dispatcher-sider-menu .ant-menu-item {
+                    margin: 6px 0;
+                    border-radius: 8px;
+                }
+                .dispatcher-sider-menu .ant-menu-item:hover {
+                    background-color: rgba(139,168,136,0.12);
+                    color: #ffffff;
+                }
+            `}</style>
+
           <Menu
+            className="dispatcher-sider-menu"
             mode="inline"
             selectedKeys={[location.pathname]}
             items={menuItems}
             onClick={(e) => navigate(e.key)}
-            style={{ borderRight: 0 }}
+            style={{ borderRight: 0, padding: '0 12px' }}
           />
         </Sider>
 

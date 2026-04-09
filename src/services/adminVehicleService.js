@@ -67,6 +67,16 @@ const adminVehicleService = {
       throw err;
     }
   }
+,
+  getDashboard: async () => {
+    try {
+      const res = await api.get('/admin/vehicles/dashboard');
+      return res.data?.data || {};
+    } catch (err) {
+      console.error('Error fetching vehicle dashboard', err);
+      throw err;
+    }
+  }
 };
 
 export default adminVehicleService;
