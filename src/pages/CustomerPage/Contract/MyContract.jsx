@@ -58,7 +58,22 @@ const ContractDetailModal = ({ contract, open, onClose, onDownload }) => {
         </Space>
       }
     >
-      
+      {/* Meta */}
+      <Row gutter={[12, 12]} style={{ marginBottom: 16 }}>
+        {contract.depositDeadline && contract.status === 'SIGNED' && (
+          <Col span={24}>
+            <Alert
+              type={new Date(contract.depositDeadline) > new Date() ? 'warning' : 'error'}
+              showIcon
+              message={
+                new Date(contract.depositDeadline) > new Date()
+                  ? ` Hạn đặt cọc: ${dayjs(contract.depositDeadline).format('HH:mm DD/MM/YYYY')} — còn ${Math.ceil((new Date(contract.depositDeadline) - new Date()) / 3600000)} giờ`
+                  : ' Đã quá hạn đặt cọc'
+              }
+            />
+          </Col>
+        )}
+      </Row>
 
       {/* Nội dung hợp đồng */}
       <Divider orientation="left" style={{ color: '#64748b', fontSize: 13 }}>Nội dung hợp đồng</Divider>
