@@ -305,32 +305,34 @@ const SurveyPricingModal = ({ visible, onClose, ticket, survey, pricing, tourRef
                                     )}
 
                                     {/* Promotion input */}
-                                    <div style={{ display: 'flex', gap: 10, marginTop: 12, alignItems: 'center' }}>
-                                        <Select
-                                            placeholder="Chọn mã khuyến mãi"
-                                            style={{ width: 320 }}
-                                            value={promoCode || undefined}
-                                            onChange={(val) => setPromoCode(val)}
-                                            allowClear
-                                        >
-                                            {promotions.map((p) => (
-                                                <Select.Option key={p.code} value={p.code}>
-                                                    {p.code} — {p.description || (p.discountType === 'Percentage' ? `${p.discountValue}%` : `${p.discountValue.toLocaleString()}₫`)}
-                                                </Select.Option>
-                                            ))}
-                                        </Select>
-                                        <Button
-                                            onClick={handleApplyPromotion}
-                                            loading={applying}
-                                            type="default"
-                                            style={{ background: '#fff', color: '#2D4F36', borderColor: '#2D4F36' }}
-                                        >
-                                            Áp dụng
-                                        </Button>
-                                        {localPricing?.promotion?.code && (
-                                            <Tag color="green" icon={<GiftOutlined />}>{localPricing.promotion.code} — −{(localPricing.promotion.discountAmount || 0).toLocaleString()}₫</Tag>
-                                        )}
-                                    </div>
+                                    {(!ticket?.invoice?.paymentStatus || ticket.invoice.paymentStatus === 'UNPAID') && (
+                                        <div style={{ display: 'flex', gap: 10, marginTop: 12, alignItems: 'center' }}>
+                                            <Select
+                                                placeholder="Chọn mã khuyến mãi"
+                                                style={{ width: 320 }}
+                                                value={promoCode || undefined}
+                                                onChange={(val) => setPromoCode(val)}
+                                                allowClear
+                                            >
+                                                {promotions.map((p) => (
+                                                    <Select.Option key={p.code} value={p.code}>
+                                                        {p.code} — {p.description || (p.discountType === 'Percentage' ? `${p.discountValue}%` : `${p.discountValue.toLocaleString()}₫`)}
+                                                    </Select.Option>
+                                                ))}
+                                            </Select>
+                                            <Button
+                                                onClick={handleApplyPromotion}
+                                                loading={applying}
+                                                type="default"
+                                                style={{ background: '#fff', color: '#2D4F36', borderColor: '#2D4F36' }}
+                                            >
+                                                Áp dụng
+                                            </Button>
+                                            {localPricing?.promotion?.code && (
+                                                <Tag color="green" icon={<GiftOutlined />}>{localPricing.promotion.code} — −{(localPricing.promotion.discountAmount || 0).toLocaleString()}₫</Tag>
+                                            )}
+                                        </div>
+                                    )}
 
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', marginTop: 8, background: 'linear-gradient(135deg, #f6ffed, #d9f7be)', borderRadius: 8, border: '1.5px solid #73d13d' }}>
                                         <span style={{ fontSize: 16, fontWeight: 700, color: '#237804', display: 'flex', alignItems: 'center', gap: 8 }}><DollarOutlined /> TỔNG CỘNG</span>
