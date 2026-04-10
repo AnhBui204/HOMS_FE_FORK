@@ -19,7 +19,7 @@ const { Option } = Select;
 const MOVE_TYPE_CONFIG = {
   FULL_HOUSE: { label: 'Chuyển nhà', color: '#44624a', textColor: '#fff' },
   SPECIFIC_ITEMS: { label: 'Đồ vật lẻ', color: '#8ba888', textColor: '#fff' },
-  TRUCK_RENTAL: { label: 'Thuê xe', color: '#c0cfb2', textColor: '#44624a' },
+  TRUCK_RENTAL: { label: 'Thuê xe', color: '#f1ebe1', textColor: '#44624a' },
 };
 
 const STATUS_MAP = {
@@ -332,25 +332,14 @@ const SurveySchedulingPage = () => {
           {/* CREATED — Approve button (both types) */}
           {record.status === "CREATED" && (
             <>
-              {record.moveType === 'FULL_HOUSE' ? (
-                <Button
-                  type="primary"
-                  style={{ background: "#44624a", borderColor: "#44624a" }}
-                  icon={<CheckCircleOutlined />}
-                  onClick={() => openApproveModal(record)}
-                >
-                  Duyệt đơn
-                </Button>
-              ) : (
-                <Button
-                  type="primary"
-                  style={{ background: "#8ba888", borderColor: "#8ba888" }}
-                  icon={<CheckCircleOutlined />}
-                  onClick={() => handleDirectApprove(record)}
-                >
-                  Duyệt đơn
-                </Button>
-              )}
+              <Button
+                type="primary"
+                style={{ background: "#44624a", borderColor: "#44624a" }}
+                icon={<CheckCircleOutlined />}
+                onClick={() => handleDirectApprove(record)}
+              >
+                Duyệt đơn
+              </Button>
               <Button
                 danger
                 icon={<CloseCircleOutlined />}
@@ -365,7 +354,7 @@ const SurveySchedulingPage = () => {
           {record.status === "WAITING_SURVEY" && record.proposedSurveyTimes?.length > 0 && (
             <Button
               type="primary"
-              style={{ background: "#8ba888", borderColor: "#8ba888" }}
+              style={{ background: "#44624a", borderColor: "#8ba888" }}
               icon={<CheckCircleOutlined />}
               onClick={() => openAcceptProposedModal(record)}
             >
@@ -409,49 +398,6 @@ const SurveySchedulingPage = () => {
           record.status === 'ASSIGNMENT_FAILED' ? 'row-assignment-failed' : ''
         }
       />
-
-      {/* ── Modal: FULL_HOUSE Approve (pick surveyor) ── */}
-      <Modal
-        title={`DUYỆT ĐƠN CHUYỂN NHÀ — #${selectedTicket?.code}`}
-        open={isApproveModalVisible}
-        onCancel={() => setIsApproveModalVisible(false)}
-        onOk={() => form.submit()}
-        okText="Xác nhận & Phân công khảo sát"
-        okButtonProps={{ style: { background: '#44624a', borderColor: '#44624a' } }}
-      >
-        <div style={{ marginBottom: 16, padding: 14, background: '#f1ebe1', borderRadius: 10 }}>
-          <Descriptions size="small" column={1} title="Thông tin khách hàng đề xuất">
-            <Descriptions.Item label="Hình thức">
-              <strong>
-                {modalSurveyInfo.surveyType === 'ONLINE' ? 'Khảo sát qua Video (ONLINE)' : 'Khảo sát trực tiếp (OFFLINE)'}
-              </strong>
-            </Descriptions.Item>
-            <Descriptions.Item label="Thời gian">
-              <strong style={{ color: '#d9363e' }}>
-                {modalSurveyInfo.scheduledDate
-                  ? dayjs(modalSurveyInfo.scheduledDate).format("HH:mm - DD/MM/YYYY")
-                  : "Chưa có"}
-              </strong>
-            </Descriptions.Item>
-          </Descriptions>
-        </div>
-
-        <Form form={form} layout="vertical" onFinish={handleApproveSubmit}>
-          <Form.Item
-            name="surveyorId"
-            label="Phân công nhân viên khảo sát"
-            rules={[{ required: true, message: "Vui lòng chọn nhân viên!" }]}
-          >
-            <Select placeholder="Chọn nhân viên khảo sát">
-              {surveyors.map((u) => (
-                <Option key={u._id} value={u._id}>
-                  {u.fullName} {u.phone ? `- ${u.phone}` : ''}
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
-        </Form>
-      </Modal>
 
       {/* ── Modal: Từ chối & Đề xuất lịch mới ── */}
       <Modal

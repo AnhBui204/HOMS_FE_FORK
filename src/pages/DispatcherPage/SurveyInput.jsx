@@ -337,6 +337,30 @@ const SurveyInput = () => {
     setAiImages([]);
     setHighlightConfig(null);
 
+    // TRUCK_RENTAL bypasses regular survey fetch since it has no survey.
+    if (ticket.moveType === 'TRUCK_RENTAL') {
+      const rental = ticket.rentalDetails || {};
+      setTimeout(() => {
+        form.setFieldsValue({
+          distanceKm: 0,
+          floors: 0,
+          carryMeter: 0,
+          hasElevator: false,
+          needsAssembling: false,
+          needsPacking: false,
+          insuranceRequired: false,
+          declaredValue: 0,
+          suggestedVehicle: rental.truckType || ticket.truckType || '1TON',
+          suggestedStaffCount: rental.withDriver ? 2 : 1,
+          estimatedHours: rental.rentalDurationHours || 2,
+          items: [],
+          notes: `Thông tin thuê xe: Xe ${rental.truckType || '1TON'}, Thời gian thuê: ${rental.rentalDurationHours || 2} giờ, Có tài xế: ${rental.withDriver ? 'Có' : 'Không'}.`
+        });
+      }, 50);
+      setIsModalOpen(true);
+      return;
+    }
+
     try {
       const res = await surveyService.getSurveyByTicket(ticket._id);
       console.log("DEBUG: LẤY ĐƯỢC SURVEY TỪ BE:", res);
@@ -720,6 +744,8 @@ const SurveyInput = () => {
   const isReadOnly = selectedTicket && ['QUOTED', 'ACCEPTED', 'CONVERTED'].includes(selectedTicket.status);
   const isReviewMode = selectedTicket?.status === 'WAITING_REVIEW';
 
+  const isTruckRental = selectedTicket?.moveType === 'TRUCK_RENTAL';
+
   // Open a small modal that shows the item's location on the AI image
   const handleShowItemOnImage = (itemVal) => {
     if (!itemVal || !itemVal._aiRaw || !Array.isArray(itemVal._aiRaw.imageIndices) || aiImages.length === 0) {
@@ -769,8 +795,11 @@ const SurveyInput = () => {
         title={
           <Title level={3} style={{ textAlign: 'center', color: '#44624A', margin: 0 }}>
             {isReviewMode ? 'XEM XÉT & BÁO GIÁ' : 'PHIẾU KHẢO SÁT'}: {selectedTicket?.code}
-            {isReviewMode && (
+            {isReviewMode && !isTruckRental && (
               <Tag color="gold" style={{ marginLeft: 12, fontSize: 12, verticalAlign: 'middle' }}>Xem xét dữ liệu AI</Tag>
+            )}
+            {isTruckRental && (
+              <Tag color="blue" style={{ marginLeft: 12, fontSize: 12, verticalAlign: 'middle' }}>Thuê Xe Tải</Tag>
             )}
           </Title>
         }
@@ -779,9 +808,12 @@ const SurveyInput = () => {
           <Row gutter={24}>
 
             {/* --- CỘT TRÁI: THÔNG TIN CHI TIẾT --- */}
-            <Col span={7} style={{ maxHeight: '78vh', overflowY: 'auto', paddingRight: '12px' }}>
-              {/* 1. Địa hình & Vận chuyển */}
-              <Card size="small" title="1. Địa hình & Vận chuyển" className="dispatcher-card mb-3" bordered={false}>
+            <Col span={isTruckRental ? 24 : 7} style={{ maxHeight: '78vh', overflowY: 'auto', paddingRight: '12px' }}>
+              
+              {!isTruckRental && (
+                <>
+                  {/* 1. Địa hình & Vận chuyển */}
+                  <Card size="small" title="1. Địa hình & Vận chuyển" className="dispatcher-card mb-3" bordered={false}>
                 <Row gutter={12}>
                   <Col span={12}>
                     <Form.Item name="floors" label="Số tầng lầu">
@@ -844,14 +876,16 @@ const SurveyInput = () => {
                   </Form.Item>
                 )}
               </Card>
+                </>
+              )}
 
               {/* 3. Đề xuất tài nguyên (Quan trọng cho tính giá) */}
               <Card
                 size="small"
-                title="3. Đề xuất Tài nguyên"
+                title={isTruckRental ? "Thông tin thuê xe (Tài nguyên & Tính giá)" : "3. Đề xuất Tài nguyên"}
                 className="dispatcher-card"
                 bordered={false}
-                extra={!isReadOnly && <Button type="dashed" size="small" style={{ color: '#1890ff', borderColor: '#1890ff' }} onClick={handleEstimate}>Tự động tính</Button>}
+                extra={!isReadOnly && !isTruckRental && <Button type="dashed" size="small" style={{ color: '#1890ff', borderColor: '#1890ff' }} onClick={handleEstimate}>Tự động tính</Button>}
                 style={{ marginTop: 16, background: '#f6ffed' }}
               >
                 <Form.Item
@@ -884,11 +918,12 @@ const SurveyInput = () => {
               </Card>
 
               <Form.Item name="notes" label="Ghi chú thêm" style={{ marginTop: 16 }}>
-                <TextArea rows={3} placeholder="Ghi chú về địa hình, giờ giấc..." />
+                <TextArea rows={5} placeholder="Ghi chú về lộ trình, khách hàng..." />
               </Form.Item>
             </Col>
 
             {/* --- CỘT PHẢI: DANH MỤC ĐỒ ĐẠC (2 PHẦN) --- */}
+            {!isTruckRental && (
             <Col span={17} style={{ borderLeft: '1px solid #f0f0f0', paddingLeft: '20px', maxHeight: '78vh', overflowY: 'auto' }}>
 
               {/* ── 4A. ĐỒ ĐẠC CHÍNH ──────────────────────────────────── */}
@@ -1232,6 +1267,7 @@ const SurveyInput = () => {
                 </div>
               </div>
             </Col>
+            )}
           </Row>
 
           <div className="survey-footer-actions">

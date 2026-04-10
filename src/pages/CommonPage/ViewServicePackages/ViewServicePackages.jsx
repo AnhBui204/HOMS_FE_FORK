@@ -48,7 +48,11 @@ const SelectServicePage = () => {
     const navigate = useNavigate();
 
     const handleServiceClick = (serviceId) => {
-        navigate('/customer/create-order', { state: { serviceId } });
+        if (serviceId === 4) {
+            navigate('/customer/create-truck-rental', { state: { serviceId } });
+        } else {
+            navigate('/customer/create-order', { state: { serviceId } });
+        }
     };
 
     return (

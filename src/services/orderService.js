@@ -28,7 +28,9 @@ const buildRequestTicketPayload = (orderData) => {
     const pickupLocation = orderData.pickupLocation || orderData.pickup;
     const dropoffLocation = orderData.dropoffLocation || orderData.delivery;
 
-    const moveType = Number(orderData.serviceId) === 1 ? 'FULL_HOUSE' : 'SPECIFIC_ITEMS';
+    let moveType = 'SPECIFIC_ITEMS';
+    if (Number(orderData.serviceId) === 1) moveType = 'FULL_HOUSE';
+    if (Number(orderData.serviceId) === 4) moveType = 'TRUCK_RENTAL';
 
     const items = orderData.itemsRich || toItemArray(
         orderData.manualItems,
@@ -72,6 +74,10 @@ const buildRequestTicketPayload = (orderData) => {
     // Include AI estimate for SPECIFIC_ITEMS/TRUCK_RENTAL so WAITING_REVIEW form is pre-filled
     if (orderData.aiEstimate) {
         payload.aiEstimate = orderData.aiEstimate;
+    }
+
+    if (moveType === 'TRUCK_RENTAL' && orderData.rentalDetails) {
+        payload.rentalDetails = orderData.rentalDetails;
     }
 
     return payload;
