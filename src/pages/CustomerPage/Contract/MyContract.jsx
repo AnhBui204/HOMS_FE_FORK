@@ -36,8 +36,9 @@ const ContractDetailModal = ({ contract, open, onClose, onDownload }) => {
 
   const customerSignedAt = contract.customerSignature?.signedAt
     ? dayjs(contract.customerSignature.signedAt).format('HH:mm DD/MM/YYYY') : null;
-  const homsSignedAt = contract.homsSignature?.signedAt
-    ? dayjs(contract.homsSignature.signedAt).format('HH:mm DD/MM/YYYY') : null;
+  // Support both `adminSignature` (newer), template-level adminSignature (fallback), and `homsSignature` (older)
+  const adminSig = contract.adminSignature || contract.templateId?.adminSignature || contract.homsSignature || null;
+  const adminSignedAt = adminSig?.signedAt ? dayjs(adminSig.signedAt).format('HH:mm DD/MM/YYYY') : null;
 
   return (
     <Modal
@@ -99,24 +100,31 @@ const ContractDetailModal = ({ contract, open, onClose, onDownload }) => {
             <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 12, color: '#0f172a', textTransform: 'uppercase' }}>
               Bên A — Đại diện HOMS
             </div>
-            {contract.homsSignature?.signatureImage ? (
-              <img
-                src={contract.homsSignature.signatureImage}
-                alt="Chữ ký HOMS"
-                style={{ maxWidth: 200, maxHeight: 80, border: '1px solid #ddd', borderRadius: 4, background: '#fff', padding: 4 }}
-              />
-            ) : (
-              <div style={{ width: '100%', height: 80, border: '1px dashed #cbd5e1', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: 13 }}>
-                Chưa ký
-              </div>
-            )}
+            {(() => {
+              // normalize: some records store full image, some only thumbnail
+              const adminImg = adminSig?.signatureImage || adminSig?.signatureImageThumb;
+              if (adminImg) {
+                return (
+                  <img
+                    src={adminImg}
+                    alt="Chữ ký HOMS"
+                    style={{ maxWidth: 200, maxHeight: 80, border: '1px solid #ddd', borderRadius: 4, background: '#fff', padding: 4 }}
+                  />
+                );
+              }
+              return (
+                <div style={{ width: '100%', height: 80, border: '1px dashed #cbd5e1', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: 13 }}>
+                  Chưa ký
+                </div>
+              );
+            })()}
             <div style={{ marginTop: 10, fontWeight: 600, color: '#1e293b' }}>
-              {contract.homsSignature?.signedByName || 'HOMS Vận Chuyển'}
+              {adminSig?.signedByName || 'HOMS Vận Chuyển'}
             </div>
-            {homsSignedAt && (
+            {adminSignedAt && (
               <div style={{ fontSize: 12, color: '#64748b', marginTop: 4 }}>
                 <CheckCircleOutlined style={{ color: '#10b981', marginRight: 4 }} />
-                {homsSignedAt}
+                {adminSignedAt}
               </div>
             )}
           </div>
