@@ -3,6 +3,7 @@ import { Card, Table, Input, Select, Space, Avatar, Rate, Tooltip, Button, Drawe
 import { SearchOutlined, EyeOutlined, ReloadOutlined, CheckOutlined, UserSwitchOutlined, EnvironmentOutlined, CarOutlined, UserOutlined, CalendarOutlined, FullscreenOutlined } from '@ant-design/icons';
 import adminRatingService from '../../../services/adminRatingService';
 import adminInvoiceService from '../../../services/adminInvoiceService';
+import AIFeedbackSummary from '../../../components/Admin/AI/AIFeedbackSummary';
 import LocationPicker from '../../../components/LocationPicker';
 
 const { Title, Text } = Typography;
@@ -464,6 +465,7 @@ const RatingManagement = () => {
                                 }
                         `}</style>
             <div className="rating-grid" style={{ marginBottom: 18 }}>
+                <AIFeedbackSummary />
                 <div>
                     <div className="kpi-row" style={{ marginBottom: 12 }}>
                         <Card className="rating-kpi-card kpi-card" style={{ borderRadius: 12 }}>

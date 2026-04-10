@@ -274,7 +274,7 @@ const AIVisionAnalyzer = ({ open, onCancel, onAnalyzeComplete, currentVehicle, c
       title={
         <Space>
           <RobotOutlined style={{ color: '#8ba888', fontSize: 24 }} />
-          <span style={{ color: '#44624a' }}>HOMS AI Vision</span>
+          <span style={{ color: '#44624a' }}>Thị giác Máy tính AI HOMS</span>
         </Space>
       }
       onCancel={closeModal}

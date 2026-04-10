@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {Row,Col,Card,Typography,Input,Select,DatePicker,Space,Button, Table,Tag, Modal, Form, InputNumber, Switch, notification, Tooltip,} from 'antd';
-import { PlusOutlined,EditOutlined, DeleteOutlined, DownloadOutlined, SearchOutlined, FilterOutlined, TagOutlined, CheckCircleOutlined, PauseCircleOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import { PlusOutlined,EditOutlined, DeleteOutlined, DownloadOutlined, SearchOutlined, FilterOutlined, TagOutlined, CheckCircleOutlined, PauseCircleOutlined, ExclamationCircleOutlined, BulbOutlined } from '@ant-design/icons';
 import { PieChart, Pie, Cell, Tooltip as ReTooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
 import adminPromotionService from '../../../services/adminPromotionService';
+import AIPromotionAdvisor from '../../../components/Admin/AI/AIPromotionAdvisor';
 import dayjs from 'dayjs';
 
 const { Title, Text } = Typography;
@@ -367,6 +368,8 @@ const PromotionManagement = () => {
           <Button type="primary" icon={<PlusOutlined />} onClick={openCreate} style={{ background: primaryColor, borderColor: primaryColor }}>Tạo khuyến mãi</Button>
         </Space>
       </div>
+
+      <AIPromotionAdvisor />
 
       <Row gutter={12} style={{ marginBottom: 12 }}>
         <style>{`

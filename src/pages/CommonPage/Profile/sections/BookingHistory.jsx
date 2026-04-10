@@ -83,11 +83,11 @@ const BookingHistory = () => {
   const getStatusText = (status) => {
     switch (status) {
       case 'paid':
-        return 'Paid';
+        return 'Đã thanh toán';
       case 'pending':
-        return 'Pending';
+        return 'Chờ thanh toán';
       case 'cancelled':
-        return 'Cancelled';
+        return 'Đã hủy';
       default:
         return status;
     }
@@ -184,7 +184,7 @@ const BookingHistory = () => {
           title={
             <div className="header-with-icon">
               <CalendarOutlined style={{ marginRight: '8px', color: 'white' }} />
-              Booking History
+              Lịch sử đặt phòng
             </div>
           }
           className="booking-history-card"
@@ -200,7 +200,7 @@ const BookingHistory = () => {
               showSizeChanger: true,
               showQuickJumper: true,
               showTotal: (total, range) =>
-                `${range[0]}-${range[1]} of ${total} bookings`,
+                `${range[0]}-${range[1]} trong ${total} đơn đặt`,
             }}
             scroll={{ x: 800 }}
           />

@@ -3,6 +3,7 @@ import { Row, Col, Card, Statistic, Typography, Table, Spin, Tag, Select, Button
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Legend } from 'recharts';
 import { DollarCircleOutlined, CreditCardOutlined, ShopOutlined, TeamOutlined } from '@ant-design/icons';
 import adminStatisticService from '../../../services/adminStatisticService';
+import AIBusinessSummary from '../../../components/Admin/AI/AIBusinessSummary';
 import dayjs from 'dayjs';
 
 import { useNavigate } from 'react-router-dom';
@@ -41,8 +42,8 @@ const Dashboard = () => {
     ];
 
     const localOrderMock = [
-        { name: 'Mon', orders: 150 }, { name: 'Tue', orders: 120 }, { name: 'Wed', orders: 140 },
-        { name: 'Thu', orders: 130 }, { name: 'Fri', orders: 170 }, { name: 'Sat', orders: 190 }, { name: 'Sun', orders: 200 }
+        { name: 'T2', orders: 150 }, { name: 'T3', orders: 120 }, { name: 'T4', orders: 140 },
+        { name: 'T5', orders: 130 }, { name: 'T6', orders: 170 }, { name: 'T7', orders: 190 }, { name: 'CN', orders: 200 }
     ];
 
     // Render only real fetched data. Do NOT fall back to local sample data for
@@ -53,15 +54,15 @@ const Dashboard = () => {
 
     // Using mock data for Top Moving Car; Last Orders will be fetched from backend and stored in state
     const topMovingCars = [
-        { id: 1, name: 'truck', count: 150, image: '🚚' },
-        { id: 2, name: 'container truck', count: 120, image: '🚛' },
+        { id: 1, name: 'Xe tải', count: 150, image: '🚚' },
+        { id: 2, name: 'Xe container', count: 120, image: '🚛' },
     ];
     const [lastOrders, setLastOrders] = useState([]);
     const localLastOrdersMock = [
-        { key: '1', orderId: '#1452', time: '2:27 PM', location: '132, Thanh Xuan', status: 'Completed' },
-        { key: '2', orderId: '#1453', time: '3:33 PM', location: '33, Nguyen Trai', status: 'Canceled' },
-        { key: '3', orderId: '#1454', time: '3:08 PM', location: '14, Le Loi', status: 'In Progress' },
-        { key: '4', orderId: '#1455', time: '2:40 PM', location: '67, Thanh Thuy', status: 'Completed' },
+        { key: '1', orderId: '#1452', time: '14:27', location: '132, Thanh Xuân', status: 'Completed' },
+        { key: '2', orderId: '#1453', time: '15:33', location: '33, Nguyễn Trãi', status: 'Canceled' },
+        { key: '3', orderId: '#1454', time: '15:08', location: '14, Lê Lợi', status: 'In Progress' },
+        { key: '4', orderId: '#1455', time: '14:40', location: '67, Thanh Thủy', status: 'Completed' },
     ];
 
     const orderColumns = [
@@ -73,8 +74,16 @@ const Dashboard = () => {
             dataIndex: 'status',
             key: 'status',
             render: (status) => {
-                let color = (status === 'PAID' || status === 'Completed' || status === 'PAID') ? 'green' : status === 'PARTIAL' ? 'orange' : 'default';
-                return <Tag color={color}>{status}</Tag>;
+                const statusMap = {
+                    'PAID': { color: 'green', label: 'Đã thanh toán' },
+                    'UNPAID': { color: 'red', label: 'Chưa thanh toán' },
+                    'PARTIAL': { color: 'orange', label: 'Thanh toán 1 phần' },
+                    'Completed': { color: 'green', label: 'Hoàn tất' },
+                    'Canceled': { color: 'red', label: 'Đã hủy' },
+                    'In Progress': { color: 'blue', label: 'Đang thực hiện' },
+                };
+                const config = statusMap[status] || { color: 'default', label: status };
+                return <Tag color={config.color}>{config.label}</Tag>;
             }
         },
     ];
@@ -250,7 +259,7 @@ const Dashboard = () => {
 
                 // If weekly, aggregate daily buckets into Mon..Sun slots (user requested weekday totals)
                 if (period === 'weekly') {
-                    const weekdayLabelsMonFirst = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+                    const weekdayLabelsMonFirst = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
                     const weekMap = [0, 0, 0, 0, 0, 0, 0]; // index 0 => Monday
                     (revenueArray || []).forEach(item => {
                         let d = null;
@@ -329,7 +338,7 @@ const Dashboard = () => {
 
                     // Build 7 buckets starting from ordersWeekStart (Monday)
                     const mondayRef = (ordersWeekStart && dayjs(ordersWeekStart).isValid()) ? dayjs(ordersWeekStart).startOf('day') : getCurrentWeekStart();
-                    const weekdayLabelsMonFirst = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+                    const weekdayLabelsMonFirst = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
                     mappedOrders = weekdayLabelsMonFirst.map((label, idx) => {
                         const day = mondayRef.add(idx, 'day');
                         const dateKey = day.format('YYYY-MM-DD');
@@ -433,6 +442,11 @@ const Dashboard = () => {
                     </Card>
                 </Col>
             </Row>
+
+            {/* AI Insight Section */}
+            <div style={{ marginTop: '24px' }}>
+                <AIBusinessSummary />
+            </div>
 
             {/* Middle Section: Chart and Top Cars */}
             <Row gutter={[16, 16]} style={{ marginTop: '24px' }}>

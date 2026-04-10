@@ -33,6 +33,23 @@ const { Header, Content, Footer } = Layout;
 const { TextArea } = Input;
 const { Option } = Select;
 
+const DISTRICT_MAP = {
+    'HAI_CHAU': 'Hải Châu',
+    'THANH_KHE': 'Thanh Khê',
+    'SON_TRA': 'Sơn Trà',
+    'NGU_HANH_SON': 'Ngũ Hành Sơn',
+    'LIEN_CHIEU': 'Liên Chiểu',
+    'CAM_LE': 'Cẩm Lệ',
+    'HOA_VANG': 'Hòa Vang',
+};
+
+const formatDistrict = (val) => {
+    if (!val) return '';
+    const cleanVal = String(val).trim();
+    // Thử tìm trong MAP trước, nếu không có trả về nguyên gốc
+    return DISTRICT_MAP[cleanVal] || DISTRICT_MAP[cleanVal.toUpperCase().replace(/ /g, '_')] || cleanVal;
+};
+
 const CustomLeftArrow = ({ currentSlide, slideCount, className, style, onClick, ...props }) => (
     <div className={`custom-carousel-arrow left-arrow ${className || ""}`} style={style} onClick={onClick}>
         <LeftOutlined />
@@ -60,23 +77,30 @@ const LandingPage = () => {
 
     useEffect(() => {
         let timer;
+        let timeout;
+        let isMounted = true;
+
         const fetchRecentOrders = async () => {
             try {
                 const res = await api.get('/public/recent-orders');
+                if (!isMounted) return; // Nếu đã rời trang trước khi có kết quả API thì hủy bỏ
+
                 if (res.data && res.data.success && res.data.data.length > 0) {
                     const orders = res.data.data;
                     let currentIndex = 0;
-                    
+
                     // Hiện 1 cái đầu tiên sau 2 giây
-                    setTimeout(() => {
+                    timeout = setTimeout(() => {
+                        if (!isMounted) return;
                         showOrderNotification(orders[currentIndex]);
                         currentIndex = (currentIndex + 1) % orders.length;
 
                         // Lặp lại mỗi 12 giây
                         timer = setInterval(() => {
+                            if (!isMounted) return;
                             showOrderNotification(orders[currentIndex]);
                             currentIndex = (currentIndex + 1) % orders.length;
-                        }, 12000); 
+                        }, 12000);
                     }, 2000);
                 }
             } catch (error) {
@@ -85,11 +109,14 @@ const LandingPage = () => {
         };
 
         const showOrderNotification = (order) => {
-            const from = order.requestTicketId?.pickup?.district || '';
-            const to = order.requestTicketId?.delivery?.district || '';
+            const rawFrom = order.requestTicketId?.pickup?.district || '';
+            const rawTo = order.requestTicketId?.delivery?.district || '';
+            const from = formatDistrict(rawFrom);
+            const to = formatDistrict(rawTo);
             const locationText = from && to ? ` từ ${from} đến ${to}` : '';
-            
+
             notification.info({
+                key: 'landing-recent-order',
                 message: <strong style={{ color: '#2D4F36', fontSize: '15px' }}>Tin vui từ HOMS!</strong>,
                 description: <span style={{ color: '#555' }}>Khách hàng <b>{order.customerId?.fullName || 'ẩn danh'}</b> vừa hoàn thành chuyến vận chuyển{locationText}.</span>,
                 placement: 'bottomLeft',
@@ -102,7 +129,10 @@ const LandingPage = () => {
         fetchRecentOrders();
 
         return () => {
+            isMounted = false;
             if (timer) clearInterval(timer);
+            if (timeout) clearTimeout(timeout);
+            notification.destroy(); // Hủy MỌI notification khi rời khỏi trang LandingPage
         };
     }, []);
 

@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, Table, Typography, Tabs, Button, Select, Space, notification, Modal, Descriptions, Tag, Divider, Row, Col, Input, DatePicker, Popover, Checkbox, Tooltip, Switch } from 'antd';
-import { FileTextOutlined, EyeOutlined, CheckCircleOutlined, DownloadOutlined, SearchOutlined, FilterOutlined, ClockCircleOutlined, ProfileOutlined, ReloadOutlined } from '@ant-design/icons';
+import { FileTextOutlined, EyeOutlined, CheckCircleOutlined, DownloadOutlined, SearchOutlined, FilterOutlined, ClockCircleOutlined, ProfileOutlined, ReloadOutlined, BulbOutlined } from '@ant-design/icons';
 import adminContractService from '../../../services/adminContractService';
+import adminAiService from '../../../services/adminAiService';
 import ContractModal from './ContractModal';
 import dayjs from 'dayjs';
 
@@ -33,6 +34,11 @@ const ContractManagement = () => {
     const [selectedTemplate, setSelectedTemplate] = useState(null);
     const [editedTemplate, setEditedTemplate] = useState(null);
     const [savingTemplate, setSavingTemplate] = useState(false);
+
+    // AI Contract Template Generating state
+    const [aiGenModalVisible, setAiGenModalVisible] = useState(false);
+    const [aiPrompt, setAiPrompt] = useState('');
+    const [generatingAiContent, setGeneratingAiContent] = useState(false);
 
     const fetchData = async (opts = {}) => {
         setLoading(true);
@@ -232,8 +238,8 @@ const ContractManagement = () => {
                 <RangePicker value={dateRange} onChange={(vals) => setDateRange(vals)} />
             </div>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-                <Button size="small" onClick={() => { setStatusFilters([]); setDateRange([null, null]); }}>Reset</Button>
-                <Button type="primary" size="small" onClick={() => { /* popover will close automatically */ }}>Apply</Button>
+                <Button size="small" onClick={() => { setStatusFilters([]); setDateRange([null, null]); }}>Đặt lại</Button>
+                <Button type="primary" size="small" onClick={() => { /* popover will close automatically */ }}>Áp dụng</Button>
             </div>
         </div>
     );
@@ -305,20 +311,67 @@ const ContractManagement = () => {
         if (!editedTemplate) return;
         setSavingTemplate(true);
         try {
-            const resp = await adminContractService.updateTemplate(editedTemplate._id || editedTemplate.id, editedTemplate);
-            // resp might be { success: true, data } or a plain object
-            const updated = resp && resp.success && resp.data ? resp.data : resp;
-            // update local list
-            setTemplates(prev => prev.map(t => (t._id === (updated._id || updated.id) || t.id === (updated._id || updated.id)) ? updated : t));
-            notification.success({ message: 'Lưu mẫu hợp đồng thành công' });
+            const templateId = editedTemplate._id || editedTemplate.id;
+            let updated;
+            
+            if (templateId) {
+                // UPDATE existing template
+                const resp = await adminContractService.updateTemplate(templateId, editedTemplate);
+                updated = resp && resp.success && resp.data ? resp.data : resp;
+                
+                setTemplates(prev => prev.map(t => 
+                    (t._id === (updated._id || updated.id) || t.id === (updated._id || updated.id)) ? updated : t
+                ));
+                notification.success({ message: 'Cập nhật mẫu hợp đồng thành công' });
+            } else {
+                // CREATE new template (e.g. from AI generation)
+                const resp = await adminContractService.createTemplate(editedTemplate);
+                updated = resp && resp.success && resp.data ? resp.data : resp;
+                
+                setTemplates(prev => [updated, ...prev]);
+                notification.success({ message: 'Lưu mẫu hợp đồng mới thành công' });
+            }
+
             setTemplateModalMode('view');
             setSelectedTemplate(updated);
             setEditedTemplate(null);
         } catch (err) {
             console.error('Failed to save template', err);
-            notification.error({ message: 'Lưu mẫu thất bại.' });
+            notification.error({ message: 'Lưu mẫu thất bại. Vui lòng kiểm tra lại dữ liệu.' });
         } finally {
             setSavingTemplate(false);
+        }
+    };
+
+    const handleAiGenerateTemplate = async () => {
+        if (!aiPrompt.trim()) {
+            notification.warning({ message: 'Vui lòng nhập mô tả cho mẫu hợp đồng.' });
+            return;
+        }
+        setGeneratingAiContent(true);
+        try {
+            const resp = await adminAiService.generateTemplateContent(aiPrompt);
+            if (resp.success) {
+                // Open creation modal with AI content
+                const newTpl = {
+                    name: `Mẫu AI: ${aiPrompt.substring(0, 30)}...`,
+                    version: '1.0',
+                    isActive: true,
+                    content: resp.data
+                };
+                setSelectedTemplate(newTpl);
+                setEditedTemplate(newTpl);
+                setTemplateModalMode('edit');
+                setAiGenModalVisible(false);
+                setTemplateModalVisible(true);
+                setAiPrompt('');
+                notification.success({ message: 'Đã tạo nội dung bằng AI! Vui lòng kiểm tra và chỉnh sửa lại.' });
+            }
+        } catch (err) {
+            console.error('AI generation failed', err);
+            notification.error({ message: 'Không thể tạo mẫu bằng AI.' });
+        } finally {
+            setGeneratingAiContent(false);
         }
     };
 
@@ -465,6 +518,16 @@ const ContractManagement = () => {
                         <Table columns={contractColumns} dataSource={contracts} rowKey="_id" loading={loading} />
                     </Tabs.TabPane>
                     <Tabs.TabPane tab="Mẫu hợp đồng" key="2">
+                        <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                             <Button 
+                                type="primary" 
+                                icon={<BulbOutlined />} 
+                                onClick={() => setAiGenModalVisible(true)}
+                                style={{ background: '#44624A', borderColor: '#44624A', display: 'flex', alignItems: 'center' }}
+                            >
+                                Tạo mẫu bằng AI
+                            </Button>
+                        </div>
                         <Table columns={templateColumns} dataSource={templates} rowKey="_id" loading={loading} />
                     </Tabs.TabPane>
                 </Tabs>
@@ -533,6 +596,33 @@ const ContractManagement = () => {
                 ) : (
                     <div style={{ textAlign: 'center', padding: 20 }}><Text type="secondary">Không tìm thấy mẫu.</Text></div>
                 )}
+            </Modal>
+
+            {/* AI Prompt Modal */}
+            <Modal
+                title={
+                    <Space>
+                        <BulbOutlined style={{ color: '#44624A' }} />
+                        <span>Tạo mẫu hợp đồng bằng AI</span>
+                    </Space>
+                }
+                open={aiGenModalVisible}
+                onCancel={() => setAiGenModalVisible(false)}
+                onOk={handleAiGenerateTemplate}
+                confirmLoading={generatingAiContent}
+                okText="Bắt đầu tạo"
+                cancelText="Hủy"
+                centered
+            >
+                <div style={{ marginBottom: 16 }}>
+                    <Text type="secondary">Mô tả loại hợp đồng hoặc các điều khoản bạn muốn AI tạo (ví dụ: "Hợp đồng chuyển văn phòng cho doanh nghiệp, có điều khoản bảo hiểm đồ đạc giá trị cao").</Text>
+                </div>
+                <Input.TextArea 
+                    placeholder="Mô tả mẫu hợp đồng tại đây..."
+                    rows={4}
+                    value={aiPrompt}
+                    onChange={e => setAiPrompt(e.target.value)}
+                />
             </Modal>
 
             {/* Contract detail modal separated into its own component */}

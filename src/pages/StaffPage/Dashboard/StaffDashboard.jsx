@@ -54,19 +54,19 @@ const STATUS_COLOR = {
 };
 
 const STATUS_LABEL = {
-    CONFIRMED: 'Confirmed',
-    CANCELLED: 'Canceled',
-    CREATED: 'Pending',
-    WAITING_SURVEY: 'Pending',
-    IN_PROGRESS: 'In Progress',
-    COMPLETED: 'Completed',
+    CONFIRMED: 'Đã xác nhận',
+    CANCELLED: 'Đã hủy',
+    CREATED: 'Chờ xử lý',
+    WAITING_SURVEY: 'Chờ khảo sát',
+    IN_PROGRESS: 'Đang thực hiện',
+    COMPLETED: 'Hoàn tất',
 };
 
 const STAT_ICONS = {
-    Assigned:   <FileDoneOutlined style={{ fontSize: 28 }} />,
-    Completed:  <CheckCircleOutlined style={{ fontSize: 28 }} />,
-    'In Transit': <TruckOutlined style={{ fontSize: 28 }} />,
-    Incident:   <WarningOutlined style={{ fontSize: 28 }} />,
+    'Đã phân công': <FileDoneOutlined style={{ fontSize: 28 }} />,
+    'Hoàn thành':  <CheckCircleOutlined style={{ fontSize: 28 }} />,
+    'Đang vận chuyển': <TruckOutlined style={{ fontSize: 28 }} />,
+    'Sự cố':   <WarningOutlined style={{ fontSize: 28 }} />,
 };
 
 const StatCard = ({ label, value, trend, trendUp, color }) => (
@@ -77,7 +77,7 @@ const StatCard = ({ label, value, trend, trendUp, color }) => (
                 <div className="stat-value">{value}</div>
                 <div className={`stat-trend ${trendUp ? 'trend-up' : 'trend-down'}`}>
                     {trendUp ? <ArrowUpOutlined /> : <ArrowDownOutlined />}
-                    {trend} (30 days)
+                    {trend} (30 ngày gần đây)
                 </div>
             </div>
             <div className="stat-icon-wrap" style={{ background: color + '18', color: color }}>
@@ -99,8 +99,8 @@ const OrderCard = ({ order }) => {
             <div className="order-card-item">{order.itemName}</div>
             <div className="order-card-footer">
                 <div>
-                    <div className="order-card-price">Order Price - ${order.price}.00</div>
-                    <div className="order-card-date">ORDER DATE : {dateStr.toUpperCase()}</div>
+                    <div className="order-card-price">Giá: ${order.price}.00</div>
+                    <div className="order-card-date">NGÀY ĐẶT : {dateStr.toUpperCase()}</div>
                 </div>
                 <button
                     className="order-status-btn"
@@ -141,16 +141,16 @@ const StaffDashboard = () => {
             {/* ── STAT CARDS ───────────────────────────── */}
             <Row gutter={[16, 16]}>
                 <Col xs={24} sm={12} lg={6}>
-                    <StatCard label="Assigned" value={stats.assigned} trend="6.5%" trendUp color="#44624A" />
+                    <StatCard label="Đã phân công" value={stats.assigned} trend="6.5%" trendUp color="#44624A" />
                 </Col>
                 <Col xs={24} sm={12} lg={6}>
-                    <StatCard label="Completed" value={stats.completed} trend="2.4%" trendUp={false} color="#52c41a" />
+                    <StatCard label="Hoàn thành" value={stats.completed} trend="2.4%" trendUp={false} color="#52c41a" />
                 </Col>
                 <Col xs={24} sm={12} lg={6}>
-                    <StatCard label="In Transit" value={stats.inTransit} trend="4.2%" trendUp color="#1890ff" />
+                    <StatCard label="Đang vận chuyển" value={stats.inTransit} trend="4.2%" trendUp color="#1890ff" />
                 </Col>
                 <Col xs={24} sm={12} lg={6}>
-                    <StatCard label="Incident" value={stats.incident} trend="4.2%" trendUp color="#ff4d4f" />
+                    <StatCard label="Sự cố" value={stats.incident} trend="4.2%" trendUp color="#ff4d4f" />
                 </Col>
             </Row>
 
@@ -161,17 +161,17 @@ const StaffDashboard = () => {
                     <Card
                         title={
                             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                                <span style={{ fontWeight: 600 }}>Number of Orders</span>
+                                <span style={{ fontWeight: 600 }}>Số lượng đơn hàng</span>
                                 <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#44624A' }}>
                                     <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#44624A', display: 'inline-block' }} />
-                                    Afternoon
+                                    Buổi chiều
                                 </span>
                             </div>
                         }
                         extra={
-                            <Select defaultValue="Last Week" size="small" style={{ width: 120 }}>
-                                <Select.Option value="Last Week">Last Week</Select.Option>
-                                <Select.Option value="This Week">This Week</Select.Option>
+                            <Select defaultValue="Tuần trước" size="small" style={{ width: 120 }}>
+                                <Select.Option value="Last Week">Tuần trước</Select.Option>
+                                <Select.Option value="This Week">Tuần này</Select.Option>
                             </Select>
                         }
                         style={{ borderRadius: 12 }}
@@ -192,7 +192,7 @@ const StaffDashboard = () => {
                 {/* Today's Schedule */}
                 <Col xs={24} lg={10}>
                     <Card
-                        title={<span style={{ fontWeight: 600, fontSize: 16 }}>Today's Schedule</span>}
+                        title={<span style={{ fontWeight: 600, fontSize: 16 }}>Lịch trình hôm nay</span>}
                         style={{ borderRadius: 12, height: '100%' }}
                     >
                         <div className="schedule-list">
@@ -210,14 +210,14 @@ const StaffDashboard = () => {
             {/* ── ORDERS ───────────────────────────────── */}
             <div style={{ marginTop: 24 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                    <span style={{ fontWeight: 700, fontSize: 18 }}>Orders</span>
+                    <span style={{ fontWeight: 700, fontSize: 18 }}>Đơn hàng</span>
                     <Button
                         type="default"
                         size="small"
                         style={{ borderRadius: 6, fontWeight: 500 }}
                         onClick={() => navigate('/staff/orders')}
                     >
-                        View All ↗
+                        Xem tất cả ↗
                     </Button>
                 </div>
 
@@ -227,13 +227,13 @@ const StaffDashboard = () => {
                         className={`order-tab-btn ${orderTab === 'pending' ? 'active' : ''}`}
                         onClick={() => setOrderTab('pending')}
                     >
-                        Pending
+                        Chờ xử lý
                     </button>
                     <button
                         className={`order-tab-btn ${orderTab === 'active' ? 'active' : ''}`}
                         onClick={() => setOrderTab('active')}
                     >
-                        Active
+                        Hoạt động
                     </button>
                 </div>
 

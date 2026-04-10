@@ -27,10 +27,10 @@ const INITIAL_ORDERS = [
 ];
 
 const STATUS_CONFIG = {
-    CONFIRMED: { color: '#52c41a', bg: '#f6ffed', label: 'Confirmed' },
-    CANCELLED: { color: '#ff4d4f', bg: '#fff2f0', label: 'Canceled' },
-    IN_TRANSIT: { color: '#faad14', bg: '#fffbe6', label: 'In Transit' },
-    COMPLETED: { color: '#1890ff', bg: '#e6f7ff', label: 'Completed' },
+    CONFIRMED: { color: '#52c41a', bg: '#f6ffed', label: 'Đã xác nhận' },
+    CANCELLED: { color: '#ff4d4f', bg: '#fff2f0', label: 'Đã hủy' },
+    IN_TRANSIT: { color: '#faad14', bg: '#fffbe6', label: 'Đang vận chuyển' },
+    COMPLETED: { color: '#1890ff', bg: '#e6f7ff', label: 'Hoàn tất' },
 };
 
 /* ── STATUS BADGE ───────────────────────────────────── */
@@ -79,7 +79,7 @@ const StaffOrderList = () => {
 
     /* ── add item ──────────────────────────────────────── */
     const handleAddItem = () => {
-        if (!newItemName.trim()) { message.warning('Please enter item name'); return; }
+        if (!newItemName.trim()) { message.warning('Vui lòng nhập tên đồ đạc'); return; }
         const newItem = { id: Date.now(), name: newItemName.trim(), preview: newItemPreview };
         const updatedItems = [...editItems, newItem];
         setEditItems(updatedItems);
@@ -88,7 +88,7 @@ const StaffOrderList = () => {
         setSelectedOrder(prev => ({ ...prev, items: updatedItems }));
         setNewItemName('');
         setNewItemPreview(null);
-        message.success('Item added');
+        message.success('Đồ đạc đã được thêm');
     };
 
     /* ── remove item ───────────────────────────────────── */
@@ -103,39 +103,39 @@ const StaffOrderList = () => {
     /* ── table columns ─────────────────────────────────── */
     const columns = [
         {
-            title: 'ORDER ID',
+            title: 'MÃ ĐƠN HÀNG',
             dataIndex: 'id',
             render: (v) => <span className="order-id-cell">#{v}</span>,
             width: 190,
         },
         {
-            title: 'ORDER DETAIL',
+            title: 'CHI TIẾT',
             dataIndex: 'detail',
             width: 130,
         },
         {
-            title: 'LOCATION',
+            title: 'KHU VỰC',
             dataIndex: 'location',
             width: 130,
         },
         {
-            title: 'CUSTOMER',
+            title: 'KHÁCH HÀNG',
             render: (_, r) => <span>{r.customer}<br /><span style={{ color: '#aaa', fontSize: 12 }}>({r.phone})</span></span>,
             width: 200,
         },
         {
-            title: 'SHIPPING SERVICE',
+            title: 'DỊCH VỤ VẬN CHUYỂN',
             dataIndex: 'service',
             width: 180,
         },
         {
-            title: 'STATUS',
+            title: 'TRẠNG THÁI',
             dataIndex: 'status',
             width: 140,
             render: (s) => <StatusBadge status={s} />,
         },
         {
-            title: 'DATE',
+            title: 'NGÀY QUY ĐỊNH',
             dataIndex: 'date',
             width: 115,
             render: (d) => <span style={{ color: '#666', fontSize: 13 }}>{d}</span>,
@@ -144,7 +144,7 @@ const StaffOrderList = () => {
             title: '',
             width: 48,
             render: (_, record) => (
-                <Tooltip title="View Details">
+                <Tooltip title="Xem chi tiết">
                     <Button
                         type="text"
                         icon={<EyeOutlined style={{ color: '#44624A' }} />}
@@ -161,13 +161,13 @@ const StaffOrderList = () => {
             <div className="order-toolbar">
                 <div className="toolbar-left">
                     <Input.Group compact className="search-group">
-                        <Select defaultValue="Order ID" style={{ width: 110 }}>
-                            <Option value="Order ID">Order ID</Option>
-                            <Option value="Customer">Customer</Option>
-                            <Option value="Detail">Detail</Option>
+                        <Select defaultValue="Mã đơn hàng" style={{ width: 110 }}>
+                            <Option value="Order ID">Mã đơn hàng</Option>
+                            <Option value="Customer">Khách hàng</Option>
+                            <Option value="Detail">Chi tiết</Option>
                         </Select>
                         <Input
-                            placeholder="Search"
+                            placeholder="Tìm kiếm..."
                             prefix={<SearchOutlined />}
                             style={{ width: 220 }}
                             value={searchText}
@@ -177,22 +177,22 @@ const StaffOrderList = () => {
                     </Input.Group>
 
                     <Select
-                        placeholder="Status"
+                        placeholder="Trạng thái"
                         style={{ width: 150 }}
                         allowClear
                         onChange={(v) => setStatusFilter(v || null)}
                     >
-                        <Option value="CONFIRMED">Confirmed</Option>
-                        <Option value="CANCELLED">Canceled</Option>
-                        <Option value="IN_TRANSIT">In Transit</Option>
-                        <Option value="COMPLETED">Completed</Option>
+                        <Option value="CONFIRMED">Đã xác nhận</Option>
+                        <Option value="CANCELLED">Đã hủy</Option>
+                        <Option value="IN_TRANSIT">Đang vận chuyển</Option>
+                        <Option value="COMPLETED">Hoàn tất</Option>
                     </Select>
                 </div>
 
                 <div className="toolbar-right">
-                    <Button icon={<ExportOutlined />} style={{ borderRadius: 8 }}>Export</Button>
+                    <Button icon={<ExportOutlined />} style={{ borderRadius: 8 }}>Xuất file</Button>
                     <Button type="primary" icon={<FilterOutlined />} style={{ borderRadius: 8, background: '#44624A', borderColor: '#44624A' }}>
-                        Filter
+                        Bộ lọc
                     </Button>
                 </div>
             </div>
@@ -225,7 +225,7 @@ const StaffOrderList = () => {
                     pageSize: PAGE_SIZE,
                     total: filtered.length,
                     onChange: setPage,
-                    showTotal: (total, range) => `Showing ${range[0]} to ${range[1]} of ${total} results`,
+                    showTotal: (total, range) => `Đang hiển thị từ ${range[0]} đến ${range[1]} trong tổng số ${total} kết quả`,
                     showSizeChanger: false,
                 }}
             />
@@ -234,7 +234,7 @@ const StaffOrderList = () => {
             <Modal
                 title={
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                        <span style={{ fontWeight: 700, fontSize: 16 }}>Shipment Details</span>
+                        <span style={{ fontWeight: 700, fontSize: 16 }}>Chi tiết vận chuyển</span>
                         {selectedOrder && <StatusBadge status={selectedOrder.status} />}
                     </div>
                 }
@@ -242,14 +242,14 @@ const StaffOrderList = () => {
                 onCancel={() => setModalOpen(false)}
                 footer={
                     <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
-                        <Button size="large" onClick={() => setModalOpen(false)} style={{ borderRadius: 8 }}>Close</Button>
+                        <Button size="large" onClick={() => setModalOpen(false)} style={{ borderRadius: 8 }}>Đóng</Button>
                         <Button
                             type="primary"
                             size="large"
                             style={{ background: '#44624A', borderColor: '#44624A', borderRadius: 8 }}
-                            onClick={() => { message.success('Order information saved'); setModalOpen(false); }}
+                            onClick={() => { message.success('Thông tin đơn hàng đã được lưu'); setModalOpen(false); }}
                         >
-                            Save Changes
+                            Lưu thay đổi
                         </Button>
                     </div>
                 }
@@ -261,7 +261,7 @@ const StaffOrderList = () => {
                     <Row gutter={[32, 16]} style={{ padding: '8px 0' }}>
                         {/* ── Left: Order Info ──────────────── */}
                         <Col span={12}>
-                            <Title level={5} style={{ color: '#44624A', marginBottom: 14 }}>Order Information</Title>
+                            <Title level={5} style={{ color: '#44624A', marginBottom: 14 }}>Thông tin đơn hàng</Title>
                             <Descriptions
                                 bordered
                                 column={1}
@@ -270,17 +270,17 @@ const StaffOrderList = () => {
                                 labelStyle={{ fontWeight: 600, background: '#fafafa', width: 145, fontSize: 13 }}
                                 contentStyle={{ fontSize: 14 }}
                             >
-                                <Descriptions.Item label="Order ID">
+                                <Descriptions.Item label="Mã đơn hàng">
                                     <strong style={{ fontFamily: 'monospace', fontSize: 14 }}>#{selectedOrder.id}</strong>
                                 </Descriptions.Item>
-                                <Descriptions.Item label="Item">{selectedOrder.detail}</Descriptions.Item>
-                                <Descriptions.Item label="Service">{selectedOrder.service}</Descriptions.Item>
-                                <Descriptions.Item label="Customer">{selectedOrder.customer}</Descriptions.Item>
-                                <Descriptions.Item label="Phone">{selectedOrder.phone}</Descriptions.Item>
-                                <Descriptions.Item label="District">{selectedOrder.location}</Descriptions.Item>
-                                <Descriptions.Item label="Date">{selectedOrder.date}</Descriptions.Item>
-                                <Descriptions.Item label="Pickup Point">{selectedOrder.pickup}</Descriptions.Item>
-                                <Descriptions.Item label="Drop-off Point">{selectedOrder.dropoff}</Descriptions.Item>
+                                <Descriptions.Item label="Đồ đạc">{selectedOrder.detail}</Descriptions.Item>
+                                <Descriptions.Item label="Dịch vụ">{selectedOrder.service}</Descriptions.Item>
+                                <Descriptions.Item label="Khách hàng">{selectedOrder.customer}</Descriptions.Item>
+                                <Descriptions.Item label="Điện thoại">{selectedOrder.phone}</Descriptions.Item>
+                                <Descriptions.Item label="Quận/Huyện">{selectedOrder.location}</Descriptions.Item>
+                                <Descriptions.Item label="Ngày tháng">{selectedOrder.date}</Descriptions.Item>
+                                <Descriptions.Item label="Điểm lấy hàng">{selectedOrder.pickup}</Descriptions.Item>
+                                <Descriptions.Item label="Điểm giao hàng">{selectedOrder.dropoff}</Descriptions.Item>
                             </Descriptions>
                         </Col>
 
@@ -288,7 +288,7 @@ const StaffOrderList = () => {
                         <Col span={12}>
                             <Title level={5} style={{ color: '#44624A', marginBottom: 14 }}>
                                 <PictureOutlined style={{ marginRight: 8 }} />
-                                Item List ({editItems.length})
+                                Danh sách đồ đạc ({editItems.length})
                             </Title>
 
                             {/* Add new item form */}
@@ -307,12 +307,12 @@ const StaffOrderList = () => {
                                         <div className="image-upload-box">
                                             {newItemPreview
                                                 ? <img src={newItemPreview} alt="preview" className="item-preview-img" />
-                                                : <><PlusOutlined /><div style={{ marginTop: 4, fontSize: 11 }}>Photo</div></>
+                                                : <><PlusOutlined /><div style={{ marginTop: 4, fontSize: 11 }}>Ảnh</div></>
                                             }
                                         </div>
                                     </Upload>
                                     <Input
-                                        placeholder="Item name (e.g.: 3-seater Sofa, 2-door Refrigerator...)"
+                                        placeholder="Tên đồ đạc (vd: Sofa 3 chỗ, Tủ lạnh 2 cánh...)"
                                         value={newItemName}
                                         onChange={(e) => setNewItemName(e.target.value)}
                                         onPressEnter={handleAddItem}
@@ -324,7 +324,7 @@ const StaffOrderList = () => {
                                         onClick={handleAddItem}
                                         style={{ background: '#44624A', borderColor: '#44624A', borderRadius: 8 }}
                                     >
-                                        Add
+                                        Thêm
                                     </Button>
                                 </div>
                             </div>
