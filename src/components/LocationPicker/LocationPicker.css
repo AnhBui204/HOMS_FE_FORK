@@ -25,6 +25,7 @@
     overflow: hidden;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     position: relative;
+    z-index: 1;
 }
 
 .selected-address {
@@ -83,7 +84,7 @@
     padding: 10px 15px;
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    z-index: 1000;
+    z-index: 400; /* Lower than header z-index */
     font-size: 12px;
 }
 
