@@ -151,30 +151,26 @@ const ContractModal = ({ open, contractId, onClose }) => {
                             )}
                         </Card>
                         <Card size="small" title="Chữ ký quản trị">
-                            {contract.adminSignature?.signatureImage ? (
-                                <div>
-                                    <div className="sig-box">
-                                        <img
-                                            src={getImageSrc(contract.adminSignature.signatureImage)}
-                                            alt="admin-sign"
-                                            style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', cursor: 'pointer' }}
-                                            onClick={() => {
-                                                const s = getImageSrc(contract.adminSignature.signatureImage);
-                                                if (s) window.open(s, '_blank');
-                                            }}
-                                        />
-                                    </div>
-                                    <div className="sig-meta">
-                                        {contract.adminSignature.signedAt ? (
-                                            <Text type="secondary">Đã ký: {dayjs(contract.adminSignature.signedAt).format('DD/MM/YYYY')}</Text>
-                                        ) : (
-                                            <Text type="secondary">Ngày ký: N/A</Text>
-                                        )}
-                                    </div>
-                                </div>
-                            ) : (
-                                <Text type="secondary">Đang chờ</Text>
-                            )}
+                            {(() => {
+                                // Template or contract may store either a full signature image or only a thumbnail.
+                                const adminImg = contract.adminSignature?.signatureImage || contract.adminSignature?.signatureImageThumb;
+                                if (adminImg) {
+                                    const src = getImageSrc(adminImg);
+                                    return (
+                                        <div>
+                                            <div className="sig-box">
+                                                <img
+                                                    src={src}
+                                                    alt="admin-sign"
+                                                    style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', cursor: 'pointer' }}
+                                                    onClick={() => { if (src) window.open(src, '_blank'); }}
+                                                />
+                                            </div>
+                                        </div>
+                                    );
+                                }
+                                return <Text type="secondary">Đang chờ</Text>;
+                            })()}
                         </Card>
                     </div>
                 </div>
