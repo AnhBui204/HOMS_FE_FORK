@@ -259,12 +259,12 @@ const SignContract = () => {
       try {
         const invRes = await api.get(`/invoices/ticket/${ticketId}`);
         if (invRes.data?.success) setInvoice(invRes.data.data);
-      } catch (_) {}
+      } catch (_) { }
       // Lấy email để hiển thị trong OTP modal
       try {
         const meRes = await api.get('/customer/personal-info');
         setCustomerEmail(meRes.data?.data?.email || '');
-      } catch (_) {}
+      } catch (_) { }
       setLoading(false);
     };
     if (ticketId) fetchData();
@@ -406,6 +406,35 @@ const SignContract = () => {
                 }}
                 dangerouslySetInnerHTML={{ __html: contract.content }}
               />
+
+              {/* Hiển thị chữ ký quản trị (nếu có) và khung chữ ký khách hàng để minh hoạ */}
+              <div style={{ display: 'flex', gap: 24, marginTop: 20, marginBottom: 20 }}>
+                <div style={{ flex: 1, textAlign: 'center' }}>
+                  <div style={{ fontWeight: 600, marginBottom: 8 }}>Bên A — Đại diện HOMS</div>
+                  <div style={{ minHeight: 80, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {contract.adminSignature?.signatureImage ? (
+                      <img src={contract.adminSignature.signatureImage} alt="admin-sign" style={{ maxWidth: '260px', maxHeight: 90 }} />
+                    ) : (
+                      <div style={{ width: 260, height: 90, borderBottom: '2px solid #ccc' }} />
+                    )}
+                  </div>
+                  <div style={{ marginTop: 8, color: '#555' }}>{contract.adminSignature?.signedByName || 'HOMS Vận Chuyển'}</div>
+                  {/* Admin signature time intentionally omitted (remove "Ký lúc") */}
+                </div>
+
+                <div style={{ flex: 1, textAlign: 'center' }}>
+                  <div style={{ fontWeight: 600, marginBottom: 8 }}>Bên B — Khách hàng</div>
+                  <div style={{ minHeight: 80, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {contract.customerSignature?.signatureImage ? (
+                      <img src={contract.customerSignature.signatureImage} alt="customer-sign" style={{ maxWidth: '260px', maxHeight: 90 }} />
+                    ) : (
+                      <div style={{ width: 260, height: 90, borderBottom: '2px solid #ccc' }} />
+                    )}
+                  </div>
+                  <div style={{ marginTop: 8, color: '#555' }}>{contract.customerId?.fullName || ''}</div>
+                  <div style={{ fontSize: 12, color: '#888' }}>{contract.customerSignature?.signedAt ? new Date(contract.customerSignature.signedAt).toLocaleString('vi-VN') : ''}</div>
+                </div>
+              </div>
 
               {/* ── CHƯA KÝ: Form ký ── */}
               {!isSigned ? (

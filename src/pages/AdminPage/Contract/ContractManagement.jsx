@@ -62,7 +62,7 @@ const ContractManagement = () => {
                     notifiedCountRef.current = resp.data.length;
                     notification.info({ message: `Đã tải ${resp.data.length} hợp đồng.`, duration: 2 });
                 }
-            }  else {
+            } else {
                 console.warn('Unexpected contracts response shape:', resp);
                 setContracts([]);
                 notification.warn({ message: 'Dữ liệu hợp đồng nhận về không đúng định dạng.' });
@@ -98,7 +98,7 @@ const ContractManagement = () => {
         // initial fetch (no contractNumber param)
         fetchData();
     }, []);
-    
+
     // Helper: apply client-side filters and sorting to an array of contracts
     const applyLocalFilters = (list, { query, sortOrder, statusFilters, dateRange }) => {
         let out = Array.isArray(list) ? list.slice() : [];
@@ -117,7 +117,7 @@ const ContractManagement = () => {
                 return d && d >= start && d <= end;
             });
         }
-        out.sort((a,b) => {
+        out.sort((a, b) => {
             const da = a.createdAt ? new Date(a.createdAt) : 0;
             const db = b.createdAt ? new Date(b.createdAt) : 0;
             return sortOrder === 'newest' ? db - da : da - db;
@@ -129,7 +129,7 @@ const ContractManagement = () => {
     useEffect(() => {
         setContracts(applyLocalFilters(allContracts, { query: searchQuery, sortOrder, statusFilters, dateRange }));
     }, [searchQuery, sortOrder, statusFilters, dateRange, allContracts]);
-    
+
     const viewContractDetails = (contract) => {
         // Open modal and let ContractModal fetch details by id
         setSelectedContractId(contract._id || contract.id || contract._id);
@@ -160,7 +160,7 @@ const ContractManagement = () => {
             title: 'Trạng thái',
             dataIndex: 'status',
             key: 'status',
-                render: status => {
+            render: status => {
                 // normalize to uppercase to match BE enums
                 const sRaw = (typeof status === 'string') ? status : (status && (status.name || status.status || String(status))) || '';
                 const s = sRaw.toString();
@@ -307,19 +307,37 @@ const ContractManagement = () => {
         setSelectedTemplate(null);
         setEditedTemplate(null);
     };
+
+    const handleTemplateSignatureFile = (file) => {
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const dataUrl = e.target.result;
+            setEditedTemplate(prev => ({
+                ...prev,
+                adminSignature: {
+                    ...(prev?.adminSignature || {}),
+                    signatureImage: dataUrl,
+                    signatureImageThumb: dataUrl
+                }
+            }));
+        };
+        reader.readAsDataURL(file);
+    };
+
     const handleTemplateSave = async () => {
         if (!editedTemplate) return;
         setSavingTemplate(true);
         try {
             const templateId = editedTemplate._id || editedTemplate.id;
             let updated;
-            
+
             if (templateId) {
                 // UPDATE existing template
                 const resp = await adminContractService.updateTemplate(templateId, editedTemplate);
                 updated = resp && resp.success && resp.data ? resp.data : resp;
-                
-                setTemplates(prev => prev.map(t => 
+
+                setTemplates(prev => prev.map(t =>
                     (t._id === (updated._id || updated.id) || t.id === (updated._id || updated.id)) ? updated : t
                 ));
                 notification.success({ message: 'Cập nhật mẫu hợp đồng thành công' });
@@ -327,7 +345,7 @@ const ContractManagement = () => {
                 // CREATE new template (e.g. from AI generation)
                 const resp = await adminContractService.createTemplate(editedTemplate);
                 updated = resp && resp.success && resp.data ? resp.data : resp;
-                
+
                 setTemplates(prev => [updated, ...prev]);
                 notification.success({ message: 'Lưu mẫu hợp đồng mới thành công' });
             }
@@ -519,9 +537,9 @@ const ContractManagement = () => {
                     </Tabs.TabPane>
                     <Tabs.TabPane tab="Mẫu hợp đồng" key="2">
                         <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-                             <Button 
-                                type="primary" 
-                                icon={<BulbOutlined />} 
+                            <Button
+                                type="primary"
+                                icon={<BulbOutlined />}
                                 onClick={() => setAiGenModalVisible(true)}
                                 style={{ background: '#44624A', borderColor: '#44624A', display: 'flex', alignItems: 'center' }}
                             >
@@ -552,12 +570,25 @@ const ContractManagement = () => {
                                 <Descriptions.Item label="Ngày tạo">{selectedTemplate.createdAt ? dayjs(selectedTemplate.createdAt).format('DD/MM/YYYY') : 'N/A'}</Descriptions.Item>
                             </Descriptions>
                             <Divider />
-                            <div style={{ maxHeight: 520, overflow: 'auto' }}>
-                                {selectedTemplate.content ? (
-                                    <div className="template-content" dangerouslySetInnerHTML={{ __html: selectedTemplate.content }} />
-                                ) : (
-                                    <Text type="secondary">Không có nội dung mẫu để hiển thị.</Text>
-                                )}
+                            <div style={{ display: 'flex', gap: 16 }}>
+                                <div style={{ flex: 1, maxHeight: 520, overflow: 'auto' }}>
+                                    {selectedTemplate.content ? (
+                                        <div className="template-content" dangerouslySetInnerHTML={{ __html: selectedTemplate.content }} />
+                                    ) : (
+                                        <Text type="secondary">Không có nội dung mẫu để hiển thị.</Text>
+                                    )}
+                                </div>
+                                <div style={{ width: 240 }}>
+                                    <div style={{ marginBottom: 8, fontWeight: 600 }}>Chữ ký quản trị (mẫu)</div>
+                                    {selectedTemplate.adminSignature?.signatureImage || selectedTemplate.adminSignature?.signatureImageThumb ? (
+                                        <div style={{ border: '1px dashed #eee', padding: 8, borderRadius: 8, textAlign: 'center' }}>
+                                            <img src={selectedTemplate.adminSignature.signatureImage || selectedTemplate.adminSignature.signatureImageThumb} alt="admin-sign" style={{ maxWidth: '100%', height: 'auto' }} />
+                                            <div style={{ marginTop: 8, fontSize: 12, color: '#555' }}>{selectedTemplate.adminSignature?.signedByName || 'HOMS Vận Chuyển'}</div>
+                                        </div>
+                                    ) : (
+                                        <Text type="secondary">Chưa có chữ ký quản trị trong mẫu này.</Text>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     ) : (
@@ -585,6 +616,28 @@ const ContractManagement = () => {
                                     rows={12}
                                     placeholder="Nội dung HTML của mẫu hợp đồng"
                                 />
+                            </div>
+                            <Divider />
+                            <div style={{ marginBottom: 12 }}>
+                                <label style={{ display: 'block', marginBottom: 6 }}>Chữ ký quản trị</label>
+                                <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                                    <div style={{ width: 180, border: '1px dashed #eee', padding: 8, borderRadius: 8, textAlign: 'center' }}>
+                                        {editedTemplate?.adminSignature?.signatureImage ? (
+                                            <img src={editedTemplate.adminSignature.signatureImage} alt="preview" style={{ maxWidth: '100%', height: 'auto' }} />
+                                        ) : (
+                                            <Text type="secondary">Chưa có ảnh</Text>
+                                        )}
+                                    </div>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={(e) => handleTemplateSignatureFile(e.target.files && e.target.files[0])}
+                                        />
+                                        <Input placeholder="Tên người ký" value={editedTemplate?.adminSignature?.signedByName || ''} onChange={e => setEditedTemplate(prev => ({ ...prev, adminSignature: { ...(prev?.adminSignature || {}), signedByName: e.target.value } }))} />
+                                        <Button onClick={() => setEditedTemplate(prev => ({ ...prev, adminSignature: {} }))}>Xóa chữ ký</Button>
+                                    </div>
+                                </div>
                             </div>
                             <Divider />
                             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
@@ -617,7 +670,7 @@ const ContractManagement = () => {
                 <div style={{ marginBottom: 16 }}>
                     <Text type="secondary">Mô tả loại hợp đồng hoặc các điều khoản bạn muốn AI tạo (ví dụ: "Hợp đồng chuyển văn phòng cho doanh nghiệp, có điều khoản bảo hiểm đồ đạc giá trị cao").</Text>
                 </div>
-                <Input.TextArea 
+                <Input.TextArea
                     placeholder="Mô tả mẫu hợp đồng tại đây..."
                     rows={4}
                     value={aiPrompt}
