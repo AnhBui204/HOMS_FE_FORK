@@ -295,21 +295,25 @@ const OrderCard = ({
           <div className="mo-route-point mo-route-point--pickup">
             <div className="mo-route-icon-box"><HomeOutlined /></div>
             <div className="mo-route-info">
-              <span className="mo-route-label">Từ (Nơi đi)</span>
+              <span className="mo-route-label">{ticket.moveType === 'TRUCK_RENTAL' ? 'Điểm lấy xe / Nơi tài xế đón' : 'Từ (Nơi đi)'}</span>
               <span className="mo-route-address">{ticket.pickup?.address || 'Chưa cập nhật'}</span>
             </div>
           </div>
-          <div className="mo-route-divider">
-            <div className="mo-route-line" />
-            <div className="mo-route-distance">Chuyển đến</div>
-          </div>
-          <div className="mo-route-point mo-route-point--delivery">
-            <div className="mo-route-icon-box"><EnvironmentOutlined /></div>
-            <div className="mo-route-info">
-              <span className="mo-route-label">Đến (Nơi đến)</span>
-              <span className="mo-route-address">{ticket.delivery?.address || 'Chưa cập nhật'}</span>
-            </div>
-          </div>
+          {ticket.moveType !== 'TRUCK_RENTAL' && (
+            <>
+              <div className="mo-route-divider">
+                <div className="mo-route-line" />
+                <div className="mo-route-distance">Chuyển đến</div>
+              </div>
+              <div className="mo-route-point mo-route-point--delivery">
+                <div className="mo-route-icon-box"><EnvironmentOutlined /></div>
+                <div className="mo-route-info">
+                  <span className="mo-route-label">Đến (Nơi đến)</span>
+                  <span className="mo-route-address">{ticket.delivery?.address || 'Chưa cập nhật'}</span>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
@@ -522,8 +526,44 @@ const OrderCard = ({
                   </div>
                )}
 
+               {/* TRUCK RENTAL DETAILS */}
+               {ticket.moveType === 'TRUCK_RENTAL' && (
+                   <div style={{ fontSize: 14 }}>
+                       <Row gutter={16}>
+                           <Col span={24}>
+                               <div style={{ background: '#e6f4ff', border: '1px solid #91caff', borderRadius: 10, padding: '14px 18px', marginBottom: 14, height: '100%' }}>
+                                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+                                       <div style={{ background: '#1677ff', borderRadius: 6, padding: '4px 10px', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                                           <CarOutlined style={{ color: '#fff', fontSize: 13 }} />
+                                           <span style={{ color: '#fff', fontWeight: 600, fontSize: 13 }}>Thông tin thuê xe tải tự lái</span>
+                                       </div>
+                                   </div>
+
+                                   <Row gutter={[10, 10]}>
+                                       {[
+                                           { icon: <CarOutlined />, label: 'Loại xe', value: ticket.rentalDetails?.truckType || ticket.truckType || 'Không xác định' },
+                                           { icon: <ClockCircleOutlined />, label: 'Thời gian thuê', value: ticket.rentalDetails?.rentalDurationHours ? `${ticket.rentalDetails.rentalDurationHours} giờ` : 'Không xác định' },
+                                           { icon: <TeamOutlined />, label: 'Kèm tài xế', value: ticket.rentalDetails?.withDriver ? 'Có' : 'Không' },
+                                       ].map((item, i) => (
+                                           <Col span={8} key={i}>
+                                               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 4, padding: '8px 4px', background: '#fff', borderRadius: 8, border: '1px solid #bae0ff' }}>
+                                                   <span style={{ color: '#1677ff', fontSize: 18 }}>{item.icon}</span>
+                                                   <div>
+                                                       <div style={{ fontSize: 11, color: '#888' }}>{item.label}</div>
+                                                       <div style={{ fontWeight: 700, color: '#1677ff', fontSize: 13, lineHeight: '1.2' }}>{item.value}</div>
+                                                   </div>
+                                               </div>
+                                           </Col>
+                                       ))}
+                                   </Row>
+                               </div>
+                           </Col>
+                       </Row>
+                   </div>
+               )}
+
                {/* SURVEY & PRICING */}
-               {surveyDetails && pricingDetails && (
+               {ticket.moveType !== 'TRUCK_RENTAL' && surveyDetails && pricingDetails && (
                    <div style={{ fontSize: 14 }}>
                    <Row gutter={16}>
                        <Col span={8}>
@@ -621,8 +661,11 @@ const OrderCard = ({
                            </div>
                        </Col>
                    </Row>
+                   </div>
+               )}
 
-                   {/* ── SECTION 3: PRICING BREAKDOWN ── */}
+               {/* ── SECTION 3: PRICING BREAKDOWN ── */}
+               {pricingDetails && (
                    <div style={{ background: '#fff', border: '1px solid #e8e8e8', borderRadius: 10, padding: '14px 18px' }}>
                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
                            <div style={{ background: '#44624A', borderRadius: 6, padding: '4px 10px', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
@@ -689,7 +732,6 @@ const OrderCard = ({
                            );
                        })()}
                    </div>
-               </div>
                )}
            </div>
         )}
