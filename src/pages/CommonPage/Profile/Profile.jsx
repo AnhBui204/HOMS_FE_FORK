@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Layout, Button, Avatar, Modal, Form, Input, message, Divider } from 'antd';
-import { UserOutlined, PhoneOutlined, HomeOutlined, EditOutlined } from '@ant-design/icons';
+import { UserOutlined, PhoneOutlined, HomeOutlined, EditOutlined, CameraOutlined } from '@ant-design/icons';
 import { Navigate, useNavigate } from 'react-router-dom';
 
 import AppHeader from '../../../components/header/header';
@@ -10,12 +10,93 @@ import './Profile.css';
 
 const { Content } = Layout;
 
+const ROLE_LABELS = {
+    customer: 'Khách hàng',
+    dispatcher: 'Điều phối viên',
+    driver: 'Tài xế',
+    staff: 'Nhân viên',
+    admin: 'Quản trị viên'
+};
+
+const getRoleLabel = (role) => {
+    if (!role) return 'Khách hàng';
+    return ROLE_LABELS[String(role).toLowerCase()] || role;
+};
+
+const formatCreatedAt = (value) => {
+    if (!value) return 'N/A';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return 'N/A';
+    return date.toLocaleDateString('vi-VN');
+};
+
 const ProfilePage = () => {
-    const { user, setUser, loading, isAuthenticated } = useUser();
+    const { user, setUser, logout, loading, isAuthenticated } = useUser();
     const [editing, setEditing] = useState(false);
+    const [uploadingAvatar, setUploadingAvatar] = useState(false);
     const [form] = Form.useForm();
-    // Avatar upload disabled: keep button but do nothing on click
+    const avatarInputRef = useRef(null);
     const navigate = useNavigate();
+
+    const handleAvatarChange = async (event) => {
+        const file = event.target.files?.[0];
+        event.target.value = '';
+
+        if (!file) return;
+
+        if (!file.type?.startsWith('image/')) {
+            message.error('Vui lòng chọn file ảnh hợp lệ');
+            return;
+        }
+
+        if (file.size > 5 * 1024 * 1024) {
+            message.error('Ảnh đại diện phải nhỏ hơn 5MB');
+            return;
+        }
+
+        try {
+            setUploadingAvatar(true);
+            const { uploadAvatar } = await import('../../../services/userService');
+            const formData = new FormData();
+            formData.append('avatar', file);
+
+            const res = await uploadAvatar(formData);
+            const updated = res.data?.data || res.data;
+
+            if (updated) {
+                setUser(updated);
+            }
+
+            message.success(res.data?.message || 'Đã cập nhật ảnh đại diện');
+        } catch (err) {
+            console.error(err);
+            message.error(err.response?.data?.message || err.message || 'Cập nhật ảnh đại diện thất bại');
+        } finally {
+            setUploadingAvatar(false);
+        }
+    };
+
+    const handleLogoutAllSessions = () => {
+        Modal.confirm({
+            title: 'Đăng xuất tất cả phiên đăng nhập?',
+            content: 'Bạn sẽ cần đăng nhập lại trên tất cả thiết bị.',
+            okText: 'Đăng xuất tất cả',
+            cancelText: 'Hủy',
+            okButtonProps: { danger: true },
+            onOk: async () => {
+                try {
+                    const { logoutAllSessions } = await import('../../../services/userService');
+                    const res = await logoutAllSessions();
+                    message.success(res.data?.message || 'Đã đăng xuất tất cả phiên');
+                    await logout();
+                    navigate('/login');
+                } catch (err) {
+                    console.error(err);
+                    message.error(err.response?.data?.message || err.message || 'Đăng xuất tất cả thất bại');
+                }
+            }
+        });
+    };
 
     // Nếu chưa load xong, hiển thị loading
     if (loading) {
@@ -147,10 +228,23 @@ const ProfilePage = () => {
                                     {user.fullName?.charAt(0)}
                                 </Avatar>
                             <h4>{user.fullName || 'N/A'}</h4>
-                            <p>{user.role || 'Khách hàng'}</p>
+                            <p>{getRoleLabel(user.role)}</p>
 
-                            <Button className="btn-outline" onClick={() => { /* intentionally no-op */ }}>
-                                Đổi ảnh đại diện
+                            <input
+                                ref={avatarInputRef}
+                                type="file"
+                                accept="image/*"
+                                style={{ display: 'none' }}
+                                onChange={handleAvatarChange}
+                            />
+
+                            <Button
+                                className="btn-outline"
+                                icon={<CameraOutlined />}
+                                loading={uploadingAvatar}
+                                onClick={() => avatarInputRef.current?.click()}
+                            >
+                                {uploadingAvatar ? 'Đang tải ảnh...' : 'Đổi ảnh đại diện'}
                             </Button>
                         </div>
                     </div>
@@ -171,16 +265,13 @@ const ProfilePage = () => {
 
                         <div className="profile-row">
                             <span>Vai trò</span>
-                            <strong>{user.role || 'Khách hàng'}</strong>
+                            <strong>{getRoleLabel(user.role)}</strong>
                         </div>
 
                         <div className="profile-row">
                             <span>Ngày tạo tài khoản</span>
                             <strong>
-                                {user.createdAt 
-                                    ? new Date(user.createdAt).toLocaleDateString('vi-VN')
-                                    : 'N/A'
-                                }
+                                {formatCreatedAt(user.createdAt || user.created_at)}
                             </strong>
                         </div>
                     </div>
@@ -208,7 +299,7 @@ const ProfilePage = () => {
 
                         <div className="profile-row">
                             <span>Phiên đăng nhập</span>
-                            <Button danger>
+                            <Button className="btn-danger-premium" danger onClick={handleLogoutAllSessions}>
                                 Đăng xuất tất cả
                             </Button>
                         </div>

@@ -69,13 +69,23 @@
 /* AVATAR */
 .profile-avatar {
     text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
-.profile-avatar img {
-    width: 120px;
-    height: 120px;
-    border-radius: 50%;
-    margin-bottom: 12px;
+.profile-avatar .ant-avatar {
+    margin: 0 auto 12px;
+    border: 6px solid #44624A;
+    box-sizing: border-box;
+}
+
+.profile-avatar .ant-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
 }
 
 .profile-avatar h4 {
@@ -88,18 +98,61 @@
     margin-bottom: 16px;
 }
 
+.profile-avatar .btn-outline {
+    margin-top: 2px;
+}
+
 /* BUTTONS */
 .btn-primary {
     background: #2d4f36;
     color: #fff;
     border-radius: 24px;
     margin-top: 12px;
+    border: 1px solid #2d4f36;
+    transition: transform 0.22s ease, box-shadow 0.22s ease;
 }
 
 .btn-outline {
     border: 1px solid #2d4f36;
     color: #2d4f36;
     border-radius: 24px;
+    transition: transform 0.22s ease, box-shadow 0.22s ease, background-color 0.22s ease;
+}
+
+.btn-primary:hover,
+.btn-primary:focus-visible,
+.btn-outline:hover,
+.btn-outline:focus-visible,
+.btn-danger-premium:hover,
+.btn-danger-premium:focus-visible {
+    transform: translateY(-2px);
+}
+
+.btn-primary:hover,
+.btn-primary:focus-visible {
+    box-shadow: 0 10px 20px rgba(45, 79, 54, 0.24);
+}
+
+.btn-outline:hover,
+.btn-outline:focus-visible {
+    background: rgba(68, 98, 74, 0.08);
+    box-shadow: 0 8px 18px rgba(68, 98, 74, 0.16);
+}
+
+.btn-danger-premium {
+    border-radius: 24px;
+    transition: transform 0.22s ease, box-shadow 0.22s ease, background-color 0.22s ease, color 0.22s ease;
+}
+
+.btn-danger-premium:hover,
+.btn-danger-premium:focus-visible {
+    box-shadow: 0 10px 20px rgba(255, 77, 79, 0.2);
+}
+
+.btn-primary:active,
+.btn-outline:active,
+.btn-danger-premium:active {
+    transform: translateY(0);
 }
 
 /* STATUS */
