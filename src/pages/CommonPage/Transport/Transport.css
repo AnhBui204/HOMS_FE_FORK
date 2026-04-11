@@ -1,0 +1,262 @@
+.transport-page { background: #f6f8fb; min-height: 100vh; }
+.transport-container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+
+:root {
+  /* Fleet / site green palette provided by user */
+  --primary: #44624A; /* main dark green */
+  --primary-dark: #8BA888; /* lighter green */
+  --accent-bg: #C0CFB2; /* soft background green */
+}
+
+.transport-hero { background: linear-gradient(90deg, var(--primary) 0%, var(--primary-dark) 100%); color: #fff; border-radius: 12px; padding: 36px; margin-bottom: 24px; }
+.transport-hero-inner { display: flex; justify-content: space-between; gap: 20px; align-items: center; }
+.transport-quick-search { background: rgba(255,255,255,0.06); padding: 16px; border-radius: 8px; width: 420px; }
+.transport-search-input { width: 100%; border-radius: 6px; }
+.transport-features { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+.feat { color: #fff; display: flex; align-items: center; gap: 8px; }
+
+.transport-panel { border-radius: 12px; box-shadow: 0 6px 20px rgba(16,24,40,0.06); }
+.transport-option-card { border-radius: 12px; transition: transform .18s ease, box-shadow .18s ease; }
+.transport-option-card:hover { transform: translateY(-6px); box-shadow: 0 12px 30px rgba(2,6,23,0.12); }
+.card-top { display: flex; align-items: center; }
+.card-body { display:flex; justify-content:space-between; align-items:center; margin-top:16px; }
+.card-metrics { display:flex; gap:12px; flex-direction:column; }
+.card-cta { display:flex; gap:12px; align-items:center; }
+.price { font-weight:700; font-size:18px; color:var(--primary-dark); display:flex; align-items:center; gap:6px }
+
+.why-choose { display:flex; gap:16px; margin-top:20px; }
+.why-card { display:flex; gap:12px; align-items:flex-start; padding:12px; background:#fff; border-radius:8px; flex:1; }
+.why-icon { font-size:22px; color:var(--primary-dark); background:var(--accent-bg); padding:8px; border-radius:8px; }
+
+.transport-side-card { border-radius:12px; box-shadow:0 6px 20px rgba(16,24,40,0.04); }
+.feature-list { padding-left: 18px; }
+.fleet-list { display:flex; flex-direction:column; gap:12px; }
+.fleet-item { display:flex; gap:10px; align-items:center; }
+
+.transport-cta { margin-top: 28px; }
+.transport-cta-card { border-radius:12px; background: linear-gradient(90deg, var(--accent-bg), #fff); }
+
+@media (max-width: 768px) {
+  .transport-hero-inner { flex-direction: column; align-items: flex-start; }
+
+  .transport-page {
+    background: #f6f8fb;
+  }
+
+  .transport-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px;
+  }
+
+  .info-hero.transport-hero {
+    background: linear-gradient(90deg, var(--primary) 0%, var(--primary-dark) 100%);
+    padding: 56px 24px;
+    border-radius: 8px;
+    margin-bottom: 28px;
+    color: #fff;
+  }
+
+  .transport-hero-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 24px;
+  }
+
+  .hero-features {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .hero-feature {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    color: #fff;
+    padding: 8px 6px;
+  }
+
+  /* Icon style inside each feature */
+  .hero-feature .anticon {
+    font-size: 18px;
+    color: #fff;
+    background: rgba(255,255,255,0.08);
+    padding: 10px;
+    border-radius: 10px;
+    min-width: 44px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .hero-feature > div {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .hero-feature > div .ant-typography {
+    color: rgba(255,255,255,0.95);
+  }
+
+  .hero-feature > div .ant-typography strong,
+  .hero-feature > div .ant-typography-strong {
+    color: #fff;
+    font-weight: 700;
+  }
+
+  @media (min-width: 900px) {
+    .hero-features { grid-template-columns: 1fr 1fr; }
+  }
+
+}
+
+@media (min-width: 900px) {
+  .hero-features { grid-template-columns: 1fr 1fr; }
+}
+
+.transport-panel {
+    padding: 18px;
+  }
+
+  .transport-side-card {
+    padding: 16px;
+  }
+
+  .vehicle-card {
+    border-radius: 8px;
+  }
+
+  .vehicle-top {
+    display: flex;
+    align-items: center;
+  }
+
+  .vehicle-icon {
+    width: 72px;
+    height: 72px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.5), rgba(255,255,255,0.35));
+    box-shadow: 0 6px 18px rgba(6,10,6,0.04);
+  }
+
+  .vehicle-meta {
+    margin-left: 16px;
+  }
+
+  .vehicle-spec {
+    color: rgba(0,0,0,0.45);
+    font-size: 13px;
+    margin-top: 6px;
+  }
+
+  .vehicle-desc {
+    margin-top: 14px;
+    color: rgba(0,0,0,0.65);
+    min-height: 56px;
+  }
+
+  .vehicle-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 18px;
+  }
+
+  .vehicle-badges .ant-tag {
+    /* use solid primary background with white text for better contrast */
+    background: var(--primary) !important;
+    color: #fff !important;
+    border: 1px solid rgba(0,0,0,0.04) !important;
+    margin-right: 8px;
+  }
+
+  .detail-link {
+    color: var(--primary);
+    font-weight: 600;
+  }
+
+  /* Polished card appearance */
+  .vehicle-card {
+    border-radius: 12px;
+    padding: 22px;
+    transition: transform .18s ease, box-shadow .18s ease;
+    background: #fff;
+  }
+  .vehicle-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 18px 40px rgba(10,20,12,0.06);
+  }
+
+  /* Side card polish */
+  .transport-side-card {
+    padding: 20px;
+  }
+
+  /* Make primary outline consistent on smaller CTAs */
+  .transport-page .outline-primary {
+    border-radius: 8px;
+    padding: 6px 14px;
+  }
+
+  .info-list {
+    padding-left: 18px;
+  }
+
+  .transport-cta {
+    margin-top: 26px;
+  }
+
+  .transport-cta-card {
+    padding: 18px;
+  }
+
+  /* small helpers */
+  .transport-hero .ant-typography {
+    color: #fff;
+  }
+
+  .transport-page .ant-card {
+    box-shadow: 0 2px 8px rgba(9,45,66,0.04);
+  }
+
+  /* Local override so primary buttons on this page match the transport palette */
+  .transport-page .ant-btn-primary,
+  .transport-page .transport-side-card .ant-btn-primary {
+    background: var(--primary) !important;
+    border-color: var(--primary) !important;
+    color: #fff !important;
+  }
+  .transport-page .ant-btn-primary:hover,
+  .transport-page .ant-btn-primary:focus,
+  .transport-page .ant-btn-primary:active,
+  .transport-page .transport-side-card .ant-btn-primary:hover,
+  .transport-page .transport-side-card .ant-btn-primary:focus,
+  .transport-page .transport-side-card .ant-btn-primary:active {
+    /* Keep hover/focus/active consistent with the transport palette */
+    background: var(--primary-dark) !important;
+    border-color: var(--primary-dark) !important;
+    color: #fff !important;
+  }
+
+  /* Outline primary style used for 'Tìm hiểu thêm' on this page */
+  .transport-page .outline-primary {
+    background: #fff;
+    color: var(--primary);
+    border: 1px solid var(--primary);
+    box-shadow: none;
+  }
+  .transport-page .outline-primary:hover,
+  .transport-page .outline-primary:focus,
+  .transport-page .outline-primary:active {
+    /* keep the same look on hover/focus/active */
+    background: #fff !important;
+    color: var(--primary) !important;
+    border-color: var(--primary) !important;
+    box-shadow: none !important;
+  }
