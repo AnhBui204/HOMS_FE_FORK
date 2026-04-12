@@ -50,6 +50,16 @@ const adminStatisticService = {
         }
     }
     ,
+    // Get canonical conversion metrics from backend (total requests, successful orders, pie-ready data)
+    getConversion: async (params) => {
+        try {
+            const response = await api.get('/admin/dashboard/conversion', { params });
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching conversion metrics', error);
+            throw error;
+        }
+    },
     // Fetch dispatcher stats (includes global invoice counts grouped by status)
     getDispatcherStats: async () => {
         try {
