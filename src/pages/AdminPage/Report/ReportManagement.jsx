@@ -75,6 +75,23 @@ const ReportManagement = () => {
         await loadData({ page: 1, limit, search: searchText, type: filterType, status: filterStatus });
     };
 
+    const exportReports = () => {
+        // Build query string from current filters
+        const params = new URLSearchParams();
+        if (searchText) params.append('search', searchText);
+        if (filterType) params.append('type', filterType);
+        if (filterStatus) params.append('status', filterStatus);
+        // request a large limit so backend exports all matching rows (backend also defaults to 10000)
+        params.append('page', '1');
+        params.append('limit', '10000');
+
+        const url = `${API_BASE}/api/admin/incidents/export?${params.toString()}`;
+        // Navigate browser to the export URL to trigger download
+        // This will include cookies for same-origin requests. If your API is cross-origin
+        // ensure CORS and credentials are configured server-side.
+        window.location.href = url;
+    };
+
     const [resolveStatus, setResolveStatus] = useState(null);
     const [resolveAction, setResolveAction] = useState(null);
     const [compensationAmount, setCompensationAmount] = useState(0);
@@ -234,7 +251,7 @@ const ReportManagement = () => {
                     <Col xs={24} sm={24} md={6} lg={9} style={{ textAlign: 'right' }}>
                         <Space>
                             <Button type="primary" icon={<SearchOutlined />} onClick={handleSearch} style={{ backgroundColor: PRIMARY, borderColor: PRIMARY }}>Tìm</Button>
-                            <Button icon={<ExportOutlined />}>Xuất báo cáo</Button>
+                            <Button icon={<ExportOutlined />} onClick={exportReports}>Xuất báo cáo</Button>
                             <Button icon={<SyncOutlined />} onClick={() => { setSearchText(''); setFilterType('all'); setFilterStatus('all'); loadData(); }}>Làm mới</Button>
                         </Space>
                     </Col>
