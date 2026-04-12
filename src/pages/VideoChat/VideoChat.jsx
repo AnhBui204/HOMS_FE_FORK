@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import io from 'socket.io-client';
 import { useSearchParams, useLocation } from 'react-router-dom';
-import { Layout } from 'antd';
+import { Layout, Badge } from 'antd';
 import { 
   VideoCameraOutlined, 
   CloseOutlined, 
@@ -9,7 +9,10 @@ import {
   PhoneOutlined, 
   AudioMutedOutlined, 
   AudioOutlined, 
-  VideoCameraAddOutlined 
+  VideoCameraAddOutlined,
+  MessageOutlined,
+  TeamOutlined,
+  LoadingOutlined,
 } from '@ant-design/icons';
 import AppHeader from '../../components/header/header';
 import AppFooter from '../../components/footer/footer';
@@ -28,6 +31,20 @@ const iceServers = {
   ]
 };
 
+const STATUS_MAP = {
+  CREATED:         { label: 'Mới tạo',            color: '#6b7280' },
+  WAITING_SURVEY:  { label: 'Chờ khảo sát',        color: '#f59e0b' },
+  SURVEYED:        { label: 'Đã khảo sát',          color: '#3b82f6' },
+  QUOTED:          { label: 'Đã báo giá',           color: '#8b5cf6' },
+  ACCEPTED:        { label: 'Đã chấp nhận',         color: '#10b981' },
+  IN_PROGRESS:     { label: 'Đang thực hiện',       color: '#f97316' },
+  COMPLETED:       { label: 'Hoàn thành',           color: '#22c55e' },
+  CANCELLED:       { label: 'Đã hủy',              color: '#ef4444' },
+  WAITING_REVIEW:  { label: 'Chờ xem xét',          color: '#a855f7' },
+};
+
+const getStatus = (status) => STATUS_MAP[status] || { label: status, color: '#6b7280' };
+
 const { Content } = Layout;
 
 function VideoChat() {
@@ -41,21 +58,18 @@ function VideoChat() {
   const [socket, setSocket] = useState(null);
   const [joined, setJoined] = useState(false);
   const [roomId, setRoomId] = useState(initialRoomId);
-  // Default to full name or email
-  const userName = user?.fullName || user?.email || 'User';
+  const userName = user?.fullName || user?.email || 'Người dùng';
 
   const activeTicket = dispatcherTickets.find(t => t.code === roomId);
   const receiverName = isCustomer 
-    ? 'Hỗ trợ' 
+    ? 'Nhân viên hỗ trợ' 
     : (activeTicket?.customerId?.fullName || activeTicket?.customer?.fullName || 'Khách hàng');
   
   const [messages, setMessages] = useState([]);
   const [messageInput, setMessageInput] = useState('');
   
-  // Call State
   const [isInCall, setIsInCall] = useState(false);
   const [incomingCallFrom, setIncomingCallFrom] = useState(null);
-
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
 
@@ -63,11 +77,8 @@ function VideoChat() {
   const remoteVideoRef = useRef(null);
   const messagesEndRef = useRef(null);
   const chatContainerRef = useRef(null);
-  
   const peerConnectionRef = useRef(null);
   const localStreamRef = useRef(null);
-  
-  // Ref to queue ICE candidates received before the remote description is fully set
   const pendingCandidatesRef = useRef([]);
 
   // Setup Socket connection with authentication
@@ -78,35 +89,27 @@ function VideoChat() {
       try {
         const token = await getValidAccessToken();
         const BASE_URL = process.env.REACT_APP_SOCKET_URL || (process.env.REACT_APP_API_URL && process.env.REACT_APP_API_URL.replace(/\/api$/, '')) || 'http://localhost:5000';
-        // Connect to the specialized /video-chat namespace
         newSocket = io(`${BASE_URL}/video-chat`, {
           auth: { token },
           transports: ['websocket', 'polling']
         });
 
         newSocket.on('connect', () => {
-          console.log('[VideoChat] Connected to socket server');
           setSocket(newSocket);
-          // Auto join room
           newSocket.emit('join_room', roomId);
           setJoined(true);
         });
 
         newSocket.on('connect_error', (err) => {
-          console.error('[VideoChat] Socket connection error:', err.message);
+          console.error('[VideoChat] Lỗi kết nối socket:', err.message);
         });
       } catch (err) {
-        console.error('[VideoChat] Error connecting socket', err);
+        console.error('[VideoChat] Lỗi khởi tạo socket', err);
       }
     };
     
     initializeSocket();
-
-    return () => {
-      if (newSocket) {
-        newSocket.disconnect();
-      }
-    };
+    return () => { if (newSocket) newSocket.disconnect(); };
   }, [roomId]);
 
   // Fetch tickets for dispatcher sidebar
@@ -114,14 +117,11 @@ function VideoChat() {
     if (!isCustomer && user) {
       const fetchTickets = async () => {
         try {
-          // Specify dispatcherId to ensure we only get tickets assigned uniquely to them
           const dId = user.userId || user.id || user._id;
           const res = await api.get(`/request-tickets?dispatcherId=${dId}`);
-          if (res.data?.success) {
-            setDispatcherTickets(res.data.data);
-          }
+          if (res.data?.success) setDispatcherTickets(res.data.data);
         } catch (err) {
-          console.error("Failed to fetch dispatcher tickets:", err);
+          console.error('Không thể tải danh sách đơn hàng:', err);
         }
       };
       fetchTickets();
@@ -143,28 +143,22 @@ function VideoChat() {
       const formattedHistory = history.map(msg => ({
         message: msg.content,
         sender: msg.senderName,
-        time: new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        time: new Date(msg.timestamp).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
       }));
       setMessages(formattedHistory);
     };
     
-    const handleReceiveMessage = (data) => {
-      setMessages((prev) => [...prev, data]);
-    };
-    const handleUserJoined = ({ userId, user: joinedUser }) => {
-      console.log('User joined room', userId, joinedUser);
-    };
+    const handleReceiveMessage = (data) => setMessages((prev) => [...prev, data]);
+    const handleUserJoined = ({ userId }) => console.log('Người dùng tham gia phòng:', userId);
     const handleOffer = async ({ caller, offer, callerName }) => {
-      console.log('Received offer from', caller);
       setIncomingCallFrom({ callerId: caller, callerName, offer });
     };
     const handleAnswer = async ({ answer }) => {
-      console.log('Received answer');
       try {
         await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(answer));
         processPendingCandidates();
       } catch (err) {
-        console.error('Error handling answer:', err);
+        console.error('Lỗi xử lý phản hồi cuộc gọi:', err);
       }
     };
     const handleIceCandidate = async ({ candidate }) => {
@@ -173,21 +167,15 @@ function VideoChat() {
           if (peerConnectionRef.current.remoteDescription) {
             await peerConnectionRef.current.addIceCandidate(new RTCIceCandidate(candidate));
           } else {
-            console.log('Queueing ICE candidate (remote description not set yet)');
             pendingCandidatesRef.current.push(candidate);
           }
         }
       } catch (err) {
-        console.warn('ICE candidate error (often safely ignored if it arrived early):', err);
+        console.warn('Lỗi ICE candidate (có thể bỏ qua):', err);
       }
     };
-    const handleUserDisconnected = () => {
-      console.log('Remote user disconnected');
-      endCall();
-    };
-    const handleCallEnded = () => {
-       endCall();
-    };
+    const handleUserDisconnected = () => endCall();
+    const handleCallEnded = () => endCall();
 
     socket.on('chat_history', handleChatHistory);
     socket.on('receive_message', handleReceiveMessage);
@@ -211,15 +199,15 @@ function VideoChat() {
   }, [socket]);
 
   const processPendingCandidates = () => {
-    if (peerConnectionRef.current && peerConnectionRef.current.remoteDescription) {
+    if (peerConnectionRef.current?.remoteDescription) {
       pendingCandidatesRef.current.forEach(async (candidate) => {
         try {
           await peerConnectionRef.current.addIceCandidate(new RTCIceCandidate(candidate));
         } catch (e) {
-          console.error("Error adding queued candidate", e);
+          console.error('Lỗi thêm ICE candidate:', e);
         }
       });
-      pendingCandidatesRef.current = []; // Clear queue
+      pendingCandidatesRef.current = [];
     }
   };
 
@@ -227,19 +215,17 @@ function VideoChat() {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
       localStreamRef.current = stream;
-      if (localVideoRef.current) {
-        localVideoRef.current.srcObject = stream;
-      }
+      if (localVideoRef.current) localVideoRef.current.srcObject = stream;
       return stream;
     } catch (err) {
-      console.error('Failed to get media devices:', err);
-      alert('Could not access camera/microphone. Please allow permissions.');
+      console.error('Không thể truy cập camera/microphone:', err);
+      alert('Không thể truy cập camera hoặc microphone. Vui lòng cấp quyền và thử lại.');
       return null;
     }
   };
 
   const createPeerConnection = (targetUserId) => {
-    pendingCandidatesRef.current = []; // Reset queue for new connection
+    pendingCandidatesRef.current = [];
     peerConnectionRef.current = new RTCPeerConnection(iceServers);
 
     if (localStreamRef.current) {
@@ -264,80 +250,62 @@ function VideoChat() {
   const initiateCall = async () => {
     const stream = await startMediaStream();
     if (!stream) return;
-
     setIsInCall(true);
-    createPeerConnection(roomId); 
-
+    createPeerConnection(roomId);
     try {
       const offer = await peerConnectionRef.current.createOffer();
       await peerConnectionRef.current.setLocalDescription(offer);
       socket.emit('offer', { target: roomId, caller: socket.id, callerName: userName, offer });
     } catch (err) {
-      console.error('Error creating offer:', err);
+      console.error('Lỗi tạo offer:', err);
     }
   };
 
   const answerCall = async () => {
     if (!incomingCallFrom) return;
-    
     const stream = await startMediaStream();
-    if (!stream) {
-      setIncomingCallFrom(null); 
-      return; 
-    }
-
+    if (!stream) { setIncomingCallFrom(null); return; }
     setIsInCall(true);
     createPeerConnection(incomingCallFrom.callerId);
-
     try {
       await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(incomingCallFrom.offer));
       processPendingCandidates();
-      
       const answer = await peerConnectionRef.current.createAnswer();
       await peerConnectionRef.current.setLocalDescription(answer);
       socket.emit('answer', { target: incomingCallFrom.callerId, answer });
       setIncomingCallFrom(null);
     } catch (err) {
-      console.error('Error handling offer:', err);
+      console.error('Lỗi chấp nhận cuộc gọi:', err);
     }
   };
 
-  const declineCall = () => {
-    setIncomingCallFrom(null);
-  };
+  const declineCall = () => setIncomingCallFrom(null);
 
   const endCall = () => {
     setIsInCall(false);
     setIncomingCallFrom(null);
-    
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach(track => track.stop());
       localStreamRef.current = null;
     }
     if (localVideoRef.current) localVideoRef.current.srcObject = null;
     if (remoteVideoRef.current) remoteVideoRef.current.srcObject = null;
-    
     if (peerConnectionRef.current) {
       peerConnectionRef.current.close();
       peerConnectionRef.current = null;
     }
-    
-    if (socket) {
-        socket.emit('call_ended', { roomId });
-    }
+    if (socket) socket.emit('call_ended', { roomId });
   };
 
   const handleSendMessage = (e) => {
     e.preventDefault();
     if (!messageInput.trim() || !socket) return;
-
     const data = {
       roomId,
       message: messageInput,
       sender: userName,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
     };
-
     socket.emit('send_message', data);
     setMessageInput('');
   };
@@ -345,20 +313,14 @@ function VideoChat() {
   const toggleVideo = () => {
     if (localStreamRef.current) {
       const videoTrack = localStreamRef.current.getVideoTracks()[0];
-      if (videoTrack) {
-        videoTrack.enabled = !videoTrack.enabled;
-        setIsVideoEnabled(videoTrack.enabled);
-      }
+      if (videoTrack) { videoTrack.enabled = !videoTrack.enabled; setIsVideoEnabled(videoTrack.enabled); }
     }
   };
 
   const toggleAudio = () => {
     if (localStreamRef.current) {
       const audioTrack = localStreamRef.current.getAudioTracks()[0];
-      if (audioTrack) {
-        audioTrack.enabled = !audioTrack.enabled;
-        setIsAudioEnabled(audioTrack.enabled);
-      }
+      if (audioTrack) { audioTrack.enabled = !audioTrack.enabled; setIsAudioEnabled(audioTrack.enabled); }
     }
   };
 
@@ -371,10 +333,11 @@ function VideoChat() {
   const renderContent = () => {
     if (!roomId) {
       return (
-        <div className="app-container">
-          <div className="panel login-container" style={{ textAlign: 'center', padding: '40px' }}>
-              <h3>Select a conversation to start</h3>
-              <p>Please choose a ticket from the sidebar to view the chat and video call interface.</p>
+        <div className="vc-app-container">
+          <div className="vc-empty-state">
+            <div className="vc-empty-icon"><MessageOutlined /></div>
+            <h3>Chọn một cuộc trò chuyện</h3>
+            <p>Vui lòng chọn đơn hàng từ danh sách bên trái để bắt đầu chat.</p>
           </div>
         </div>
       );
@@ -382,120 +345,152 @@ function VideoChat() {
 
     if (!joined || !socket) {
       return (
-        <div className="app-container">
-          <div className="panel login-container">
-              <h3>Connecting to secure room...</h3>
+        <div className="vc-app-container">
+          <div className="vc-empty-state">
+            <div className="vc-empty-icon vc-loading"><LoadingOutlined /></div>
+            <h3>Đang kết nối phòng bảo mật...</h3>
+            <p>Vui lòng chờ trong giây lát.</p>
           </div>
         </div>
       );
     }
 
     return (
-      <div className="app-container">
-      
-      {incomingCallFrom && !isInCall && (
-        <div className="incoming-call-modal">
-          <div className="panel modal-content">
-            <h3>Incoming Video Call</h3>
-            <p>{incomingCallFrom.callerName || 'Someone'} is calling you...</p>
-            <div className="modal-actions">
-              <button className="btn-control danger" onClick={declineCall} title="Decline">
-                <CloseOutlined style={{ fontSize: '20px' }} />
-              </button>
-              <button className="btn-control success" onClick={answerCall} title="Accept">
-                <PhoneOutlined style={{ fontSize: '20px' }} />
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <div className="vc-app-container">
 
-      <div className={`workspace-container ${isCustomer ? 'customer-workspace' : 'dispatcher-workspace'}`}>
-        
-        {/* Chat Area */}
-        <div className={isInCall ? "panel chat-section split-hidden-mobile" : "panel chat-section"} id="mobile-chat-toggle">
-          <div className="chat-header">
-            <div>
-              {receiverName} <span className="room-badge">{roomId}</span>
-            </div>
-            {!isInCall && (
-              <button className="btn-control primary-outline" style={{ width: '36px', height: '36px' }} onClick={initiateCall} title="Start Video Call">
-                <VideoCameraAddOutlined style={{ fontSize: '1.2rem' }} />
-              </button>
-            )}
-          </div>
-          
-          <div className="chat-messages" ref={chatContainerRef}>
-            {messages.map((msg, idx) => {
-              const isMine = msg.sender === userName;
-              return (
-                <div key={idx} className={`message ${isMine ? 'message-mine' : 'message-other'}`}>
-                  {!isMine && <div className="message-sender">{msg.sender} • {msg.time}</div>}
-                  {isMine && <div className="message-sender" style={{textAlign: 'right'}}>{msg.time}</div>}
-                  <div>{msg.message}</div>
-                </div>
-              );
-            })}
-            <div ref={messagesEndRef} />
-          </div>
-
-          <form className="chat-input-area" onSubmit={handleSendMessage}>
-            <input 
-              className="standard-input" 
-              placeholder="Type a message..." 
-              value={messageInput}
-              onChange={(e) => setMessageInput(e.target.value)}
-              style={{ flex: 1 }}
-            />
-            <button type="submit" className="btn-send" style={{ display: 'flex', alignItems: 'center', justifyItems: 'center', padding: '0 16px' }}>
-              <SendOutlined style={{ fontSize: '18px' }} />
-            </button>
-          </form>
-        </div>
-
-        {/* Video Area */}
-        {isInCall && (
-          <div className="panel video-section">
-            <div className="header-bar">
-              <div className="header-title">Live Call <span className="room-badge">{roomId}</span></div>
-            </div>
-            
-            <div className="video-grid">
-              <div className="video-wrapper">
-                <video 
-                  ref={localVideoRef} 
-                  autoPlay 
-                  playsInline 
-                  muted 
-                  className="video-element"
-                />
-                <div className="video-label">{userName} (You)</div>
+        {/* Incoming Call Modal */}
+        {incomingCallFrom && !isInCall && (
+          <div className="vc-incoming-overlay">
+            <div className="vc-incoming-modal">
+              <div className="vc-incoming-pulse">
+                <PhoneOutlined className="vc-incoming-phone-icon" />
               </div>
-              <div className="video-wrapper">
-                <video 
-                  ref={remoteVideoRef} 
-                  autoPlay 
-                  playsInline 
-                  className="video-element remote-video"
-                />
-                <div className="video-label">Remote User</div>
+              <h3>Cuộc gọi video đến</h3>
+              <p><strong>{incomingCallFrom.callerName || 'Ai đó'}</strong> đang gọi cho bạn...</p>
+              <div className="vc-incoming-actions">
+                <button className="vc-btn-decline" onClick={declineCall} title="Từ chối">
+                  <CloseOutlined />
+                  <span>Từ chối</span>
+                </button>
+                <button className="vc-btn-accept" onClick={answerCall} title="Chấp nhận">
+                  <PhoneOutlined />
+                  <span>Chấp nhận</span>
+                </button>
               </div>
-            </div>
-
-            <div className="controls-bar">
-              <button className="btn-control" onClick={toggleAudio} title="Toggle Audio">
-                {isAudioEnabled ? <AudioOutlined style={{ fontSize: '20px' }} /> : <AudioMutedOutlined style={{ fontSize: '20px', color: '#ff4d4f' }} />}
-              </button>
-              <button className="btn-control" onClick={toggleVideo} title="Toggle Video">
-                <VideoCameraOutlined style={{ fontSize: '20px', color: isVideoEnabled ? 'inherit' : '#ff4d4f' }} />
-              </button>
-              <button className="btn-control danger" onClick={endCall} title="End Call">
-                <CloseOutlined style={{ fontSize: '20px' }} />
-              </button>
             </div>
           </div>
         )}
-      </div>
+
+        <div className={`vc-workspace ${isCustomer ? 'vc-workspace--customer' : 'vc-workspace--dispatcher'}`}>
+          
+          {/* Chat Panel */}
+          <div className={`vc-panel vc-chat-panel ${isInCall ? 'vc-chat-panel--split' : ''}`}>
+            <div className="vc-chat-header">
+              <div className="vc-chat-header-info">
+                <div className="vc-avatar">{receiverName.charAt(0).toUpperCase()}</div>
+                <div>
+                  <div className="vc-chat-header-name">{receiverName}</div>
+                  <div className="vc-room-badge">
+                    <span className="vc-room-dot" />
+                    {roomId}
+                  </div>
+                </div>
+              </div>
+              {!isInCall && (
+                <button
+                  className="vc-btn-video-start"
+                  onClick={initiateCall}
+                  title="Bắt đầu cuộc gọi video"
+                >
+                  <VideoCameraAddOutlined />
+                </button>
+              )}
+            </div>
+            
+            <div className="vc-messages" ref={chatContainerRef}>
+              {messages.length === 0 && (
+                <div className="vc-messages-empty">
+                  <MessageOutlined style={{ fontSize: 28, opacity: 0.3 }} />
+                  <p>Chưa có tin nhắn nào. Hãy bắt đầu cuộc trò chuyện!</p>
+                </div>
+              )}
+              {messages.map((msg, idx) => {
+                const isMine = msg.sender === userName;
+                return (
+                  <div key={idx} className={`vc-message ${isMine ? 'vc-message--mine' : 'vc-message--other'}`}>
+                    {!isMine && <div className="vc-message-sender">{msg.sender}</div>}
+                    <div className="vc-message-bubble">{msg.message}</div>
+                    <div className="vc-message-time">{msg.time}</div>
+                  </div>
+                );
+              })}
+              <div ref={messagesEndRef} />
+            </div>
+
+            <form className="vc-chat-input" onSubmit={handleSendMessage}>
+              <input
+                className="vc-input"
+                placeholder="Nhập tin nhắn..."
+                value={messageInput}
+                onChange={(e) => setMessageInput(e.target.value)}
+              />
+              <button type="submit" className="vc-btn-send">
+                <SendOutlined />
+              </button>
+            </form>
+          </div>
+
+          {/* Video Panel */}
+          {isInCall && (
+            <div className="vc-panel vc-video-panel">
+              <div className="vc-video-header">
+                <div className="vc-video-header-title">
+                  <span className="vc-live-dot" />
+                  Đang gọi trực tiếp
+                </div>
+                <span className="vc-room-badge vc-room-badge--dark">{roomId}</span>
+              </div>
+              
+              <div className="vc-video-grid">
+                <div className="vc-video-wrapper">
+                  <video ref={localVideoRef} autoPlay playsInline muted className="vc-video" />
+                  <div className="vc-video-label">{userName} (Bạn)</div>
+                </div>
+                <div className="vc-video-wrapper">
+                  <video ref={remoteVideoRef} autoPlay playsInline className="vc-video vc-video--remote" />
+                  <div className="vc-video-label">{receiverName}</div>
+                </div>
+              </div>
+
+              <div className="vc-controls">
+                <button
+                  className={`vc-ctrl-btn ${!isAudioEnabled ? 'vc-ctrl-btn--off' : ''}`}
+                  onClick={toggleAudio}
+                  title={isAudioEnabled ? 'Tắt micro' : 'Bật micro'}
+                >
+                  {isAudioEnabled ? <AudioOutlined /> : <AudioMutedOutlined />}
+                  <span>{isAudioEnabled ? 'Micro' : 'Đã tắt'}</span>
+                </button>
+                <button
+                  className="vc-ctrl-btn vc-ctrl-btn--end"
+                  onClick={endCall}
+                  title="Kết thúc cuộc gọi"
+                >
+                  <PhoneOutlined style={{ transform: 'rotate(135deg)' }} />
+                  <span>Kết thúc</span>
+                </button>
+                <button
+                  className={`vc-ctrl-btn ${!isVideoEnabled ? 'vc-ctrl-btn--off' : ''}`}
+                  onClick={toggleVideo}
+                  title={isVideoEnabled ? 'Tắt camera' : 'Bật camera'}
+                >
+                  <VideoCameraOutlined />
+                  <span>{isVideoEnabled ? 'Camera' : 'Đã tắt'}</span>
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     );
   };
@@ -503,43 +498,51 @@ function VideoChat() {
   const renderSidebar = () => {
     if (isCustomer) return null;
     return (
-      <div className="chat-sidebar" style={{ width: 300, borderRight: '1px solid #e0e0e0', background: '#f1ebe1', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ padding: '16px', borderBottom: '1px solid #c0cfb2', background: '#8ba888', color: '#fff' }}>
-          <h3 style={{ margin: 0, color: '#fff', fontSize: 16 }}>Đơn hàng quản lý</h3>
-          <div style={{ fontSize: 12, color: '#f1ebe1', marginTop: 4 }}>Chọn đơn để vào phòng chat</div>
+      <div className="vc-sidebar">
+        <div className="vc-sidebar-header">
+          <TeamOutlined className="vc-sidebar-header-icon" />
+          <div>
+            <div className="vc-sidebar-title">Đơn hàng quản lý</div>
+            <div className="vc-sidebar-subtitle">Chọn đơn để vào phòng chat</div>
+          </div>
         </div>
-        <div style={{ flex: 1, overflowY: 'auto' }}>
+        <div className="vc-sidebar-list">
           {dispatcherTickets.map(ticket => {
             const isActive = roomId === ticket.code;
+            const statusInfo = getStatus(ticket.status);
+            const customerName = ticket.customerId?.fullName || ticket.customer?.fullName || 'Khách hàng';
             return (
-              <div 
+              <div
                 key={ticket._id}
+                className={`vc-sidebar-item ${isActive ? 'vc-sidebar-item--active' : ''}`}
                 onClick={() => {
-                   if (roomId !== ticket.code) {
-                     setMessages([]); // prevent flashing old history
-                     setRoomId(ticket.code);
-                     setSearchParams({ room: ticket.code });
-                   }
-                }}
-                style={{ 
-                  padding: '12px 16px', 
-                  borderBottom: '1px solid #c0cfb2', 
-                  cursor: 'pointer',
-                  background: isActive ? '#c0cfb2' : 'transparent',
-                  borderLeft: isActive ? '3px solid #44624a' : '3px solid transparent',
-                  transition: 'background 0.2s'
+                  if (roomId !== ticket.code) {
+                    setMessages([]);
+                    setRoomId(ticket.code);
+                    setSearchParams({ room: ticket.code });
+                  }
                 }}
               >
-                <div style={{ fontWeight: 600, color: isActive ? '#44624a' : '#333' }}>#{ticket.code?.slice(-10)}</div>
-                <div style={{ fontSize: 13, color: '#44624a', marginTop: 4 }}>{ticket.customerId?.fullName || ticket.customer?.fullName || 'Khách hàng'}</div>
-                <div style={{ fontSize: 11, color: '#555', marginTop: 4 }}>
-                   Trạng thái: <strong style={{ color: '#44624a' }}>{ticket.status}</strong>
+                <div className="vc-sidebar-item-avatar">{customerName.charAt(0).toUpperCase()}</div>
+                <div className="vc-sidebar-item-info">
+                  <div className="vc-sidebar-item-name">{customerName}</div>
+                  <div className="vc-sidebar-item-code">#{ticket.code?.slice(-10)}</div>
+                  <div className="vc-sidebar-item-status">
+                    <span
+                      className="vc-status-dot"
+                      style={{ background: statusInfo.color }}
+                    />
+                    <span style={{ color: statusInfo.color, fontWeight: 600 }}>{statusInfo.label}</span>
+                  </div>
                 </div>
               </div>
             );
           })}
           {dispatcherTickets.length === 0 && (
-            <div style={{ padding: '24px', textAlign: 'center', color: '#8ba888' }}>Không có đơn hàng nào</div>
+            <div className="vc-sidebar-empty">
+              <TeamOutlined style={{ fontSize: 28, opacity: 0.3 }} />
+              <p>Không có đơn hàng nào</p>
+            </div>
           )}
         </div>
       </div>
@@ -548,9 +551,9 @@ function VideoChat() {
 
   if (isCustomer) {
     return (
-      <Layout className="video-chat-customer-layout">
+      <Layout className="vc-layout">
         <AppHeader />
-        <Content style={{ minHeight: '80vh', padding: 0, background: '#f5f5f5' }}>
+        <Content className="vc-layout-content">
           {renderContent()}
         </Content>
         <AppFooter />
@@ -559,9 +562,9 @@ function VideoChat() {
   }
 
   return (
-    <div style={{ display: 'flex', height: 'calc(100vh - 120px)', width: '100%', borderRadius: 8, overflow: 'hidden', border: '1px solid #e0e0e0' }}>
+    <div className="vc-dispatcher-root">
       {renderSidebar()}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#f9f9f9' }}>
+      <div className="vc-dispatcher-main">
         {renderContent()}
       </div>
     </div>
