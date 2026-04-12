@@ -403,7 +403,13 @@ const Dashboard = () => {
                                         <div className="qa-icon"><DollarOutlined style={{ fontSize: 28 }} /></div>
                                         <div className="qa-title">Xem Bảng Giá</div>
                                     </div>
-                                    <div className="qa-card" onClick={() => handleQuickAction('/customer/support')}>
+                                    <div className="qa-card" onClick={() => {
+                                        if (activeTicket) {
+                                            handleQuickAction(`/customer/video-chat?room=${activeTicket.code}`);
+                                        } else {
+                                            message.info("Bạn chưa có đơn hàng nào để liên hệ hỗ trợ!");
+                                        }
+                                    }}>
                                         <div className="qa-icon"><PhoneCall size={28} /></div>
                                         <div className="qa-title">Liên Hệ Hỗ Trợ</div>
                                     </div>

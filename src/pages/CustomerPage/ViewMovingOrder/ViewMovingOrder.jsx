@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Layout, Modal, message, Spin, Tour, Button, ConfigProvider, Row, Col, Tag, Divider, Typography, Tooltip, Empty } from "antd";
 import viVN from 'antd/locale/vi_VN';
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   EnvironmentOutlined,
   HomeOutlined,
@@ -171,6 +171,7 @@ const OrderCard = ({
   const [dispatchDetails, setDispatchDetails] = useState(null);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const [hasFetchedDetails, setHasFetchedDetails] = useState(false);
+  const navigate = useNavigate();
 
   const fetchAdditionalDetails = async () => {
     if (hasFetchedDetails) return;
@@ -420,7 +421,7 @@ const OrderCard = ({
           {ticket.status !== 'QUOTED' && (
             <button
               className="mo-btn mo-btn--contact"
-              onClick={() => window.open(`/customer/video-chat?room=${ticket.code}`, '_blank')}
+              onClick={() => navigate(`/customer/video-chat?room=${ticket.code}`)}
             >
               <PhoneOutlined /> CSKH
             </button>
