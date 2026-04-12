@@ -1,6 +1,7 @@
 {
   "name": "homs_fe",
   "version": "1.0.0",
+  "homepage": "/",
   "description": "HOMS - Home Moving Service Frontend",
   "private": true,
   "dependencies": {
