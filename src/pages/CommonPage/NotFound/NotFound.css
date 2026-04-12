@@ -1,0 +1,38 @@
+.not-found-container {
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f0f2f5;
+    background-image: radial-gradient(#e6f7ff 1px, transparent 1px);
+    background-size: 20px 20px;
+}
+
+.not-found-container .ant-result-title {
+    font-size: 120px;
+    font-weight: 800;
+    color: #1890ff;
+    line-height: 1;
+    margin-bottom: 24px;
+}
+
+.not-found-container .ant-result-subtitle {
+    font-size: 20px;
+    color: #595959;
+}
+
+.not-found-container .home-button {
+    height: 50px;
+    padding: 0 40px;
+    font-size: 18px;
+    border-radius: 25px;
+    background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+    border: none;
+    box-shadow: 0 4px 15px rgba(24, 144, 255, 0.3);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.not-found-container .home-button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(24, 144, 255, 0.4);
+}

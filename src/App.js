@@ -17,6 +17,7 @@ import RoutesCus from "./routes/CustomerRoutes/RoutesCus";
 import RoutesAdmin from "./routes/AdminRoutes/RoutesAdmin";
 import RoutesDispatcher from './routes/DispatcherRoutes/DispatcherRoutes';
 import RoutesStaff from "./routes/StaffRoutes/RoutesStaff";
+import NotFound from "./pages/CommonPage/NotFound/NotFound";
 import { initCsrfToken } from './services/api';
 import ScrollToTop from "./components/common/ScrollToTop";
 
@@ -50,6 +51,7 @@ function App() {
             <Route path="/admin/*" element={<RoutesAdmin />} />
             <Route path="/dispatcher/*" element={<RoutesDispatcher />} />
             <Route path="/staff/*" element={<RoutesStaff />} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </UserProvider>
       </BrowserRouter>
