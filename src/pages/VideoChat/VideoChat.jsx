@@ -21,15 +21,37 @@ import { getValidAccessToken } from '../../services/authService';
 import api from '../../services/api';
 import './VideoChat.css';
 
+// STUN + TURN servers — TURN is required in production so media can be
+// relayed when peers are behind symmetric NAT (common on Render/cloud).
 const iceServers = {
   iceServers: [
+    // STUN — discover public IP
     { urls: 'stun:stun.l.google.com:19302' },
     { urls: 'stun:stun1.l.google.com:19302' },
-    { urls: 'stun:stun2.l.google.com:19302' },
-    { urls: 'stun:stun3.l.google.com:19302' },
-    { urls: 'stun:stun4.l.google.com:19302' }
-  ]
+    // TURN — relay fallback (Open Relay, free)
+    {
+      urls: 'turn:openrelay.metered.ca:80',
+      username: 'openrelayproject',
+      credential: 'openrelayproject',
+    },
+    {
+      urls: 'turn:openrelay.metered.ca:443',
+      username: 'openrelayproject',
+      credential: 'openrelayproject',
+    },
+    {
+      urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+      username: 'openrelayproject',
+      credential: 'openrelayproject',
+    },
+    {
+      urls: 'turns:openrelay.metered.ca:443',
+      username: 'openrelayproject',
+      credential: 'openrelayproject',
+    },
+  ],
 };
+
 
 const STATUS_MAP = {
   CREATED:         { label: 'Mới tạo',            color: '#6b7280' },
@@ -240,12 +262,28 @@ function VideoChat() {
       }
     };
 
+    // Log ICE gathering & connection state for debugging
+    peerConnectionRef.current.oniceconnectionstatechange = () => {
+      const state = peerConnectionRef.current?.iceConnectionState;
+      console.log('[WebRTC] ICE connection state:', state);
+      if (state === 'failed') {
+        console.warn('[WebRTC] ICE failed — trying ICE restart');
+        peerConnectionRef.current.restartIce();
+      }
+    };
+
+    peerConnectionRef.current.onconnectionstatechange = () => {
+      const state = peerConnectionRef.current?.connectionState;
+      console.log('[WebRTC] Peer connection state:', state);
+    };
+
     peerConnectionRef.current.ontrack = (event) => {
       if (remoteVideoRef.current && remoteVideoRef.current.srcObject !== event.streams[0]) {
         remoteVideoRef.current.srcObject = event.streams[0];
       }
     };
   };
+
 
   const initiateCall = async () => {
     const stream = await startMediaStream();
