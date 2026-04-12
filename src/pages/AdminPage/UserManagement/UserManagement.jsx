@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Table, Input, Select, Button, Tag, Space, Typography, Tooltip, Avatar, notification, Modal, Row, Col, Statistic, Progress } from 'antd';
+import { Card, Table, Input, Select, Button, Tag, Space, Typography, Tooltip, Avatar, notification, Modal, Row, Col, Statistic, Progress, Tabs } from 'antd';
 import { SearchOutlined, FilterOutlined, ExportOutlined, EyeOutlined, EditOutlined, LockOutlined, UnlockOutlined, UserOutlined, TeamOutlined, CheckCircleOutlined, UserAddOutlined, ApartmentOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import adminUserService from '../../../services/adminUserService';
@@ -7,6 +7,9 @@ import UserModal from './components/UserModal';
 
 const { Title } = Typography;
 const { Option } = Select;
+
+// primary color used across admin pages
+const primaryColor = '#44624A';
 
 const UserManagement = () => {
     const [loading, setLoading] = useState(false);
@@ -34,12 +37,25 @@ const UserManagement = () => {
     const fetchUsers = async (page = 1, pageSize = 7, currentFilters = filters) => {
         try {
             setLoading(true);
-            const params = {
+            // roleFilter drives which tab we're fetching for. If currentFilters._roleFilter === 'staff'
+            // we fetch a large set and filter out customers client-side to simulate "staff" group (all roles except customer).
+            const roleFilter = currentFilters._roleFilter || undefined;
+            let params = {
                 page,
                 limit: pageSize,
                 search: currentFilters.search || undefined,
-                role: currentFilters.role || undefined
             };
+
+            if (roleFilter === 'customers') {
+                params.role = 'customer';
+            }
+
+            // If requesting staff (all non-customer roles) we'll request a large limit and paginate client-side
+            if (roleFilter === 'staff') {
+                params.page = 1;
+                params.limit = 10000;
+            }
+
             const response = await adminUserService.getAllUsers(params);
 
             // adminUserService may return the axios response or already return response.data
@@ -68,8 +84,19 @@ const UserManagement = () => {
             }
             total = total != null ? parseInt(total, 10) : data.length;
 
-            setUsers(data);
-            setPagination((prev) => ({ ...prev, current: page, pageSize, total }));
+            // If roleFilter === 'staff', filter out customers and then paginate client-side
+            if (roleFilter === 'staff') {
+                const staffData = data.filter(u => (u.role || '').toString().toLowerCase() !== 'customer');
+                const staffTotal = staffData.length;
+                // slice for current page
+                const start = (page - 1) * pageSize;
+                const paged = staffData.slice(start, start + pageSize);
+                setUsers(paged);
+                setPagination((prev) => ({ ...prev, current: page, pageSize, total: staffTotal }));
+            } else {
+                setUsers(data);
+                setPagination((prev) => ({ ...prev, current: page, pageSize, total }));
+            }
         } catch (error) {
             console.error('Failed to fetch users', error);
             notification.error({ message: 'Error fetching users' });
@@ -78,8 +105,12 @@ const UserManagement = () => {
         }
     };
 
+    // tabKey = 'customers' | 'staff'
+    const [tabKey, setTabKey] = useState('customers');
+
     useEffect(() => {
-        fetchUsers();
+        // pass the tab filter inside filters via a reserved _roleFilter key
+        fetchUsers(1, pagination.pageSize, { ...filters, _roleFilter: tabKey });
         fetchMetrics();
     }, []);
 
@@ -121,19 +152,25 @@ const UserManagement = () => {
     };
 
     const handleTableChange = (newPagination) => {
-        fetchUsers(newPagination.current, newPagination.pageSize);
+        fetchUsers(newPagination.current, newPagination.pageSize, { ...filters, _roleFilter: tabKey });
     };
 
     const handleSearch = (value) => {
         const newFilters = { ...filters, search: value };
         setFilters(newFilters);
-        fetchUsers(1, pagination.pageSize, newFilters);
+        fetchUsers(1, pagination.pageSize, { ...newFilters, _roleFilter: tabKey });
     };
 
     const handleFilterChange = (key, value) => {
         const newFilters = { ...filters, [key]: value === 'all' ? undefined : value };
         setFilters(newFilters);
-        fetchUsers(1, pagination.pageSize, newFilters);
+        fetchUsers(1, pagination.pageSize, { ...newFilters, _roleFilter: tabKey });
+    };
+
+    const handleTabChange = (key) => {
+        setTabKey(key);
+        // reset to page 1 when switching tabs
+        fetchUsers(1, pagination.pageSize, { ...filters, _roleFilter: key });
     };
 
     const exportUsers = async () => {
@@ -465,83 +502,167 @@ const UserManagement = () => {
                 </Row>
             </div>
 
-            <Card style={{ borderRadius: '12px', border: 'none' }}>
-                {/* Header Controls */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, flexWrap: 'wrap', gap: '16px' }}>
-                    <Input
-                        placeholder="Search by name or email"
-                        prefix={<SearchOutlined />}
-                        style={{ width: 300, borderRadius: '8px' }}
-                        onChange={(e) => handleSearch(e.target.value)}
-                        allowClear
-                    />
-
-                    <Space size="middle">
-                        <Select
-                            placeholder="Role"
-                            style={{ width: 120, borderRadius: '8px' }}
-                            onChange={(val) => handleFilterChange('role', val)}
-                            allowClear
-                        >
-                            <Option value="all">All Roles</Option>
-                            <Option value="customer">Customer</Option>
-                            <Option value="dispatcher">Dispatcher</Option>
-                            <Option value="driver">Driver</Option>
-                            <Option value="staff">Staff</Option>
-                        </Select>
-
-                        <Tooltip title="Refresh">
-                            <Button
-                                icon={<ReloadOutlined />}
-                                style={{
-                                    borderRadius: '8px',
-                                    border: '1px solid #2D4F36',
-                                    color: '#2D4F36',
-                                    background: 'transparent'
-                                }}
-                                onClick={async () => { await fetchUsers(pagination.current, pagination.pageSize); fetchMetrics(); }}
-                                disabled={loading}
+            <Tabs activeKey={tabKey} onChange={handleTabChange} type="card">
+                <Tabs.TabPane key="customers" tab={<span style={{ color: tabKey === 'customers' ? primaryColor : '#888', fontWeight: 600 }}>Khách hàng</span>}>
+                    <Card style={{ borderRadius: '12px', border: 'none' }}>
+                        {/* Header Controls */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, flexWrap: 'wrap', gap: '16px' }}>
+                            <Input
+                                placeholder="Search by name or email"
+                                prefix={<SearchOutlined />}
+                                style={{ width: 300, borderRadius: '8px' }}
+                                onChange={(e) => handleSearch(e.target.value)}
+                                allowClear
                             />
-                        </Tooltip>
 
-                        <Button
-                            icon={<ExportOutlined />}
-                            style={{
-                                borderRadius: '8px',
-                                border: '1px solid #2D4F36',
-                                color: '#2D4F36',
-                                background: 'transparent'
-                            }}
-                            onClick={exportUsers}
-                            disabled={loading}
-                        >
-                            Export
-                        </Button>
+                            <Space size="middle">
+                                <Select
+                                    placeholder="Role"
+                                    style={{ width: 120, borderRadius: '8px' }}
+                                    onChange={(val) => handleFilterChange('role', val)}
+                                    allowClear
+                                >
+                                    <Option value="all">All Roles</Option>
+                                    <Option value="customer">Customer</Option>
+                                    <Option value="dispatcher">Dispatcher</Option>
+                                    <Option value="driver">Driver</Option>
+                                    <Option value="staff">Staff</Option>
+                                </Select>
 
-                        <Button
-                            onClick={openCreateModal}
-                            style={{
-                                borderRadius: '8px',
-                                backgroundColor: '#2D4F36',
-                                borderColor: '#2D4F36',
-                                color: '#ffffff'
-                            }}
-                        >
-                            + Add User
-                        </Button>
-                    </Space>
-                </div>
+                                <Tooltip title="Refresh">
+                                    <Button
+                                        icon={<ReloadOutlined />}
+                                        style={{
+                                            borderRadius: '8px',
+                                            border: '1px solid #2D4F36',
+                                            color: '#2D4F36',
+                                            background: 'transparent'
+                                        }}
+                                        onClick={async () => { await fetchUsers(pagination.current, pagination.pageSize, { ...filters, _roleFilter: tabKey }); fetchMetrics(); }}
+                                        disabled={loading}
+                                    />
+                                </Tooltip>
 
-                {/* Users Table */}
-                <Table
-                    columns={columns}
-                    dataSource={users}
-                    rowKey="_id"
-                    pagination={pagination}
-                    loading={loading}
-                    onChange={handleTableChange}
-                />
-            </Card>
+                                <Button
+                                    icon={<ExportOutlined />}
+                                    style={{
+                                        borderRadius: '8px',
+                                        border: '1px solid #2D4F36',
+                                        color: '#2D4F36',
+                                        background: 'transparent'
+                                    }}
+                                    onClick={exportUsers}
+                                    disabled={loading}
+                                >
+                                    Export
+                                </Button>
+
+                                <Button
+                                    onClick={openCreateModal}
+                                    style={{
+                                        borderRadius: '8px',
+                                        backgroundColor: '#2D4F36',
+                                        borderColor: '#2D4F36',
+                                        color: '#ffffff'
+                                    }}
+                                >
+                                    + Add User
+                                </Button>
+                            </Space>
+                        </div>
+
+                        {/* Users Table */}
+                        <Table
+                            columns={columns}
+                            dataSource={users}
+                            rowKey="_id"
+                            pagination={pagination}
+                            loading={loading}
+                            onChange={handleTableChange}
+                        />
+                    </Card>
+                </Tabs.TabPane>
+
+                <Tabs.TabPane key="staff" tab={<span style={{ color: tabKey === 'staff' ? primaryColor : '#888', fontWeight: 600 }}>Nhân sự</span>}>
+                    <Card style={{ borderRadius: '12px', border: 'none' }}>
+                        {/* Reuse same header controls for staff tab */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, flexWrap: 'wrap', gap: '16px' }}>
+                            <Input
+                                placeholder="Search by name or email"
+                                prefix={<SearchOutlined />}
+                                style={{ width: 300, borderRadius: '8px' }}
+                                onChange={(e) => handleSearch(e.target.value)}
+                                allowClear
+                            />
+
+                            <Space size="middle">
+                                <Select
+                                    placeholder="Role"
+                                    style={{ width: 120, borderRadius: '8px' }}
+                                    onChange={(val) => handleFilterChange('role', val)}
+                                    allowClear
+                                >
+                                    <Option value="all">All Roles</Option>
+                                    <Option value="customer">Customer</Option>
+                                    <Option value="dispatcher">Dispatcher</Option>
+                                    <Option value="driver">Driver</Option>
+                                    <Option value="staff">Staff</Option>
+                                </Select>
+
+                                <Tooltip title="Refresh">
+                                    <Button
+                                        icon={<ReloadOutlined />}
+                                        style={{
+                                            borderRadius: '8px',
+                                            border: '1px solid #2D4F36',
+                                            color: '#2D4F36',
+                                            background: 'transparent'
+                                        }}
+                                        onClick={async () => { await fetchUsers(pagination.current, pagination.pageSize, { ...filters, _roleFilter: tabKey }); fetchMetrics(); }}
+                                        disabled={loading}
+                                    />
+                                </Tooltip>
+
+                                <Button
+                                    icon={<ExportOutlined />}
+                                    style={{
+                                        borderRadius: '8px',
+                                        border: '1px solid #2D4F36',
+                                        color: '#2D4F36',
+                                        background: 'transparent'
+                                    }}
+                                    onClick={exportUsers}
+                                    disabled={loading}
+                                >
+                                    Export
+                                </Button>
+
+                                <Button
+                                    onClick={openCreateModal}
+                                    style={{
+                                        borderRadius: '8px',
+                                        backgroundColor: '#2D4F36',
+                                        borderColor: '#2D4F36',
+                                        color: '#ffffff'
+                                    }}
+                                >
+                                    + Add User
+                                </Button>
+                            </Space>
+                        </div>
+
+                        {/* Users Table */}
+                        <Table
+                            columns={columns}
+                            dataSource={users}
+                            rowKey="_id"
+                            pagination={pagination}
+                            loading={loading}
+                            onChange={handleTableChange}
+                        />
+                    </Card>
+                </Tabs.TabPane>
+            </Tabs>
 
             <UserModal
                 visible={isModalVisible}

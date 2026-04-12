@@ -455,8 +455,37 @@ const RatingManagement = () => {
                                 .rating-table-card .ant-table-tbody > tr:hover td { transform: none; box-shadow: none; }
                                 .rating-table-card .ant-table-thead > tr > th { background: #fafafa; }
 
-                                /* Needs attention visual */
-                                .rating-needs-attention td { border-left: 4px solid #ff4d4f !important; }
+                                /* Needs attention visual - pulsing red glow to draw attention */
+                                .rating-needs-attention td {
+                                    position: relative;
+                                    background: #fff;
+                                    /* remove rounded corners for attention rows */
+                                    border-radius: 0 !important;
+                                    /* subtle base shadow so the pulse has a starting point */
+                                    box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+                                    /* remove static red stripe, keep animated glow */
+                                    animation: pulse-red 2.2s ease-in-out infinite;
+                                }
+
+                                /* ensure first/last cells in the row also have square corners */
+                                .rating-needs-attention td:first-child, .rating-needs-attention td:last-child {
+                                    border-radius: 0 !important;
+                                }
+
+                                @keyframes pulse-red {
+                                    0% {
+                                        box-shadow: 0 4px 12px rgba(0,0,0,0.04), 0 0 0 0 rgba(255,77,79,0.12);
+                                    }
+                                    40% {
+                                        box-shadow: 0 10px 30px rgba(0,0,0,0.06), 0 0 36px 8px rgba(255,77,79,0.10);
+                                    }
+                                    70% {
+                                        box-shadow: 0 6px 20px rgba(0,0,0,0.05), 0 0 18px 4px rgba(255,77,79,0.06);
+                                    }
+                                    100% {
+                                        box-shadow: 0 4px 12px rgba(0,0,0,0.04), 0 0 0 0 rgba(255,77,79,0);
+                                    }
+                                }
 
                                 @media (max-width: 860px) {
                                     .kpi-tiles { flex-direction: column; }
