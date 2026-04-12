@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Row, Col, Card, Statistic, Typography, Table, Spin, Tag, Select, Button, Space } from 'antd';
-import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Legend } from 'recharts';
+import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell } from 'recharts';
 import { DollarCircleOutlined, CreditCardOutlined, ShopOutlined, TeamOutlined } from '@ant-design/icons';
 import adminStatisticService from '../../../services/adminStatisticService';
 import AIBusinessSummary from '../../../components/Admin/AI/AIBusinessSummary';
@@ -58,6 +58,8 @@ const Dashboard = () => {
         { id: 2, name: 'Xe container', count: 120, image: '🚛' },
     ];
     const [lastOrders, setLastOrders] = useState([]);
+    const [conversionData, setConversionData] = useState([]);
+    const [conversionRate, setConversionRate] = useState(0);
     const localLastOrdersMock = [
         { key: '1', orderId: '#1452', time: '14:27', location: '132, Thanh Xuân', status: 'Completed' },
         { key: '2', orderId: '#1453', time: '15:33', location: '33, Nguyễn Trãi', status: 'Canceled' },
@@ -178,16 +180,21 @@ const Dashboard = () => {
                     endDate: monday.add(6, 'day').endOf('day').format('YYYY-MM-DD')
                 };
 
-                const [overviewRes, revenueRes, orderRes, recentInvoicesRes] = await Promise.all([
+                const [overviewRes, revenueRes, orderRes, totalRequestsRes, recentInvoicesRes, conversionRes] = await Promise.all([
                     // adminStatisticService methods return response.data, so the resolved value is the data itself.
                     // Make the catch fallbacks return the same shape (data, not wrapped in { data: ... }).
                         adminStatisticService.getOverview().catch(() => ({ totalRevenue: 342247, dailyRevenue: 12145, dailyOrders: 214, totalCustomers: 2140 })),
                         // Do not inject sample data on error — return empty arrays so
                         // charts do not show mocked points for missing dates.
                         adminStatisticService.getRevenue(revenueParams).catch(() => ([])),
-                        // Use the new endpoint that returns RequestTicket daily counts
+                        // Use the new endpoint that returns RequestTicket daily counts (weekly buckets for chart)
                         adminStatisticService.getRequestTicketsDaily({ startDate: orderParams.startDate, endDate: orderParams.endDate }).catch(() => ([])),
-            adminStatisticService.getRecentInvoices({ limit: 5 }).catch(() => ([]))
+                        // Also request all request-ticket daily counts (no time filter) to compute total requests
+                        adminStatisticService.getRequestTicketsDaily({ startDate: '1970-01-01', endDate: dayjs().format('YYYY-MM-DD') }).catch(() => ([])),
+            // Fetch a small recent-invoices set for the table (avoid fetching the entire DB)
+            adminStatisticService.getRecentInvoices({ limit: 5 }).catch(() => ([])),
+            // Request canonical conversion metrics from backend (preferred) to avoid large client-side scans
+            (adminStatisticService.getConversion ? adminStatisticService.getConversion().catch(() => (null)) : Promise.resolve(null))
                 ]);
 
                 // Debug: log raw responses so we can inspect shapes in the browser console
@@ -208,6 +215,7 @@ const Dashboard = () => {
                 const overviewData = overviewRes && overviewRes.data ? overviewRes.data : overviewRes;
                 const revenueArray = normalizeToArray(revenueRes);
                 const orderArray = normalizeToArray(orderRes);
+                const totalRequestsArray = normalizeToArray(totalRequestsRes);
                 const recentInvoicesArray = normalizeToArray(recentInvoicesRes);
 
                 // Map overview
@@ -368,6 +376,44 @@ const Dashboard = () => {
                     setLastOrders(localLastOrdersMock);
                 }
 
+                // Compute Conversion Rate: prefer backend-provided metric; fall back to a best-effort estimate
+                try {
+                    const conversionPayload = conversionRes && conversionRes.data ? conversionRes.data : conversionRes;
+                    if (conversionPayload && (conversionPayload.pie || conversionPayload.totalRequests !== undefined)) {
+                        // Use backend values when available
+                        if (Array.isArray(conversionPayload.pie) && conversionPayload.pie.length) {
+                            setConversionData(conversionPayload.pie.map(p => ({ name: p.name, value: Number(p.value) || 0 })));
+                        } else if (conversionPayload.totalRequests !== undefined && conversionPayload.successfulOrders !== undefined) {
+                            setConversionData([
+                                { name: 'Đơn thành công', value: Number(conversionPayload.successfulOrders) || 0 },
+                                { name: 'Không chuyển đổi', value: Math.max((Number(conversionPayload.totalRequests) || 0) - (Number(conversionPayload.successfulOrders) || 0), 0) }
+                            ]);
+                        }
+                        setConversionRate(Number(conversionPayload.conversionRate ?? 0));
+                    } else {
+                        // Fallback: compute a rough estimate using available recent invoices (table) and total requests count
+                        const totalRequests = (totalRequestsArray || []).reduce((s, it) => s + (Number(it.count ?? it.orders ?? it.value ?? 0) || 0), 0);
+                        const isSuccessfulInvoice = (inv) => {
+                            if (!inv) return false;
+                            const status = (inv.paymentStatus || inv.status || '').toString().toLowerCase();
+                            if (status.includes('paid') || status.includes('completed') || status.includes('success')) return true;
+                            if (inv.isPaid || inv.paid === true) return true;
+                            return false;
+                        };
+                        const successfulCount = (recentInvoicesArray || []).filter(inv => isSuccessfulInvoice(inv)).length;
+                        const notConverted = Math.max((totalRequests - successfulCount), 0);
+                        setConversionData([
+                            { name: 'Đơn thành công', value: successfulCount },
+                            { name: 'Không chuyển đổi', value: notConverted }
+                        ]);
+                        const cr = totalRequests > 0 ? Math.round((successfulCount / totalRequests) * 10000) / 100 : 0; // two decimals
+                        setConversionRate(cr);
+                    }
+                } catch (e) {
+                    setConversionData([]);
+                    setConversionRate(0);
+                }
+
             } catch (error) {
                 console.error("Failed to load dashboard data", error);
             } finally {
@@ -489,16 +535,39 @@ const Dashboard = () => {
                     </Card>
                 </Col>
                 <Col xs={24} lg={6}>
-                    <Card title="Xe được sử dụng nhiều" style={{ borderRadius: '12px', height: '100%' }}>
-                        <Text type="secondary">Xe được chọn nhiều nhất</Text>
-                        <div style={{ marginTop: '20px' }}>
-                            {topMovingCars.map(car => (
-                                <div key={car.id} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', alignItems: 'center' }}>
-                                    <span style={{ fontSize: '24px' }}>{car.image}</span>
-                                    <Text strong>{car.name}</Text>
-                                    <Text>{car.count}</Text>
-                                </div>
-                            ))}
+                    <Card title="Tỷ lệ chuyển đổi" style={{ borderRadius: '12px', height: '100%' }}>
+                        <Text type="secondary">Tỷ lệ giữa đơn hàng thành công và tổng số Request Ticket</Text>
+                        {/* increased height so the donut can be larger without clipping */}
+                        <div style={{ marginTop: 12, height: 260, position: 'relative' }}>
+                            {conversionData && conversionData.length > 0 ? (
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <PieChart>
+                                        <Pie
+                                            data={conversionData}
+                                            dataKey="value"
+                                            nameKey="name"
+                                            cx="50%"
+                                            cy="45%"
+                                            innerRadius={60}
+                                            outerRadius={95}
+                                            paddingAngle={3}
+                                        >
+                                            {/* pastel palette: soft green for success, pale rose for non-converted */}
+                                            <Cell key="cell-0" fill="#8BA888" />
+                                            <Cell key="cell-1" fill="#FFF4C2" />
+                                        </Pie>
+                                        <RechartsTooltip formatter={(value) => `${value}`} />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            ) : (
+                                <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#888' }}>Không có dữ liệu</div>
+                            )}
+
+                            {/* Center label showing conversion percent (slightly smaller) */}
+                            <div style={{ position: 'absolute', left: 0, right: 0, top: '42%', textAlign: 'center', pointerEvents: 'none' }}>
+                                <div style={{ fontSize: 16, fontWeight: 700, color: primaryColor }}>{conversionRate}%</div>
+                                <div style={{ fontSize: 12, color: '#666' }}>Tỷ lệ chuyển đổi</div>
+                            </div>
                         </div>
                     </Card>
                 </Col>
