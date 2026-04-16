@@ -43,15 +43,15 @@ const serviceDetails = {
         title: 'Chuyển Nhà Trọn Gói',
         description: 'Khảo sát, đóng gói, tháo lắp nội thất, vận chuyển và sắp xếp tại nơi ở mới.'
     },
-    2: {
-        title: 'Chuyển Văn Phòng - Công Ty',
-        description: 'Hỗ trợ di dời văn phòng, công ty nhanh chóng và chuyên nghiệp.'
-    },
+    // 2: {
+    //     title: 'Chuyển Văn Phòng - Công Ty',
+    //     description: 'Hỗ trợ di dời văn phòng, công ty nhanh chóng và chuyên nghiệp.'
+    // },
     3: {
         title: 'Chuyển Đồ Đạc',
         description: 'Hỗ trợ di dời đồ đạc trong nhà, văn phòng nhanh chóng và chuyên nghiệp.'
     },
-    4: {
+    3: {
         title: 'Thuê Xe Tải',
         description: 'Hỗ trợ di dời đồ đạc, văn phòng nhanh chóng và chuyên nghiệp.'
     }
@@ -483,7 +483,7 @@ const MovingInformationPage = () => {
                                             return (
                                                 <Popover
                                                     content={popoverContent}
-                                                    title={<span style={{ color: bestSlot ? slotConfig.color : '#333', fontWeight: 600 }}><StarOutlined /> Đánh giá từ HOMS AI</span>}
+                                                    title={<span style={{ color: bestSlot ? slotConfig.color : '#333', fontWeight: 600 }}><StarOutlined /> Đánh giá từ hệ thống</span>}
                                                     trigger="click"
                                                     placement="rightTop"
                                                 >
@@ -501,7 +501,7 @@ const MovingInformationPage = () => {
                                                         height: '45px', // matches DatePicker height generally
                                                         transition: 'all 0.3s'
                                                     }}>
-                                                        <span style={{ fontSize: 10, color: '#666', marginBottom: 2 }}>Đánh giá AI</span>
+                                                        <span style={{ fontSize: 10, color: '#666', marginBottom: 2 }}>Đánh giá thời gian</span>
                                                         <span style={{ fontSize: 13, fontWeight: 'bold', color: slotConfig.color }}>
                                                             {isRecommending ? 'ĐANG TÍNH...' : slotConfig.text}
                                                         </span>

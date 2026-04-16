@@ -681,7 +681,8 @@ body {
   font-size: 0.95rem;
   font-style: italic;
   line-height: 1.65;
-  min-height: 80px;
+  height: 150px;
+  overflow-y: auto;
   margin: 0;
   position: relative;
   z-index: 1;

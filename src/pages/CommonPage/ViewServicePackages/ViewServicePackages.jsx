@@ -21,13 +21,13 @@ const services = [
         description:
             'Khảo sát, đóng gói, tháo lắp nội thất, vận chuyển và sắp xếp tại nơi ở mới. Giải pháp tiết kiệm thời gian, công sức và đảm bảo an toàn cho đồ đạc.',
     },
-    {
-        id: 2,
-        icon: officeIcon,
-        title: 'Chuyển Văn Phòng - Công Ty',
-        description:
-            'Hỗ trợ di dời văn phòng, công ty nhanh chóng và chuyên nghiệp. Cam kết đúng tiến độ, hạn chế gián đoạn công việc, bảo quản hồ sơ, thiết bị và tài sản doanh nghiệp.',
-    },
+    // {
+    //     id: 2,
+    //     icon: officeIcon,
+    //     title: 'Chuyển Văn Phòng - Công Ty',
+    //     description:
+    //         'Hỗ trợ di dời văn phòng, công ty nhanh chóng và chuyên nghiệp. Cam kết đúng tiến độ, hạn chế gián đoạn công việc, bảo quản hồ sơ, thiết bị và tài sản doanh nghiệp.',
+    // },
     {
         id: 3,
         icon: boxIcon,

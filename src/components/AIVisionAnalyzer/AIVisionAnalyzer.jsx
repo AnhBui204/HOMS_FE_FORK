@@ -392,11 +392,11 @@ const AIVisionAnalyzer = ({ open, onCancel, onAnalyzeComplete, currentVehicle, c
                 <div className="compare-field-label">Nhân viên</div>
                 <div className="compare-values">
                   <Tag color="green" className="compare-tag current-tag">
-                    ✅ Hiện tại: {currentStaffCount || '?'} người
+                    ✅ Hiện tại: {currentStaffCount != null ? `${currentStaffCount} người` : 'Chưa xác định'}
                   </Tag>
                   <SwapOutlined style={{ color: '#d9d9d9', margin: '0 8px' }} />
                   <Tag color={overrideStaff ? 'orange' : 'default'} className="compare-tag ai-tag">
-                    🤖 AI: {result.suggestedStaffCount || '?'} người
+                    🤖 AI: {result.suggestedStaffCount != null ? `${result.suggestedStaffCount} người` : 'Không rõ'}
                   </Tag>
                 </div>
                 <div className="compare-override">
@@ -404,7 +404,7 @@ const AIVisionAnalyzer = ({ open, onCancel, onAnalyzeComplete, currentVehicle, c
                     size="small"
                     checked={overrideStaff}
                     onChange={setOverrideStaff}
-                    disabled={!result.suggestedStaffCount || result.suggestedStaffCount === currentStaffCount}
+                    disabled={result.suggestedStaffCount == null || result.suggestedStaffCount === currentStaffCount}
                     checkedChildren="Dùng AI"
                     unCheckedChildren="Giữ nguyên"
                   />

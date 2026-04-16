@@ -254,17 +254,19 @@ const SurveyPricingModal = ({ visible, onClose, ticket, survey, pricing, tourRef
                         </div>
 
                         {(() => {
-                            const bd = pricing?.breakdown || {};
+                            const bd = localPricing?.breakdown || {};
                             // determine applied discount from returned pricing snapshot
                             const appliedDiscount = (localPricing?.discountAmount || localPricing?.promotion?.discountAmount || 0);
                             const lines =[
-                                { icon: <ArrowRightOutlined />, label: 'Phí vận chuyển cơ bản', value: bd.baseTransportFee, always: true },
-                                { icon: <CarOutlined />, label: 'Phí xe tải (theo km)', value: bd.vehicleFee, always: true },
-                                { icon: <TeamOutlined />, label: 'Phí nhân công', value: bd.laborFee, always: true },
-                                { icon: <AppstoreOutlined />, label: 'Phí dịch vụ đồ vật', value: bd.serviceFee, always: false },
-                                { icon: <EnvironmentOutlined />, label: 'Phụ phí chặng xa (>30km)', value: bd.distanceSurcharge, always: false },
+                                { icon: <ArrowRightOutlined />, label: 'Phí vận chuyển cơ bản', value: bd.baseTransportFee, always: false },
+                                { icon: <CarOutlined />, label: 'Phí xe tải (theo km)', value: bd.vehicleFee, always: false },
+                                { icon: <TeamOutlined />, label: 'Phí nhân công', value: bd.laborFee, always: false },
+                                { icon: <AppstoreOutlined />, label: 'Phí dịch vụ đồ vật', value: bd.itemServiceFee, always: false },
+                                { icon: <EnvironmentOutlined />, label: 'Phụ phí chặng xa (>30km)', value: bd.distanceFee, always: false },
                                 { icon: <TeamOutlined />, label: 'Phí khiêng vác bộ', value: bd.carryFee, always: false },
                                 { icon: <AppstoreOutlined />, label: 'Phí tầng lầu', value: bd.floorFee, always: false },
+                                { icon: <ToolOutlined />, label: 'Phí tháo lắp', value: bd.assemblingFee, always: false },
+                                { icon: <InboxOutlined />, label: 'Phí đóng gói', value: bd.packingFee, always: false },
                                 { icon: <SafetyOutlined />, label: 'Phí bảo hiểm', value: bd.insuranceFee, always: false },
                                 { icon: <InfoCircleOutlined />, label: 'Phí quản lý', value: bd.managementFee, always: false },
                             ].filter(l => l.always || (l.value != null && l.value > 0));
@@ -283,12 +285,12 @@ const SurveyPricingModal = ({ visible, onClose, ticket, survey, pricing, tourRef
 
                                     <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0 6px', marginTop: 2 }}>
                                         <span style={{ fontWeight: 600, color: '#444' }}>Tạm tính</span>
-                                        <span style={{ fontWeight: 600, color: '#444' }}>{(pricing.subtotal || 0).toLocaleString()} ₫</span>
+                                        <span style={{ fontWeight: 600, color: '#444' }}>{(localPricing.subtotal || 0).toLocaleString()} ₫</span>
                                     </div>
 
                                     <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0 10px', color: '#888' }}>
                                         <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><PercentageOutlined /> Thuế VAT</span>
-                                        <span>{(pricing.tax || 0).toLocaleString()} ₫</span>
+                                        <span>{(localPricing.tax || 0).toLocaleString()} ₫</span>
                                     </div>
 
                                     {appliedDiscount > 0 && (

@@ -6,7 +6,7 @@ import { getValidAccessToken } from './authService';
 const api = axios.create({
   baseURL: process.env.REACT_APP_API_URL,
   withCredentials: true,
-  timeout: 15000, // 15 seconds timeout
+  timeout: 45000,
   headers: {
     "ngrok-skip-browser-warning": "69420",
   },
@@ -49,14 +49,18 @@ export const initCsrfToken = async () => {
   await csrfTokenPromise;
 };
 
+export const resetCsrfToken = () => {
+  csrfToken = null;
+  csrfTokenPromise = null;
+  console.log('🔄 CSRF token reset (will re-fetch on next request)');
+};
+
 // Hàm gắn interceptor
 export const setupInterceptors = (contextLogout) => {
   api.interceptors.request.use(
     async (config) => {
       if (['post', 'put', 'patch', 'delete'].includes(config.method)) {
-        if (!csrfToken) {
-          await initCsrfToken();
-        }
+        // CSRF no longer mandatory for Bearer-protected API routes
         if (csrfToken) {
           config.headers['X-CSRF-Token'] = csrfToken;
         }
@@ -123,10 +127,10 @@ export const setupInterceptors = (contextLogout) => {
         return Promise.reject(error);
       }
 
-      // Handle 403 Forbidden (likely CSRF)
+      // Handle 403 Forbidden
       if (error.response?.status === 403) {
-        console.warn("⚠️ CSRF Forbidden Error detected. Clearing local token cache...");
-        csrfToken = null; // Force re-init on next request
+        console.warn("⚠️ 403 Forbidden detected. Check permissions or session.");
+        // Optional: csrfToken = null;
       }
 
       // Do not show toast for 401 Unauthorized globally since it might trigger auth flows or silent refreshes

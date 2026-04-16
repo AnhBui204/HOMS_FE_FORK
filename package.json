@@ -1,6 +1,7 @@
 {
   "name": "homs_fe",
   "version": "1.0.0",
+  "homepage": "/",
   "description": "HOMS - Home Moving Service Frontend",
   "private": true,
   "dependencies": {
@@ -12,6 +13,7 @@
     "antd": "^5.29.3",
     "axios": "^1.13.6",
     "dayjs": "^1.11.19",
+    "framer-motion": "^12.38.0",
     "jwt-decode": "^4.0.0",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.574.0",

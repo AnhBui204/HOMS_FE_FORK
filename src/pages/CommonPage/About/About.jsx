@@ -1,6 +1,7 @@
 import React from "react";
 import { Layout } from "antd";
 import { FaTruckMoving, FaUsers, FaShieldAlt } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 
 import AppHeader from "../../../components/header/header";
 import AppFooter from "../../../components/footer/footer";
@@ -10,6 +11,8 @@ import "./styling.css";
 const { Content } = Layout;
 
 const About = () => {
+    const navigate = useNavigate();
+
     return (
         <Layout className="about-page">
             <AppHeader />
@@ -71,8 +74,8 @@ const About = () => {
                 {/* CTA */}
                 <section className="about-cta">
                     <h2>Sẵn sàng chuyển nhà cùng HOMS?</h2>
-                    <button className="about-btn">
-                        Liên Hệ Ngay
+                    <button className="about-btn" onClick={() => navigate('/customer/service-packages')}>
+                        Chuyển Nhà Ngay
                     </button>
                 </section>
 

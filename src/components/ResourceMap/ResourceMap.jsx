@@ -153,7 +153,7 @@ function isPointRestricted(point, allRoutes, vehicleType, dispatchTime) {
                         const interpLat = p1.lat + (p2.lat - p1.lat) * fraction;
                         const interpLng = p1.lng + (p2.lng - p1.lng) * fraction;
 
-                        if (getDistance(point, { lat: interpLat, lng: interpLng }) < 250) {
+                        if (getDistance(point, { lat: interpLat, lng: interpLng }) < 50) {
                             return true;
                         }
                     }
@@ -164,7 +164,7 @@ function isPointRestricted(point, allRoutes, vehicleType, dispatchTime) {
             const checkDistPoint = (coordArray) => {
                 for (const coord of coordArray) {
                     const p = normalizeCoord(coord);
-                    if (getDistance(point, p) < 250) return true;
+                    if (getDistance(point, p) < 50) return true;
                 }
                 return false;
             };
@@ -280,6 +280,10 @@ const ResourceMap = ({ pickup, delivery, allRoutes = [], vehicleType, dispatchTi
             restrictions: encounterRestrictions,
             isSafe: encounterRestrictions.length === 0
         };
+    }).sort((a, b) => {
+        if (a.isSafe && !b.isSafe) return -1;
+        if (!a.isSafe && b.isSafe) return 1;
+        return a.distance - b.distance;
     });
 
     const currentRouteInfo = routesWithInfo[selectedRouteIdx];
@@ -398,13 +402,13 @@ const ResourceMap = ({ pickup, delivery, allRoutes = [], vehicleType, dispatchTi
                                 >
                                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
                                         <Text strong style={{ color: selectedRouteIdx === index ? '#1890ff' : 'inherit' }}>
-                                            Tuyến {index + 1} {index === 0 && <Tag color="blue" size="small" style={{ marginLeft: 8 }}>Nhanh nhất</Tag>}
+                                            Tuyến {index + 1} {index === 0 && <Tag color="green" size="small" style={{ marginLeft: 8 }}>Tối ưu</Tag>}
                                         </Text>
                                         {!item.isSafe && <WarningOutlined style={{ color: '#ff4d4f' }} />}
                                     </div>
                                     <div style={{ display: 'flex', gap: '16px', fontSize: '13px', color: '#595959' }}>
                                         <span><CarOutlined /> {(item.distance / 1000).toFixed(1)} km</span>
-                                        <span>Thời gian: {Math.round(item.duration / 60)} phút</span>
+                                        <span>Thời gian lái (Xe tải): {Math.round((item.distance / 1000) * 2.5 + 5)} phút</span>
                                     </div>
                                     {!item.isSafe && (
                                         <div style={{ marginTop: 8, fontSize: '11px', color: '#ff4d4f' }}>

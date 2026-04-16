@@ -256,23 +256,6 @@ const MyContract = () => {
       render: (status) => <StatusTag status={status} />,
     },
     {
-      title: 'Hiệu lực từ', dataIndex: 'validFrom', width: 130,
-      render: (date) => date ? <Text>{dayjs(date).format('DD/MM/YYYY')}</Text> : <Text type="secondary">—</Text>,
-    },
-    {
-      title: 'Hiệu lực đến', dataIndex: 'validUntil', width: 130,
-      render: (date) => {
-        if (!date) return <Text type="secondary">—</Text>;
-        const isNear = dayjs(date).diff(dayjs(), 'day') <= 30;
-        return (
-          <Text style={{ color: isNear ? '#ef4444' : undefined, fontWeight: isNear ? 600 : 400 }}>
-            {dayjs(date).format('DD/MM/YYYY')}
-            {isNear && <ExclamationCircleOutlined style={{ marginLeft: 6 }} />}
-          </Text>
-        );
-      },
-    },
-    {
       title: 'Ngày tạo', dataIndex: 'createdAt', width: 130,
       render: (date) => <Text type="secondary">{dayjs(date).format('DD/MM/YYYY')}</Text>,
     },

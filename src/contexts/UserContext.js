@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
-import { setupInterceptors } from "../services/api";
+import { setupInterceptors, resetCsrfToken } from "../services/api";
 import { getUserInfo } from "../services/userService";
 import { clearAccessToken,logoutApi } from "../services/authService";
 
@@ -21,6 +21,7 @@ export const UserProvider = ({ children }) => {
   setUser(null);
   setIsAuthenticated(false);
   clearAccessToken();
+  resetCsrfToken();
   localStorage.removeItem("hasSession");
 
 }, []);

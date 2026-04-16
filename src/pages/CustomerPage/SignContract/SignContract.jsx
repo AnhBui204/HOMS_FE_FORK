@@ -56,10 +56,35 @@ const SignatureCanvas = ({ onSignatureChange }) => {
 
     lastPos.current = pos;
     setHasSignature(true);
-    onSignatureChange(canvas.toDataURL('image/png'));
-  }, [onSignatureChange]);
+  }, []);
 
-  const stopDraw = useCallback(() => { isDrawing.current = false; }, []);
+  const stopDraw = useCallback(() => { 
+    if (!isDrawing.current) return;
+    isDrawing.current = false;
+    
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    // Use a fixed-size temporary canvas (780x180) to ensure consistent image dimensions
+    // regardless of the screen's devicePixelRatio (Retina/DPI).
+    const exportWidth = 780;
+    const exportHeight = 180;
+    
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = exportWidth;
+    tempCanvas.height = exportHeight;
+    const tempCtx = tempCanvas.getContext('2d');
+    
+    // Fill white background
+    tempCtx.fillStyle = '#ffffff';
+    tempCtx.fillRect(0, 0, exportWidth, exportHeight);
+    
+    // Draw the signature from the source canvas, resizing it if necessary
+    tempCtx.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, exportWidth, exportHeight);
+    
+    // Export as compressed JPEG (0.7 quality)
+    onSignatureChange(tempCanvas.toDataURL('image/jpeg', 0.7));
+  }, [onSignatureChange]);
 
   const clearCanvas = () => {
     const canvas = canvasRef.current;

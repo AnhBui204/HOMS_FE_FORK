@@ -15,27 +15,9 @@ const fleet = [
 ];
 
 const Hero = () => (
-  <div className="transport-hero info-hero">
-    <div className="transport-hero-inner">
-      <div>
-        <Title level={2} style={{ color: '#fff', marginBottom: 8 }}>Phương tiện vận chuyển của chúng tôi</Title>
-        <Paragraph style={{ color: 'rgba(255,255,255,0.95)', maxWidth: 720 }}>
-          Chúng tôi sở hữu đội xe hiện đại, đa dạng từ xe pickup, xe tải nhẹ tới xe tải lớn, phục vụ cho nhu cầu chuyển nhà, chuyển văn phòng
-          và giao nhận hàng hóa. Mỗi phương tiện được bảo trì định kỳ và vận hành bởi đội ngũ lái xe chuyên nghiệp.
-        </Paragraph>
-        <Space size="middle">
-          <Button type="default" className="outline-primary">Tìm hiểu thêm</Button>
-          <Button>Liên hệ đội ngũ</Button>
-        </Space>
-      </div>
-      <div className="hero-features">
-        <div className="hero-feature"><CarOutlined /> <div><Text strong>Đa dạng phương tiện</Text><br/><Text type="secondary">Từ pickup đến tải lớn</Text></div></div>
-        <div className="hero-feature"><TeamOutlined /> <div><Text strong>Đội lái chuyên nghiệp</Text><br/><Text type="secondary">Đào tạo & kinh nghiệm</Text></div></div>
-        <div className="hero-feature"><SettingOutlined /> <div><Text strong>Bảo trì định kỳ</Text><br/><Text type="secondary">Đảm bảo an toàn & hiệu suất</Text></div></div>
-        <div className="hero-feature"><EnvironmentOutlined /> <div><Text strong>Thân thiện môi trường</Text><br/><Text type="secondary">Tiết kiệm nhiên liệu</Text></div></div>
-      </div>
-    </div>
-  </div>
+  <section className="transport-hero">
+    <h1>Phương Tiện Vận Chuyển</h1>
+  </section>
 );
 
 const VehicleCard = ({ v }) => (
@@ -66,8 +48,36 @@ const Transport = () => {
   return (
     <div className="transport-page">
       <AppHeader />
+
+      <Hero />
+      
       <main className="transport-container">
-        <Hero />
+
+        <section className="transport-intro">
+          <h2>Đội xe hiện đại & đa dạng</h2>
+          <p>
+            Chúng tôi sở hữu đội xe hiện đại, đa dạng từ xe pickup, xe tải nhẹ tới xe tải lớn, phục vụ cho nhu cầu chuyển nhà, chuyển văn phòng
+            và giao nhận hàng hóa. Mỗi phương tiện được bảo trì định kỳ và vận hành bởi đội ngũ lái xe chuyên nghiệp.
+          </p>
+        </section>
+
+        <section className="transport-values">
+            <div className="value-card">
+              <CarOutlined className="value-icon" />
+              <h3>Đa dạng phương tiện</h3>
+              <p>Từ pickup đến tải lớn, đáp ứng mọi nhu cầu.</p>
+            </div>
+            <div className="value-card">
+              <TeamOutlined className="value-icon" />
+              <h3>Đội lái chuyên nghiệp</h3>
+              <p>Được đào tạo bài bản & giàu kinh nghiệm vận hành.</p>
+            </div>
+            <div className="value-card">
+              <SettingOutlined className="value-icon" />
+              <h3>Bảo trì định kỳ</h3>
+              <p>Đảm bảo an toàn tuyệt đối và hiệu suất vận hành cao.</p>
+            </div>
+        </section>
 
         <section className="transport-section info-section">
           <Row gutter={[24, 24]}>

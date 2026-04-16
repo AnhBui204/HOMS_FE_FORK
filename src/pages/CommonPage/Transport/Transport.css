@@ -8,12 +8,89 @@
   --accent-bg: #C0CFB2; /* soft background green */
 }
 
-.transport-hero { background: linear-gradient(90deg, var(--primary) 0%, var(--primary-dark) 100%); color: #fff; border-radius: 12px; padding: 36px; margin-bottom: 24px; }
-.transport-hero-inner { display: flex; justify-content: space-between; gap: 20px; align-items: center; }
-.transport-quick-search { background: rgba(255,255,255,0.06); padding: 16px; border-radius: 8px; width: 420px; }
-.transport-search-input { width: 100%; border-radius: 6px; }
-.transport-features { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
-.feat { color: #fff; display: flex; align-items: center; gap: 8px; }
+/* HERO */
+.transport-hero {
+  background: linear-gradient(rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.35)),
+      url('../../../../public/images/truck-banner.png') center/cover no-repeat;
+  height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--primary); /* Fallback */
+}
+
+.transport-hero h1 {
+  color: white;
+  font-size: 42px;
+  font-weight: 600;
+  margin: 0;
+}
+
+/* INTRO */
+.transport-intro {
+  max-width: 900px;
+  margin: 60px auto;
+  text-align: center;
+  padding: 0 20px;
+}
+
+.transport-intro h2 {
+  color: #2f5d3f;
+  margin-bottom: 20px;
+  font-size: 32px;
+  font-weight: 600;
+}
+
+.transport-intro p {
+  color: #555;
+  line-height: 1.6;
+  font-size: 18px;
+}
+
+/* VALUES (Features) */
+.transport-values {
+  max-width: 1300px;
+  margin: 40px auto 80px;
+  display: flex;
+  gap: 30px;
+  justify-content: center;
+  flex-wrap: wrap;
+  padding: 0 16px;
+}
+
+.transport-values .value-card {
+  background: white;
+  padding: 40px 30px;
+  border-radius: 20px;
+  border: 1px solid #e3e6e1;
+  width: calc(33.333% - 20px);
+  min-width: 300px;
+  text-align: center;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+.transport-values .value-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+}
+
+.transport-values .value-icon {
+  font-size: 48px;
+  color: var(--primary);
+  margin-bottom: 24px;
+}
+
+.transport-values .value-card h3 {
+  font-size: 24px;
+  color: #2D4F36;
+  margin-bottom: 16px;
+}
+
+.transport-values .value-card p {
+  color: #555;
+  margin: 0;
+}
 
 .transport-panel { border-radius: 12px; box-shadow: 0 6px 20px rgba(16,24,40,0.06); }
 .transport-option-card { border-radius: 12px; transition: transform .18s ease, box-shadow .18s ease; }
@@ -37,7 +114,18 @@
 .transport-cta-card { border-radius:12px; background: linear-gradient(90deg, var(--accent-bg), #fff); }
 
 @media (max-width: 768px) {
-  .transport-hero-inner { flex-direction: column; align-items: flex-start; }
+  .transport-hero h1 {
+    font-size: 32px;
+  }
+
+  .transport-intro h2 {
+    font-size: 24px;
+  }
+
+  .transport-values .value-card {
+    width: 100%;
+    min-width: unset;
+  }
 
   .transport-page {
     background: #f6f8fb;
@@ -48,74 +136,9 @@
     margin: 0 auto;
     padding: 24px;
   }
-
-  .info-hero.transport-hero {
-    background: linear-gradient(90deg, var(--primary) 0%, var(--primary-dark) 100%);
-    padding: 56px 24px;
-    border-radius: 8px;
-    margin-bottom: 28px;
-    color: #fff;
-  }
-
-  .transport-hero-inner {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 24px;
-  }
-
-  .hero-features {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-
-  .hero-feature {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    color: #fff;
-    padding: 8px 6px;
-  }
-
-  /* Icon style inside each feature */
-  .hero-feature .anticon {
-    font-size: 18px;
-    color: #fff;
-    background: rgba(255,255,255,0.08);
-    padding: 10px;
-    border-radius: 10px;
-    min-width: 44px;
-    min-height: 44px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .hero-feature > div {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .hero-feature > div .ant-typography {
-    color: rgba(255,255,255,0.95);
-  }
-
-  .hero-feature > div .ant-typography strong,
-  .hero-feature > div .ant-typography-strong {
-    color: #fff;
-    font-weight: 700;
-  }
-
-  @media (min-width: 900px) {
-    .hero-features { grid-template-columns: 1fr 1fr; }
-  }
-
 }
 
-@media (min-width: 900px) {
-  .hero-features { grid-template-columns: 1fr 1fr; }
-}
+
 
 .transport-panel {
     padding: 18px;
