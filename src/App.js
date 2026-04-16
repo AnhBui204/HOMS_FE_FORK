@@ -20,6 +20,7 @@ import RoutesStaff from "./routes/StaffRoutes/RoutesStaff";
 import NotFound from "./pages/CommonPage/NotFound/NotFound";
 import { initCsrfToken } from './services/api';
 import ScrollToTop from "./components/common/ScrollToTop";
+import MagicLogin from "./pages/CustomerPage/Auth/MagicLogin";
 
 function App() {
    const [csrfReady, setCsrfReady] = useState(false);
@@ -40,6 +41,7 @@ function App() {
             <Route path="/landing" element={<HomeRedirect />} />
             <Route path="/about" element={<About />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/magic"element={<MagicLogin/>}/>
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/change-password" element={<ChangePasswordPage />} />

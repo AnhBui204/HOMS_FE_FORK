@@ -1,15 +1,17 @@
-import { Form, Input, Button, Divider, message } from "antd";
-import { EyeInvisibleOutlined, EyeTwoTone } from "@ant-design/icons";
+import { Form, Input, Button, Divider, message,Space } from "antd";
+import { EyeInvisibleOutlined, EyeTwoTone,FacebookFilled  } from "@ant-design/icons";
 import { FcGoogle } from "react-icons/fc";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   login,
   loginGoogle,
+   loginFacebook, 
   saveAccessToken,
 } from "../../../services/authService";
 import useUser from "../../../contexts/UserContext";
 import { GoogleLogin } from "@react-oauth/google";
+import FacebookLogin from "@greatsumini/react-facebook-login";
 import { resetCsrfToken } from "../../../services/api";
 
 const PRIMARY_COLOR = "#44624A";
@@ -119,19 +121,20 @@ const LoginForm = () => {
       </Button>
 
       <Divider>Hoặc</Divider>
-
-      {/* ✅ GOOGLE LOGIN */}
+<div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+  {/* GOOGLE */}
+  <div style={{ flex: 1, display: "flex", justifyContent: "center" }}>
+    <div style={{ width: "100%" }}>
       <GoogleLogin
+        width="100%"
         onSuccess={async (credentialResponse) => {
           try {
             const googleToken = credentialResponse.credential;
-
             const res = await loginGoogle(googleToken);
             const responseData = res.data.data || res.data;
             const { user, accessToken, expiresInMs } = responseData;
             handleLoginSuccess(user, accessToken, expiresInMs);
           } catch (err) {
-            console.error(err);
             message.error("Đăng nhập Google thất bại");
           }
         }}
@@ -139,8 +142,58 @@ const LoginForm = () => {
           message.error("Google login failed");
         }}
       />
+    </div>
+  </div>
+
+  {/* DIVIDER DỌC */}
+  <Divider type="vertical" style={{ height: 40 }} />
+
+  {/* FACEBOOK */}
+  <div style={{ flex: 1 }}>
+    <FacebookLogin
+      appId={process.env.REACT_APP_FACEBOOK_APP_ID || "NHAP_APP_ID"}
+      onSuccess={async (response) => {
+         console.log("FB Response:", response); 
+        try {
+          
+          const res = await loginFacebook(response.accessToken); 
+          const responseData = res.data.data || res.data;
+          const { user, accessToken, expiresInMs } = responseData;
+          handleLoginSuccess(user, accessToken, expiresInMs);
+        } catch (err) {
+           console.error("LỖI CHI TIẾT:", err.response?.data);
+          message.error(err.response?.data?.message || "Đăng nhập Facebook thất bại");
+        }
+      }}
+      onFail={(error) => {
+        console.log('Login FB Fail!', error);
+      }}
+      render={({ onClick }) => (
+       <Button
+  size="large"
+  block
+  onClick={onClick}
+  icon={<FacebookFilled style={{ color: '#1877F2', fontSize: 18 }} />}
+  style={{
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 40,
+    borderRadius: 2, 
+    fontWeight: 400,
+    fontSize: 14,
+    padding: '0 12px'
+  }}
+>
+  Đăng nhập bằng Facebook
+</Button>
+      )}
+    />
+  </div>
+</div>
     </Form>
   );
+  
 };
 
 export default LoginForm;

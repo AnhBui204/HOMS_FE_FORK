@@ -23,6 +23,7 @@ const PUBLIC_ENDPOINTS = [
   '/reset-password',
   '/ai/chat',
   '/auth/google-login',
+  '/auth/facebook-login',
   '/orders/validate',
   '/public/estimate-price',
   '/public/best-moving-time',
