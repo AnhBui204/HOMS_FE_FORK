@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Button, Typography, Tag, message, Modal, Select, Form, Space, Row, Col, Card, Descriptions, Divider, DatePicker } from 'antd';
+import { Table, Button, Typography, Tag, message, Modal, Select, Form, Space, Row, Col, Card, Descriptions, Divider, DatePicker, Alert } from 'antd';
 import { Spin as AntdSpin } from 'antd';
 import { CarOutlined } from '@ant-design/icons';
 import api from '../../services/api';
@@ -88,16 +88,19 @@ const ResourceAllocation = () => {
     const showDispatchModal = async (invoice) => {
         setSelectedInvoice(invoice);
         form.resetFields();
-        // Set default dispatch time to the original scheduled time
-        if (invoice.requestTicketId?.scheduledTime) {
+        const ticket = invoice.requestTicketId;
+        const surveyData = ticket?.surveyDataId || {};
+
+        // Set defaults from survey
+        if (ticket?.scheduledTime) {
             form.setFieldsValue({
-                dispatchTime: dayjs(invoice.requestTicketId.scheduledTime)
+                dispatchTime: dayjs(ticket.scheduledTime),
+                vehicleType: surveyData.suggestedVehicle || undefined
             });
         }
         setIsModalVisible(true);
 
         // Prepare coordinates for map
-        const ticket = invoice.requestTicketId;
         let pCoords = ticket?.pickup?.coordinates;
         let dCoords = ticket?.delivery?.coordinates;
 
@@ -147,6 +150,52 @@ const ResourceAllocation = () => {
             fetchInvoices(); // Refresh list
         } catch (error) {
             message.error('Lỗi khi điều phối: ' + (error.response?.data?.message || ''));
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    const handleAutoFill = async () => {
+        if (!selectedInvoice) return;
+        try {
+            setSubmitting(true);
+            const ticket = selectedInvoice.requestTicketId;
+            const payload = {
+                totalWeight: ticket?.surveyDataId?.totalWeight || 1000,
+                totalVolume: ticket?.surveyDataId?.totalVolume || 10,
+                pickupLocation: mapCoords.pickup ? { coordinates: [mapCoords.pickup.lng, mapCoords.pickup.lat] } : null
+            };
+            const response = await api.post('/invoices/optimal-squad', payload);
+            if (response.data && response.data.success) {
+                const squad = response.data.data;
+                const newValues = {};
+                if (squad.vehicle) newValues.vehicleType = squad.vehicle.vehicleType;
+                
+                // Đảm bảo đưa User vào list để Select mapping được Tên thay vì hiển thị ID
+                if (squad.leader) {
+                    setDrivers(prev => prev.some(d => d._id === squad.leader._id) ? prev : [...prev, squad.leader]);
+                    newValues.leaderId = squad.leader._id;
+                }
+                if (squad.driver && squad.driver._id !== squad.leader?._id) {
+                    setDrivers(prev => prev.some(d => d._id === squad.driver._id) ? prev : [...prev, squad.driver]);
+                    newValues.driverIds = [squad.driver._id];
+                }
+                if (squad.helpers && squad.helpers.length > 0) {
+                    setStaff(prev => {
+                        const arr = [...prev];
+                        squad.helpers.forEach(h => {
+                            if (!arr.some(s => s._id === h._id)) arr.push(h);
+                        });
+                        return arr;
+                    });
+                    newValues.staffIds = squad.helpers.map(h => h._id);
+                }
+                
+                form.setFieldsValue(newValues);
+                message.success('Đã áp dụng Biệt đội tối ưu (Smart Squad)!');
+            }
+        } catch (error) {
+            message.error('Lỗi khi tính toán đội ngũ tối ưu.');
         } finally {
             setSubmitting(false);
         }
@@ -262,9 +311,18 @@ const ResourceAllocation = () => {
                             {/* Resource Form Card */}
                             <Card
                                 size="small"
-                                title="Cấu hình Nhân sự & Phương tiện"
+                                title={<Space><Text strong>Cấu hình Nhân sự & Phương tiện</Text></Space>}
+                                extra={<Button type="dashed" danger onClick={handleAutoFill} style={{ borderRadius: '8px' }}>✨ Smart Auto-fill</Button>}
                                 styles={{ header: { minHeight: '36px', background: '#f8f9fa' } }}
                             >
+                                {selectedInvoice?.requestTicketId?.surveyDataId && (
+                                    <Alert
+                                        message={`Khảo sát đề xuất: Dùng xe ${selectedInvoice.requestTicketId.surveyDataId.suggestedVehicle || 'Chưa định'} và cần ${selectedInvoice.requestTicketId.surveyDataId.suggestedStaffCount || '?'} nhân sự.`}
+                                        type="info"
+                                        showIcon
+                                        style={{ marginBottom: '12px' }}
+                                    />
+                                )}
                                 <Form form={form} layout="vertical" onFinish={handleSubmit} initialValues={{ vehicleCount: 1 }}>
                                     <Divider orientation="left" style={{ margin: '8px 0', fontSize: '13px' }}>Đội ngũ nhân sự</Divider>
                                     <Form.Item

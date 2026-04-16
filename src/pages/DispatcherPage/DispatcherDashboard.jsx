@@ -11,6 +11,7 @@ import {
 } from '@ant-design/icons';
 import api from '../../services/api';
 import dayjs from 'dayjs';
+import LiveFleetMonitor from '../../components/ResourceMap/LiveFleetMonitor';
 
 const { Title, Text } = Typography;
 
@@ -245,6 +246,12 @@ const DispatcherDashboard = () => {
                             />
                         )}
                     </Card>
+                </Col>
+            </Row>
+
+            <Row gutter={[16, 16]} style={{ marginTop: 24 }}>
+                <Col span={24}>
+                    <LiveFleetMonitor />
                 </Col>
             </Row>
 
