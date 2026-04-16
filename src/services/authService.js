@@ -101,3 +101,9 @@ export const loginGoogle = (googleToken) => {
   });
 
 };
+export const loginFacebook = (accessToken) => {
+  return api.post('/auth/facebook-login', { accessToken }, {
+    withCredentials: true,
+    headers: { "ngrok-skip-browser-warning": "69420" }
+  });
+};
