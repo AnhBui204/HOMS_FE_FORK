@@ -46,11 +46,19 @@ const UserManagement = () => {
                 search: currentFilters.search || undefined,
             };
 
+            // If the UI explicitly requested a role filter, forward it to the backend.
+            // (handleFilterChange already sets role to undefined when selecting "all")
+            if (currentFilters.role) {
+                params.role = currentFilters.role;
+            }
+
+            // If requesting the customers tab, explicitly request only customers from backend
             if (roleFilter === 'customers') {
                 params.role = 'customer';
             }
 
             // If requesting staff (all non-customer roles) we'll request a large limit and paginate client-side
+            // but still forward any explicit role selection (e.g. driver) so backend can filter further.
             if (roleFilter === 'staff') {
                 params.page = 1;
                 params.limit = 10000;
