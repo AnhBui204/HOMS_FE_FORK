@@ -26,6 +26,7 @@ import useUser from "../../../contexts/UserContext";
 import { analyzeMedia } from "../../../services/ai/geminiVisionService";
 import { createOrder } from "../../../services/orderService";
 import { normalizeAIItems } from '../../../services/ai/catalogMappingService';
+import { uploadSurveyMedia } from "../../../services/uploadService";
 
 import "./style.css";
 
@@ -434,6 +435,17 @@ const ItemMovingAnalysis = () => {
         if (!isAuthenticated) { navigate('/login'); return; }
         try {
             message.loading({ content: 'Đang gửi yêu cầu...', key: 'submit' });
+
+            let uploadedImages = [];
+            if (fileList.length > 0) {
+                message.loading({ content: 'Đang tải hình ảnh lên hệ thống...', key: 'submit' });
+                const validFiles = fileList.filter(f => f instanceof File);
+                if (validFiles.length > 0) {
+                    uploadedImages = await uploadSurveyMedia(validFiles);
+                }
+                message.loading({ content: 'Đang tạo yêu cầu với hình ảnh...', key: 'submit' });
+            }
+
             const itemsRich = [
                 ...primary.map(i => ({
                     name: i.name,
@@ -470,7 +482,7 @@ const ItemMovingAnalysis = () => {
                 distanceKm:          orderData?.distanceKm || 0,
             } : undefined;
 
-            await createOrder({ ...orderData, itemsRich, aiEstimate });
+            await createOrder({ ...orderData, itemsRich, images: uploadedImages, aiEstimate });
             message.success({ content: 'Tạo yêu cầu thành công!', key: 'submit', duration: 2 });
             navigate('/customer/order');
         } catch (err) {

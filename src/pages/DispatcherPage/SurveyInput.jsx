@@ -611,7 +611,8 @@ const SurveyInput = () => {
           })) || []),
           ...secondaryItemsPayload,
           ...criticalItemsPayload
-        ]
+        ],
+        images: aiImages || []
       };
 
       // Gọi PUT /api/surveys/:ticketId/complete

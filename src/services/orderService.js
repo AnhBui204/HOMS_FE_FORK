@@ -68,6 +68,7 @@ const buildRequestTicketPayload = (orderData) => {
         },
         scheduledTime: orderData.movingDate || null,
         items,
+        images: orderData.images || [],
         notes: notesParts.join(' | ')
     };
 

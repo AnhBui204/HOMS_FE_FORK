@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Modal, Upload, Button, message, Typography, Spin, Row, Col, Space, Switch, Tag, Tooltip } from 'antd';
 import { InboxOutlined, CheckCircleOutlined, SyncOutlined, RobotOutlined, WarningOutlined, SwapOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import { analyzeMedia } from '../../services/ai/geminiVisionService';
+import { uploadSurveyMedia } from '../../services/uploadService';
 import { buildPreviewItems } from '../../services/ai/catalogMappingService';
 import './AIVisionAnalyzer.css';
 
@@ -228,19 +229,28 @@ const AIVisionAnalyzer = ({ open, onCancel, onAnalyzeComplete, currentVehicle, c
   };
 
 
-  const applyResults = () => {
+  const applyResults = async () => {
     if (result) {
-      // Build a lightweight, image-indexed list of thumbnails we can pass
-      // back to the survey screen so it can later highlight item locations.
-      const images = fileList
-        .map((file, index) => {
-          if (!file.type.startsWith('image/')) return null;
-          const thumb = thumbUrls.find(t => t.uid === file.uid);
-          return thumb?.url
-            ? { index, name: file.name, url: thumb.url }
-            : null;
-        })
-        .filter(Boolean);
+      // 1. Convert thumbnail object URLs to final Cloudinary URLs before saving
+      message.loading({ content: 'Đang tải hình ảnh lên hệ thống...', key: 'upload' });
+      let uploadedImages = [];
+      try {
+        const validFiles = fileList.filter(f => f instanceof File);
+        if (validFiles.length > 0) {
+          const cloudResponses = await uploadSurveyMedia(validFiles);
+          
+          let cloudIdx = 0;
+          uploadedImages = fileList.map((file, index) => {
+            if (!file.type.startsWith('image/')) return null;
+            const cloudFile = cloudResponses[cloudIdx++];
+            return cloudFile ? { index, name: file.name, url: cloudFile.url, publicId: cloudFile.publicId, resourceType: cloudFile.resourceType } : null;
+          }).filter(Boolean);
+        }
+      } catch (err) {
+        message.error({ content: 'Lỗi tải ảnh lên: ' + err.message, key: 'upload' });
+        return; 
+      }
+      message.success({ content: 'Lưu & tải ảnh hoàn tất!', key: 'upload' });
 
       // Translate item names to Vietnamese before passing back to the survey form
       const translatedResult = {
@@ -252,7 +262,7 @@ const AIVisionAnalyzer = ({ open, onCancel, onAnalyzeComplete, currentVehicle, c
         })),
         _applyVehicle: overrideVehicle,
         _applyStaff: overrideStaff,
-        _images: images,
+        _images: uploadedImages,
       };
       onAnalyzeComplete(translatedResult);
       closeModal();
