@@ -60,6 +60,28 @@ export const SECONDARY_KEY_RULES = [
   },
 ];
 
+// ─── UTILS ───────────────────────────────────────────────────────────────────
+
+/**
+ * Calculates Levenshtein Distance for fuzzy string matching
+ */
+const getLevenshteinDistance = (a, b) => {
+  const matrix = Array.from({ length: a.length + 1 }, () => []);
+  for (let i = 0; i <= a.length; i++) matrix[i][0] = i;
+  for (let j = 0; j <= b.length; j++) matrix[0][j] = j;
+
+  for (let i = 1; i <= a.length; i++) {
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      matrix[i][j] = Math.min(
+        matrix[i - 1][j] + 1,
+        matrix[i][j - 1] + 1,
+        matrix[i - 1][j - 1] + cost
+      );
+    }
+  }
+  return matrix[a.length][b.length];
+};
 
 /**
  * Match an item name to a secondary catalog key.
@@ -68,9 +90,22 @@ export const SECONDARY_KEY_RULES = [
  */
 export const matchSecondaryKey = (name = '') => {
   const lower = name.toLowerCase();
+  
+  // 1. Exact or strict includes match (Fast path)
   for (const { key, patterns } of SECONDARY_KEY_RULES) {
     if (patterns.some(p => lower.includes(p))) return key;
   }
+  
+  // 2. Fuzzy match fallback
+  for (const { key, patterns } of SECONDARY_KEY_RULES) {
+    for (const pattern of patterns) {
+      // Only fuzzy match words longer than 3 characters to avoid false positives
+      if (pattern.length > 3 && lower.length >= pattern.length - 2 && getLevenshteinDistance(lower, pattern) <= 2) {
+        return key;
+      }
+    }
+  }
+  
   return null;
 };
 
@@ -159,9 +194,21 @@ const CATALOG_CATEGORY_HINTS = [
  */
 const getCategoryHint = (name = '') => {
   const lower = name.toLowerCase();
+  
+  // 1. Strict includes
   for (const { catalog, patterns } of CATALOG_CATEGORY_HINTS) {
     if (patterns.some(p => lower.includes(p))) return catalog;
   }
+  
+  // 2. Fuzzy fallback
+  for (const { catalog, patterns } of CATALOG_CATEGORY_HINTS) {
+    for (const pattern of patterns) {
+      if (pattern.length > 3 && lower.length >= pattern.length - 2 && getLevenshteinDistance(lower, pattern) <= 2) {
+         return catalog;
+      }
+    }
+  }
+  
   return null;
 };
 
