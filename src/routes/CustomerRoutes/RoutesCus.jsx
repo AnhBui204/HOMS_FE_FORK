@@ -19,6 +19,7 @@ import ProtectedRoute from "../../components/ProtectRoute/ProtectedRoute";
 import VideoChat from "../../pages/VideoChat/VideoChat";
 import AIAssistant from "../../components/AIAssistant/AIAssistant";
 import NotificationPage from "../../pages/CommonPage/Notifications/NotificationPage";
+import MyInvoice from "../../pages/CustomerPage/Invoice/MyInvoice";
 
 const RoutesCus = () => {
   return (
@@ -137,6 +138,14 @@ const RoutesCus = () => {
           element={
             <ProtectedRoute allowedRoles={["customer"]}>
               <MyContract />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/invoices"
+          element={
+            <ProtectedRoute allowedRoles={["customer"]}>
+              <MyInvoice />
             </ProtectedRoute>
           }
         />
