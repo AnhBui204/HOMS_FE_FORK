@@ -15,7 +15,7 @@ const starColor = '#faad14';
 const RatingManagement = () => {
     const [loading, setLoading] = useState(false);
     const [ratings, setRatings] = useState([]);
-    const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
+    const [pagination, setPagination] = useState({ current: 1, pageSize: 5, total: 0 });
     const [filters, setFilters] = useState({ search: '', minRating: undefined });
     const [reviewedIds, setReviewedIds] = useState(new Set());
     const [viewMode, setViewMode] = useState('all'); // all | needs | reviewed
@@ -157,10 +157,14 @@ const RatingManagement = () => {
         });
     };
 
-    const negativeKeywords = ['bad', 'terrible', 'late', 'rude', 'broken', 'damaged', 'delay', 'trễ', 'tệ', 'chậm', 'hỏng', 'không'];
+    // Local negative keywords (kept small). Prefer server-provided `needsAttention` flag when available.
+    const negativeKeywords = ['bad', 'terrible', 'late', 'rude', 'broken', 'damaged', 'delay', 'trễ', 'tệ', 'chậm', 'hỏng'];
     const needsAttention = (record) => {
         if (!record) return false;
-        if (record.rating && record.rating <= 2) return true;
+        // If server computed a conservative flag, trust it.
+        if (typeof record.needsAttention === 'boolean') return record.needsAttention;
+        // Fallback: mark 1-3 stars as needing attention, or if negative keywords appear in comment
+        if (record.rating && Number(record.rating) <= 3) return true;
         const text = (record.comment || '').toLowerCase();
         return negativeKeywords.some(k => text.includes(k));
     };
