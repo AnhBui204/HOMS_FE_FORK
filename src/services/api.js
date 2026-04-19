@@ -97,18 +97,9 @@ export const setupInterceptors = (contextLogout) => {
       const config = error.config;
 
       // Mất kết nối mạng / Timeout handling
-    if (!error.response || error.code === 'ECONNABORTED' || error.message === 'Network Error') {
-
- if (config && !config._retryNotificationShown) { 
- notification.error({
- message: 'Mất kết nối mạng hoặc server không phản hồi',
- description: 'Đang thử kết nối lại để không gián đoạn trải nghiệm...',
- placement: 'topRight',
- duration: 5,
- });
- config._retryNotificationShown = true; 
- }
-
+      if (!error.response || error.code === 'ECONNABORTED' || error.message === 'Network Error') {
+        // Global network error notifications have been removed per user request.
+        
         // Auto-retry for GET requests up to 2 times
         if (config && config.method === 'get') {
           config._retryCount = config._retryCount || 0;
@@ -121,30 +112,19 @@ export const setupInterceptors = (contextLogout) => {
       }
 
       // Any status codes that falls outside the range of 2xx causes this function to trigger
-      const errorMessage = error.response?.data?.message || error.message || "An unexpected error occurred.";
-
+      
       // Suppress noisy toasts for known client/server validation about invalid invoice id
       if (error.response?.data?.message && String(error.response.data.message).toLowerCase().includes('invalid invoice id')) {
-        // do not show notification for this specific, non-actionable message
         return Promise.reject(error);
       }
 
       // Handle 403 Forbidden
       if (error.response?.status === 403) {
         console.warn("⚠️ 403 Forbidden detected. Check permissions or session.");
-        // Optional: csrfToken = null;
       }
 
-      // Do not show toast for 401 Unauthorized globally since it might trigger auth flows or silent refreshes
-      // Allow callers to suppress global error notifications by setting config._suppressErrorNotification = true
-      if (!config?._suppressErrorNotification && error.response?.status !== 401 && error.response?.status !== 403) {
-        notification.error({
-          message: 'Lỗi hệ thống',
-          description: errorMessage,
-          placement: 'topRight',
-          duration: 4,
-        });
-      }
+      // Global error notifications have been removed per user request. 
+      // Individual components are now responsible for handling their own error UI.
 
       return Promise.reject(error);
     }
