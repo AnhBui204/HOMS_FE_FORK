@@ -20,8 +20,31 @@ const LoginForm = () => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [fbReady, setFbReady] = useState(false);
+  const [fbError, setFbError] = useState(false);
   const { setUser, setIsAuthenticated } = useUser();
   const navigate = useNavigate();
+
+  const appId = process.env.REACT_APP_FACEBOOK_APP_ID;
+  const isAppIdValid = appId && appId !== "NHAP_APP_ID";
+
+  useEffect(() => {
+    // Nếu App ID không hợp lệ, báo lỗi luôn
+    if (!isAppIdValid) {
+      console.warn("Facebook App ID is missing or invalid. Please check your .env file.");
+      return;
+    }
+
+    // Timeout sau 10s nếu không load được
+    const timer = setTimeout(() => {
+      if (!fbReady) {
+        setFbError(true);
+        console.error("Facebook SDK load timeout. Check your network or App ID.");
+      }
+    }, 10000);
+
+    return () => clearTimeout(timer);
+  }, [fbReady, isAppIdValid]);
+
   const handleLoginSuccess = (userData, accessToken, expiresInMs) => {
     saveAccessToken(accessToken, expiresInMs || 30 * 60 * 1000);
     setUser(userData);
@@ -152,10 +175,11 @@ const LoginForm = () => {
   {/* FACEBOOK */}
   <div style={{ flex: 1 }}>
     <FacebookLogin
-      appId={process.env.REACT_APP_FACEBOOK_APP_ID || "NHAP_APP_ID"}
+      appId={appId || "NHAP_APP_ID"}
       onInit={() => {
         console.log("FB SDK Initialized");
         setFbReady(true);
+        setFbError(false);
       }}
       onSuccess={async (response) => {
          console.log("FB Response:", response); 
@@ -177,9 +201,10 @@ const LoginForm = () => {
        <Button
   size="large"
   block
-  loading={!fbReady}
+  loading={!fbReady && !fbError && isAppIdValid}
   onClick={onClick}
-  icon={<FacebookFilled style={{ color: '#1877F2', fontSize: 18 }} />}
+  disabled={!fbReady}
+  icon={<FacebookFilled style={{ color: fbReady ? '#1877F2' : '#ccc', fontSize: 18 }} />}
   style={{
     display: 'flex',
     alignItems: 'center',
@@ -191,7 +216,7 @@ const LoginForm = () => {
     padding: '0 12px'
   }}
 >
-  {fbReady ? "Đăng nhập bằng Facebook" : "Đang tải Facebook..."}
+  {!isAppIdValid ? "Thiếu Facebook App ID" : (fbError ? "Lỗi tải Facebook" : (fbReady ? "Đăng nhập bằng Facebook" : "Đang tải Facebook..."))}
 </Button>
       )}
     />
