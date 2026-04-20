@@ -1,7 +1,7 @@
 import { Form, Input, Button, Divider, message, Space } from "antd";
 import { EyeInvisibleOutlined, EyeTwoTone, FacebookFilled } from "@ant-design/icons";
 import { FcGoogle } from "react-icons/fc";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   login,
