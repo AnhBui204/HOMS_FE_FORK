@@ -14,6 +14,8 @@ const UserModal = ({ visible, onClose, onSuccess, user }) => {
     const role = Form.useWatch('role', form);
 
     useEffect(() => {
+        // Initialize form when modal opens. When editing a user, prefill fields.
+        // When creating a new user, reset fields and set the default password display.
         if (visible) {
             if (user) {
                 form.setFieldsValue({
@@ -25,13 +27,24 @@ const UserModal = ({ visible, onClose, onSuccess, user }) => {
                     workingAreas: user.dispatcherProfile?.workingAreas || []
                 });
             } else {
-                // set default password visible on create
-                form.setFieldsValue({ password: 'User123@' });
+                // reset first, then set default non-editable password
                 form.resetFields();
                 form.setFieldsValue({ password: 'User123@' });
             }
         }
     }, [visible, user, form]);
+
+    // Ensure the confirmation modal is closed whenever the main modal is closed
+    // to avoid stacking / z-index issues when opening the create modal repeatedly.
+    useEffect(() => {
+        if (!visible) {
+            setConfirmVisible(false);
+            setConfirmHover(false);
+            setCreateHover(false);
+            // also reset the form when fully closed to avoid stale values
+            form.resetFields();
+        }
+    }, [visible, form]);
 
     const handleSubmit = async () => {
         try {
@@ -96,6 +109,8 @@ const UserModal = ({ visible, onClose, onSuccess, user }) => {
                 width={640}
                 bodyStyle={{ padding: 24 }}
                 destroyOnClose
+                zIndex={1000}
+                getContainer={() => document.body}
             >
 
                 {/* Header */}
@@ -195,6 +210,8 @@ const UserModal = ({ visible, onClose, onSuccess, user }) => {
                 centered
                 width={420}
                 bodyStyle={{ padding: 24 }}
+                zIndex={1500}
+                getContainer={() => document.body}
             >
                 {/* Polished confirmation card */}
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 18 }}>
