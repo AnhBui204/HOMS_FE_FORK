@@ -115,10 +115,10 @@ const LoginForm = () => {
       }
     }
 
-    // 3. Delay cực ngắn để Context kịp update
+    // 3. Một chút delay (500ms) để React Context và các Service kịp đồng bộ hoàn toàn
     setTimeout(() => {
       navigate(redirectPath);
-    }, 100);
+    }, 500);
   };
   // ===== NORMAL LOGIN =====
   const onFinish = async (values) => {

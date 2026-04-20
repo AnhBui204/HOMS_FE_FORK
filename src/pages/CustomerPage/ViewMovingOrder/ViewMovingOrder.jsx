@@ -1055,6 +1055,7 @@ const ViewMovingOrder = () => {
     let retryCount = 0;
 
     const fetchTickets = async () => {
+      // Đảm bảo cả 2 biến đều đã được React cập nhật
       if (!isAuthenticated || !user) { 
         if (isMounted) setLoading(false); 
         return; 
@@ -1062,14 +1063,17 @@ const ViewMovingOrder = () => {
       
       try {
         const currentUserId = user._id || user.id;
+        // Thêm timestamp _t để chống cache trình duyệt
         const response = await api.get(`/request-tickets`, {
-          params: { customerId: currentUserId },
+          params: { 
+            customerId: currentUserId,
+            _t: Date.now() 
+          },
         });
 
         if (response.data?.success && isMounted) {
           let userTickets = response.data.data || [];
           
-          // Lọc chính xác đơn của user này
           userTickets = userTickets.filter(
             (t) =>
               (t.customerId && (t.customerId._id === currentUserId || t.customerId === currentUserId)) ||
@@ -1078,7 +1082,6 @@ const ViewMovingOrder = () => {
           
           userTickets.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-          // Xử lý search từ URL
           const searchCode = new URLSearchParams(location.search).get("searchCode");
           if (searchCode) {
             const kw = searchCode.toLowerCase();
@@ -1091,10 +1094,14 @@ const ViewMovingOrder = () => {
 
           setTickets(userTickets);
 
-          // Nếu danh sách trống, thử lại 1 lần sau 800ms (đề phòng server chưa kịp link guest order)
-          if (userTickets.length === 0 && retryCount === 0) {
+          // Nếu danh sách trống, thử lại tối đa 2 lần (Lần 1: 1s, Lần 2: 2s)
+          if (userTickets.length === 0 && retryCount < 2) {
             retryCount++;
-            setTimeout(fetchTickets, 800);
+            const delay = retryCount === 1 ? 1000 : 2000;
+            console.log(`[ViewOrder] Danh sách trống, đang thử lại lần ${retryCount} sau ${delay}ms...`);
+            setTimeout(() => {
+              if (isMounted) fetchTickets();
+            }, delay);
           }
         }
       } catch (error) {
@@ -1107,6 +1114,13 @@ const ViewMovingOrder = () => {
     fetchTickets();
     return () => { isMounted = false; };
   }, [isAuthenticated, user, location.search]);
+  
+  // Tự động cuộn lên đầu khi có đơn mới nạp vào
+  useEffect(() => {
+    if (tickets.length > 0) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [tickets.length]);
 
   /* ── filter logic ── */
   const matchFilter = (t, key) => {
