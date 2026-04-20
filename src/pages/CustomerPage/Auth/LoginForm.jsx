@@ -1,12 +1,12 @@
-import { Form, Input, Button, Divider, message,Space } from "antd";
-import { EyeInvisibleOutlined, EyeTwoTone,FacebookFilled  } from "@ant-design/icons";
+import { Form, Input, Button, Divider, message, Space } from "antd";
+import { EyeInvisibleOutlined, EyeTwoTone, FacebookFilled } from "@ant-design/icons";
 import { FcGoogle } from "react-icons/fc";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   login,
   loginGoogle,
-   loginFacebook, 
+  loginFacebook,
   saveAccessToken,
 } from "../../../services/authService";
 import useUser from "../../../contexts/UserContext";
@@ -49,7 +49,7 @@ const LoginForm = () => {
     saveAccessToken(accessToken, expiresInMs || 30 * 60 * 1000);
     setUser(userData);
     setIsAuthenticated(true);
-    resetCsrfToken(); 
+    resetCsrfToken();
     message.success("Đăng nhập thành công!");
     let redirectPath = "/";
 
@@ -145,86 +145,87 @@ const LoginForm = () => {
       </Button>
 
       <Divider>Hoặc</Divider>
-<div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-  {/* GOOGLE */}
-  <div style={{ flex: 1, display: "flex", justifyContent: "center" }}>
-    <div style={{ width: "100%" }}>
-      <GoogleLogin
-        width="100%"
-        onSuccess={async (credentialResponse) => {
-          try {
-            const googleToken = credentialResponse.credential;
-            const res = await loginGoogle(googleToken);
-            const responseData = res.data.data || res.data;
-            const { user, accessToken, expiresInMs } = responseData;
-            handleLoginSuccess(user, accessToken, expiresInMs);
-          } catch (err) {
-            message.error("Đăng nhập Google thất bại");
-          }
-        }}
-        onError={() => {
-          message.error("Google login failed");
-        }}
-      />
-    </div>
-  </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        {/* GOOGLE */}
+        <div style={{ flex: 1, display: "flex", justifyContent: "center" }}>
+          <div style={{ width: "100%" }}>
+            <GoogleLogin
+              width="100%"
+              onSuccess={async (credentialResponse) => {
+                try {
+                  const googleToken = credentialResponse.credential;
+                  const res = await loginGoogle(googleToken);
+                  const responseData = res.data.data || res.data;
+                  const { user, accessToken, expiresInMs } = responseData;
+                  handleLoginSuccess(user, accessToken, expiresInMs);
+                } catch (err) {
+                  message.error("Đăng nhập Google thất bại");
+                }
+              }}
+              onError={() => {
+                message.error("Google login failed");
+              }}
+            />
+          </div>
+        </div>
 
-  {/* DIVIDER DỌC */}
-  <Divider type="vertical" style={{ height: 40 }} />
+        {/* DIVIDER DỌC */}
+        <Divider type="vertical" style={{ height: 40 }} />
 
-  {/* FACEBOOK */}
-  <div style={{ flex: 1 }}>
-    <FacebookLogin
-      appId={appId || "NHAP_APP_ID"}
-      onInit={() => {
-        console.log("FB SDK Initialized");
-        setFbReady(true);
-        setFbError(false);
-      }}
-      onSuccess={async (response) => {
-         console.log("FB Response:", response); 
-        try {
-          
-          const res = await loginFacebook(response.accessToken); 
-          const responseData = res.data.data || res.data;
-          const { user, accessToken, expiresInMs } = responseData;
-          handleLoginSuccess(user, accessToken, expiresInMs);
-        } catch (err) {
-           console.error("LỖI CHI TIẾT:", err.response?.data);
-          message.error(err.response?.data?.message || "Đăng nhập Facebook thất bại");
-        }
-      }}
-      onFail={(error) => {
-        console.log('Login FB Fail!', error);
-      }}
-      render={({ onClick }) => (
-       <Button
-  size="large"
-  block
-  loading={!fbReady && !fbError && isAppIdValid}
-  onClick={onClick}
-  disabled={!fbReady}
-  icon={<FacebookFilled style={{ color: fbReady ? '#1877F2' : '#ccc', fontSize: 18 }} />}
-  style={{
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: 40,
-    borderRadius: 2, 
-    fontWeight: 400,
-    fontSize: 14,
-    padding: '0 12px'
-  }}
->
-  {!isAppIdValid ? "Thiếu Facebook App ID" : (fbError ? "Lỗi tải Facebook" : (fbReady ? "Đăng nhập bằng Facebook" : "Đang tải Facebook..."))}
-</Button>
-      )}
-    />
-  </div>
-</div>
+        {/* FACEBOOK */}
+        <div style={{ flex: 1 }}>
+          <FacebookLogin
+            appId={appId || "NHAP_APP_ID"}
+            onInit={() => {
+              console.log("FB SDK Initialized");
+              setFbReady(true);
+              setFbError(false);
+            }}
+            onSuccess={async (response) => {
+              console.log("FB Response:", response);
+              try {
+
+                const res = await loginFacebook(response.accessToken);
+                const responseData = res.data.data || res.data;
+                const { user, accessToken, expiresInMs } = responseData;
+                handleLoginSuccess(user, accessToken, expiresInMs);
+              } catch (err) {
+                console.error("LỖI CHI TIẾT:", err.response?.data);
+                message.error(err.response?.data?.message || "Đăng nhập Facebook thất bại");
+              }
+            }}
+            onFail={(error) => {
+              console.error('Facebook Login Fail:', error);
+              setFbError(true);
+            }}
+            render={({ onClick }) => (
+              <Button
+                size="large"
+                block
+                loading={!fbReady && !fbError && isAppIdValid}
+                onClick={onClick}
+                disabled={!fbReady}
+                icon={<FacebookFilled style={{ color: fbReady ? '#1877F2' : '#ccc', fontSize: 18 }} />}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  height: 40,
+                  borderRadius: 2,
+                  fontWeight: 400,
+                  fontSize: 14,
+                  padding: '0 12px'
+                }}
+              >
+                {!isAppIdValid ? "Thiếu Facebook App ID" : (fbError ? "Lỗi tải Facebook" : (fbReady ? "Đăng nhập bằng Facebook" : "Đang tải Facebook..."))}
+              </Button>
+            )}
+          />
+        </div>
+      </div>
     </Form>
   );
-  
+
 };
 
 export default LoginForm;
