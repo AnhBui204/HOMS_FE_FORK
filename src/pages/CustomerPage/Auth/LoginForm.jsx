@@ -28,19 +28,49 @@ const LoginForm = () => {
   const isAppIdValid = appId && appId !== "NHAP_APP_ID";
 
   useEffect(() => {
-    // Nếu App ID không hợp lệ, báo lỗi luôn
     if (!isAppIdValid) {
       console.warn("Facebook App ID is missing or invalid. Please check your .env file.");
       return;
     }
 
-    // Timeout sau 10s nếu không load được
-    const timer = setTimeout(() => {
-      if (!fbReady) {
+    // 1. Kiểm tra xem FB đã có sẵn chưa
+    if (window.FB) {
+      setFbReady(true);
+      setFbError(false);
+      return;
+    }
+
+    // 2. Tự tay chèn script Facebook (Manual Injection) để đảm bảo script được gọi
+    const id = 'facebook-jssdk';
+    if (!document.getElementById(id)) {
+      const fjs = document.getElementsByTagName('script')[0];
+      const js = document.createElement('script');
+      js.id = id;
+      js.src = "https://connect.facebook.net/vi_VN/sdk.js";
+      js.async = true;
+      js.defer = true;
+      js.crossOrigin = "anonymous";
+      js.onload = () => {
+        console.log("Facebook Script đã được nạp vào DOM.");
+      };
+      js.onerror = () => {
+        console.error("Script Facebook bị chặn hoặc không thể tải.");
         setFbError(true);
-        console.error("Facebook SDK load timeout. Check your network or App ID.");
+      };
+      if (fjs && fjs.parentNode) {
+        fjs.parentNode.insertBefore(js, fjs);
+      } else {
+        document.head.appendChild(js);
       }
-    }, 10000);
+    }
+
+    // 3. Đợi library init hoặc timeout
+    const timer = setTimeout(() => {
+      if (!fbReady && !window.FB) {
+        setFbError(true);
+        console.error("Facebook SDK load timeout. Vui lòng kiểm tra AdBlock hoặc VPN.");
+      }
+    }, 8000);
 
     return () => clearTimeout(timer);
   }, [fbReady, isAppIdValid]);
@@ -203,9 +233,15 @@ const LoginForm = () => {
                 size="large"
                 block
                 loading={!fbReady && !fbError && isAppIdValid}
-                onClick={onClick}
-                disabled={!fbReady}
-                icon={<FacebookFilled style={{ color: fbReady ? '#1877F2' : '#ccc', fontSize: 18 }} />}
+                onClick={() => {
+                  if (fbError) {
+                    window.location.reload(); // Thử lại bằng cách reload
+                  } else {
+                    onClick();
+                  }
+                }}
+                disabled={!fbReady && !fbError}
+                icon={<FacebookFilled style={{ color: fbReady ? '#1877F2' : (fbError ? '#ff4d4f' : '#ccc'), fontSize: 18 }} />}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -217,7 +253,7 @@ const LoginForm = () => {
                   padding: '0 12px'
                 }}
               >
-                {!isAppIdValid ? "Thiếu Facebook App ID" : (fbError ? "Lỗi tải Facebook" : (fbReady ? "Đăng nhập bằng Facebook" : "Đang tải Facebook..."))}
+                {!isAppIdValid ? "Thiếu Facebook App ID" : (fbError ? "Lỗi tải (Nhấn để thử lại)" : (fbReady ? "Đăng nhập bằng Facebook" : "Đang tải Facebook..."))}
               </Button>
             )}
           />
