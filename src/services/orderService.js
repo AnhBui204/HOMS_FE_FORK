@@ -72,6 +72,12 @@ const buildRequestTicketPayload = (orderData) => {
         notes: notesParts.join(' | ')
     };
 
+    // If frontend supplied a pricing snapshot (from estimate modal), attach it so backend
+    // can persist a quote snapshot and show total price immediately on customer order page.
+    if (orderData.pricing) {
+        payload.pricing = orderData.pricing;
+    }
+
     // Include AI estimate for SPECIFIC_ITEMS/TRUCK_RENTAL so WAITING_REVIEW form is pre-filled
     if (orderData.aiEstimate) {
         payload.aiEstimate = orderData.aiEstimate;
@@ -261,10 +267,24 @@ export const getVehicles = async () => {
   const res = await api.get("/admin/vehicles");
   return res.data;
 };
+
+// Get price estimate for an order without creating it
+export const getPriceEstimate = async (orderData) => {
+    try {
+        // build payload similar to createOrder so pricing controller can map fields
+        const payload = buildRequestTicketPayload(orderData);
+        const response = await api.post('/pricing/calculate', payload);
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching price estimate:', error);
+        normalizeApiError(error);
+    }
+};
 const orderService = {
     createOrder,
     getMyOrders,
     getOrderById,
+    getPriceEstimate,
     updateTicketStatus,
     cancelOrder,
     createPaymentLink,

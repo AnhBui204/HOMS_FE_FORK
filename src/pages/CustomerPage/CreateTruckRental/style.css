@@ -163,8 +163,9 @@
 }
 
 .segment-btn:not(.active):hover {
-    color: #44624A;
-    border-color: #8BA888;
+    color: #2D4F36;
+    border-color: #2D4F36;
+    background-color: rgba(45,79,54,0.06);
 }
 
 .location-summary {
@@ -219,4 +220,75 @@
     transform: translateY(-2px);
     background-color: #2D4F36;
     box-shadow: 0 10px 25px rgba(68, 98, 74, 0.35);
+}
+
+/* Override Ant Design primary buttons on this page to use the project primary color */
+.create-order-layout .ant-btn-primary,
+.create-order-layout .ant-btn-primary:visited {
+    background-color: #2D4F36 !important;
+    border-color: #2D4F36 !important;
+    color: #ffffff !important;
+    box-shadow: none !important;
+}
+
+.create-order-layout .ant-btn-primary:hover,
+.create-order-layout .ant-btn-primary:focus,
+.create-order-layout .ant-btn-primary:active {
+    background-color: #244329 !important; /* darker on hover */
+    border-color: #244329 !important;
+    color: #ffffff !important;
+}
+
+/* Make primary buttons slightly rounded and consistent with local styles */
+.create-order-layout .ant-btn {
+    border-radius: 8px !important;
+}
+
+/* Default (non-primary) Ant buttons on this page: on hover, use primary color accents */
+.create-order-layout .ant-btn-default:hover,
+.create-order-layout .ant-btn-default:focus {
+    color: #2D4F36 !important;
+    border-color: #2D4F36 !important;
+    background-color: rgba(45,79,54,0.04) !important;
+}
+
+/* Slight transition for hover/focus states */
+.create-order-layout .ant-btn {
+    transition: all 0.18s ease;
+}
+
+/* Price modal custom styling */
+.price-modal .ant-modal-content {
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.price-modal-content {
+    animation: fadeInUp 220ms ease;
+}
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(8px) scale(0.995); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.price-modal .ant-modal-header {
+    background: transparent;
+    border-bottom: none;
+}
+
+.price-modal .ant-modal-title {
+    font-weight: 700;
+    color: #2D4F36;
+}
+
+.price-modal .ant-btn-primary {
+    background: #2D4F36 !important;
+    border-color: #2D4F36 !important;
+}
+
+/* Ensure Steps current dot uses primary color (already set elsewhere but make specific) */
+.create-order-layout .ant-steps-item-process .ant-steps-item-icon {
+    background-color: #2D4F36 !important;
+    border-color: #2D4F36 !important;
 }
