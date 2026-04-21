@@ -11,20 +11,23 @@ import {
   Modal,
   DatePicker,
   message,
-  Alert,
   Select,
   Checkbox,
   ConfigProvider,
 } from "antd";
-import { EnvironmentOutlined } from "@ant-design/icons";
-import { InfoCircleOutlined, DollarCircleOutlined, CheckCircleOutlined, CarOutlined } from '@ant-design/icons';
+import {
+  EnvironmentOutlined,
+  InfoCircleOutlined,
+  DollarCircleOutlined,
+  CheckCircleOutlined,
+  CarOutlined
+} from '@ant-design/icons';
 import viVN from "antd/locale/vi_VN";
 import dayjs from "dayjs";
 
 import AppHeader from "../../../components/header/header";
 import AppFooter from "../../../components/footer/footer";
 import LocationPicker from "../../../components/LocationPicker/LocationPicker";
-import api from "../../../services/api";
 import { createOrder, getVehicles, getPriceEstimate } from "../../../services/orderService";
 
 import "./style.css";
@@ -43,38 +46,31 @@ const CreateTruckRental = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [vehicles, setVehicles] = useState([]);
-  // From navigation state ideally
   const serviceId = location.state?.serviceId || 4;
 
-  // Pick-up location state
   const [pickupLocation, setPickupLocation] = useState(
     JSON.parse(sessionStorage.getItem("pickupLocation")) || null,
   );
   const [pickupDescription, setPickupDescription] = useState("");
 
-  // Rental details
   const [truckType, setTruckType] = useState("1TON");
-  // track selected vehicle by id so options with same vehicleType don't appear selected together
   const [selectedVehicleId, setSelectedVehicleId] = useState(null);
   const [rentalDurationHours, setRentalDurationHours] = useState(2);
   const [extraStaffCount, setExtraStaffCount] = useState(0);
   const [needsPacking, setNeedsPacking] = useState(false);
   const [needsAssembling, setNeedsAssembling] = useState(false);
 
-  // Schedule state
   const [movingDate, setMovingDate] = useState(null);
 
-  // UI state
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
   const [priceEstimate, setPriceEstimate] = useState(null);
   const [confirmVisible, setConfirmVisible] = useState(false);
 
-  // compute distance (km) between two coords using Haversine formula
   const computeDistanceKm = (a, b) => {
     if (!a || !b || a.lat == null || a.lng == null || b.lat == null || b.lng == null) return 0;
     const toRad = (deg) => deg * (Math.PI / 180);
-    const R = 6371; // earth km
+    const R = 6371;
     const dLat = toRad(b.lat - a.lat);
     const dLon = toRad(b.lng - a.lng);
     const lat1 = toRad(a.lat);
@@ -84,32 +80,37 @@ const CreateTruckRental = () => {
     const aHarv = sinDLat * sinDLat + sinDLon * sinDLon * Math.cos(lat1) * Math.cos(lat2);
     const c = 2 * Math.atan2(Math.sqrt(aHarv), Math.sqrt(1 - aHarv));
     const d = R * c;
-    return Math.round(d * 10) / 10; // 1 decimal km
+    return Math.round(d * 10) / 10;
   };
 
   useEffect(() => {
-    // Restore moving date if cached
     const savedDate = sessionStorage.getItem("movingDate");
     if (savedDate) setMovingDate(dayjs(savedDate));
   }, []);
+
   useEffect(() => {
     const fetchVehicles = async () => {
       try {
         const data = await getVehicles();
-
-        // chỉ lấy xe AVAILABLE
         const available = data.filter(v => v.status === "Available");
-
-      setVehicles(available);
-      // set default selected vehicle to first available
-      if (available && available.length > 0) {
-        setSelectedVehicleId(available[0]._id);
-        setTruckType(available[0].vehicleType || truckType);
+        setVehicles(available);
+        if (available && available.length > 0) {
+          setSelectedVehicleId(available[0]._id);
+          setTruckType(available[0].vehicleType || truckType);
+        }
+      } catch (err) {
+        message.error("Không tải được danh sách xe");
       }
-    } catch (err) {
-      message.error("Không tải được danh sách xe");
+    };
+    fetchVehicles();
+  }, []);
+
+  useEffect(() => {
+    const limit = MAX_PORTERS[truckType] || 0;
+    if (extraStaffCount > limit) {
+      setExtraStaffCount(limit);
     }
-  }, [truckType]);
+  }, [truckType, extraStaffCount]);
 
   const handleLocationChange = (locationData) => {
     setPickupLocation(locationData);
@@ -119,21 +120,12 @@ const CreateTruckRental = () => {
 
   const handleNext = async () => {
     const newErrors = {};
-
-    if (
-      !pickupLocation ||
-      !pickupLocation.lat ||
-      !pickupLocation.lng ||
-      !pickupLocation.address
-    ) {
-      newErrors.pickupLocation =
-        "Vui lòng chọn địa điểm nhận xe hợp lệ từ bản đồ";
+    if (!pickupLocation || !pickupLocation.lat || !pickupLocation.lng || !pickupLocation.address) {
+      newErrors.pickupLocation = "Vui lòng chọn địa điểm nhận xe hợp lệ từ bản đồ";
     }
-
     if (!movingDate) {
       newErrors.movingDate = "Vui lòng chọn ngày giờ nhận xe";
     }
-
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       message.error("Vui lòng điền đầy đủ thông tin bắt buộc");
@@ -145,24 +137,17 @@ const CreateTruckRental = () => {
 
     const now = dayjs();
     const selectedMovingDate = dayjs(movingDate);
-
-
-    const hoursUntilMoving = selectedMovingDate.diff(now, 'hour', true);
-    if (hoursUntilMoving < 2) {
-      setErrors(prev => ({
-        ...prev,
-        movingDate: 'Thời gian nhận xe phải cách hiện tại ít nhất 2 tiếng'
-      }));
+    if (selectedMovingDate.diff(now, 'hour', true) < 2) {
+      setErrors(prev => ({ ...prev, movingDate: 'Thời gian nhận xe phải cách hiện tại ít nhất 2 tiếng' }));
       setIsSubmitting(false);
       return;
     }
 
-    // Important: for ConfirmMovingOrder, we want dropoffLocation to be pickupLocation or null. Setting identical.
     const orderData = {
       serviceId,
       serviceName: "Thuê Xe Tải",
       pickupLocation,
-      dropoffLocation: pickupLocation, // Both needed
+      dropoffLocation: pickupLocation,
       pickupDescription,
       movingDate: movingDate.toISOString(),
       moveType: "TRUCK_RENTAL",
@@ -176,15 +161,8 @@ const CreateTruckRental = () => {
     };
 
     try {
-      // compute distanceKm between pickup and dropoff (if dropoff provided)
-      const dropoff = orderData.dropoffLocation || orderData.delivery || orderData.pickupLocation;
-      const distanceKm = computeDistanceKm(orderData.pickupLocation, dropoff || orderData.pickupLocation);
-      const payloadForEstimate = { ...orderData, distanceKm };
-
-      // First request a price estimate
-      const res = await getPriceEstimate(payloadForEstimate);
-      const data = res?.data || res;
-      setPriceEstimate(data);
+      const res = await getPriceEstimate(orderData);
+      setPriceEstimate(res.data || res);
       setConfirmVisible(true);
     } catch (error) {
       message.error(error?.message || 'Không thể tính báo giá. Vui lòng thử lại.');
@@ -197,7 +175,7 @@ const CreateTruckRental = () => {
     if (!priceEstimate) return;
     setIsSubmitting(true);
     try {
-      const response = await createOrder({
+      await createOrder({
         serviceId,
         serviceName: 'Thuê Xe Tải',
         pickupLocation,
@@ -205,9 +183,14 @@ const CreateTruckRental = () => {
         pickupDescription,
         movingDate: movingDate.toISOString(),
         moveType: 'TRUCK_RENTAL',
-        rentalDetails: { truckType, rentalDurationHours, withDriver, selectedVehicleId: selectedVehicleId },
-        distanceKm: computeDistanceKm(pickupLocation, pickupLocation),
-        // include the price snapshot (subtotal/tax/totalPrice/depositAmount/breakdown)
+        rentalDetails: {
+          truckType,
+          rentalDurationHours,
+          extraStaffCount,
+          needsPacking,
+          needsAssembling,
+          selectedVehicleId
+        },
         pricing: {
           subtotal: priceEstimate.subtotal,
           tax: priceEstimate.tax,
@@ -231,12 +214,10 @@ const CreateTruckRental = () => {
       <AppHeader />
       <Content className="create-order-content">
         <main className="main-container">
-          {/* HERO */}
           <section className="moving-hero" style={{ position: "relative" }}>
             <h1>Thuê Xe Tải</h1>
           </section>
 
-          {/* STEPS */}
           <section className="service-steps-container">
             <Card className="steps-card">
               <Steps
@@ -262,104 +243,108 @@ const CreateTruckRental = () => {
                       style={{ marginBottom: 15 }}
                     />
                     {errors.pickupLocation && (
-                      <div
-                        style={{
-                          color: "#ff4d4f",
-                          marginBottom: 15,
-                          marginTop: -10,
-                          fontSize: 13,
-                        }}
-                      >
+                      <div style={{ color: "#ff4d4f", marginBottom: 15, marginTop: -10, fontSize: 13 }}>
                         {errors.pickupLocation}
                       </div>
                     )}
 
                     <TextArea
-                      placeholder="Ghi chú thêm về địa điểm (vd: Xe có thể đậu trước hẻm)..."
+                      placeholder="Ghi chú thêm về địa điểm..."
                       value={pickupDescription}
                       onChange={(e) => setPickupDescription(e.target.value)}
                       rows={2}
                       style={{ marginBottom: 15 }}
                     />
 
-               <h3>Loại xe</h3>
-<Row gutter={10} style={{ marginBottom: 15 }}>
-  {vehicles.map((v) => {
-    const formatVehicleType = (type) => {
-      if (!type) return '';
-      // Normalize common codes like '1TON', '1.5TON', '2TON' to Vietnamese labels
-      const t = String(type).toUpperCase();
-      // replace 'TON' with ' TẤN'
-      const human = t.replace(/TON$/, ' TẤN').replace(/\./g, '.');
-      return human;
-    };
+                    <h3>Loại xe</h3>
+                    <Row gutter={10} style={{ marginBottom: 15 }}>
+                      {vehicles.map((v) => {
+                        const formatVehicleType = (type) => {
+                          if (!type) return '';
+                          const t = String(type).toUpperCase();
+                          return t.replace(/TON$/, ' TẤN');
+                        };
+                        const label = `${formatVehicleType(v.vehicleType)} (${v.loadCapacity || "?"} kg)`;
+                        return (
+                          <Col span={12} key={v._id}>
+                            <Button
+                              type={selectedVehicleId === v._id ? "primary" : "default"}
+                              block
+                              onClick={() => {
+                                setSelectedVehicleId(v._id);
+                                setTruckType(v.vehicleType);
+                              }}
+                              style={{ height: 50 }}
+                            >
+                              {label}
+                            </Button>
+                          </Col>
+                        );
+                      })}
+                    </Row>
 
-    const label = `${formatVehicleType(v.vehicleType)} (${v.loadCapacity || "?"} kg)`;
+                    <h3>Thời gian thuê</h3>
+                    <Row gutter={10} style={{ marginBottom: 15 }}>
+                      {[2, 4, 8, 24].map((hour) => (
+                        <Col span={12} key={hour}>
+                          <Button
+                            type={rentalDurationHours === hour ? "primary" : "default"}
+                            block
+                            onClick={() => setRentalDurationHours(hour)}
+                            style={{ height: 45 }}
+                          >
+                            {hour === 24 ? "1 ngày" : `${hour} tiếng`}
+                          </Button>
+                        </Col>
+                      ))}
+                    </Row>
 
-    return (
-      <Col span={12} key={v._id}>
-        <Button
-          type={selectedVehicleId === v._id ? "primary" : "default"}
-          block
-          onClick={() => {
-            setSelectedVehicleId(v._id);
-            setTruckType(v.vehicleType);
-          }}
-          style={{ height: 50 }}
-        >
-          {label}
-        </Button>
-      </Col>
-    );
-  })}
-</Row>
-<h3>Thời gian thuê</h3>
-<Row gutter={10} style={{ marginBottom: 15 }}>
-  {[2, 4, 8, 24].map((hour) => (
-    <Col span={12} key={hour}>
-      <Button
-        type={rentalDurationHours === hour ? "primary" : "default"}
-        block
-        onClick={() => setRentalDurationHours(hour)}
-        style={{ height: 45 }}
-      >
-        {hour === 24 ? "1 ngày" : `${hour} tiếng`}
-      </Button>
-    </Col>
-  ))}
-</Row>
+                    <h3>Ngày giờ nhận xe</h3>
+                    <ConfigProvider locale={viVN}>
+                      <DatePicker
+                        placeholder="Chọn ngày giờ"
+                        showTime={{ format: "HH:mm", minuteStep: 15 }}
+                        format="DD/MM/YYYY HH:mm"
+                        value={movingDate}
+                        onChange={(v) => {
+                          setMovingDate(v);
+                          if (v) sessionStorage.setItem("movingDate", v.toISOString());
+                          else sessionStorage.removeItem("movingDate");
+                          setErrors((prev) => ({ ...prev, movingDate: null }));
+                        }}
+                        disabledDate={(current) => current && current < dayjs().startOf("day")}
+                        style={{ width: "100%", padding: "10px 14px" }}
+                      />
+                    </ConfigProvider>
+                    {errors.movingDate && (
+                      <div style={{ color: "#ff4d4f", marginTop: 5, fontSize: 13 }}>
+                        {errors.movingDate}
+                      </div>
+                    )}
 
-<h3>Ngày giờ nhận xe</h3>
-<ConfigProvider locale={viVN}>
-  <DatePicker
-    placeholder="Chọn ngày giờ"
-    showTime={{ format: "HH:mm", minuteStep: 15 }}
-    format="DD/MM/YYYY HH:mm"
-    value={movingDate}
-    onChange={(v) => {
-      setMovingDate(v);
-      if (v)
-        sessionStorage.setItem("movingDate", v.toISOString());
-      else sessionStorage.removeItem("movingDate");
-
-      setErrors((prev) => ({
-        ...prev,
-        movingDate: null,
-      }));
-    }}
-    disabledDate={(current) =>
-      current && current < dayjs().startOf("day")
-    }
-    style={{ width: "100%", padding: "10px 14px" }}
-  />
-</ConfigProvider>
-
-{errors.movingDate && (
-  <div style={{ color: "#ff4d4f", marginTop: 5, fontSize: 13 }}>
-    {errors.movingDate}
-  </div>
-)}
-
+                    <div style={{ marginTop: 20 }}>
+                      <h3>Dịch vụ bổ sung</h3>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 15 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <span style={{ fontSize: 14 }}>Số lượng nhân viên bốc xếp bổ sung:</span>
+                          <Select
+                            value={extraStaffCount}
+                            onChange={v => setExtraStaffCount(v)}
+                            style={{ width: 120 }}
+                          >
+                            {Array.from({ length: (MAX_PORTERS[truckType] || 0) + 1 }, (_, i) => i).map(n => (
+                              <Option key={n} value={n}>{n === 0 ? "Không có" : `${n} người`}</Option>
+                            ))}
+                          </Select>
+                        </div>
+                        <Checkbox checked={needsPacking} onChange={e => setNeedsPacking(e.target.checked)}>
+                          Dịch vụ đóng gói đồ đạc
+                        </Checkbox>
+                        <Checkbox checked={needsAssembling} onChange={e => setNeedsAssembling(e.target.checked)}>
+                          Dịch vụ tháo lắp
+                        </Checkbox>
+                      </div>
+                    </div>
                   </div>
                 </Card>
               </Col>
@@ -368,11 +353,7 @@ const CreateTruckRental = () => {
                 <div style={{ height: "700px" }}>
                   <LocationPicker
                     onLocationChange={handleLocationChange}
-                    initialPosition={
-                      pickupLocation
-                        ? { lat: pickupLocation.lat, lng: pickupLocation.lng }
-                        : null
-                    }
+                    initialPosition={pickupLocation ? { lat: pickupLocation.lat, lng: pickupLocation.lng } : null}
                     currentLocationData={pickupLocation}
                     locationType="pickup"
                   />
@@ -382,16 +363,11 @@ const CreateTruckRental = () => {
           </section>
 
           <div className="next-button">
-            <Button
-              type="primary"
-              size="large"
-              onClick={handleNext}
-              loading={isSubmitting}
-            >
+            <Button type="primary" size="large" onClick={handleNext} loading={isSubmitting}>
               Tiếp tục đặt xe
             </Button>
           </div>
-          {/* Confirm price modal */}
+
           <Modal
             title={
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -408,37 +384,59 @@ const CreateTruckRental = () => {
           >
             {priceEstimate ? (
               <div className="price-modal-content">
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-                  <DollarCircleOutlined style={{ fontSize: 28, color: '#2D4F36' }} />
-                  <div>
-                    <div style={{ fontSize: 14, color: '#8c8c8c' }}>Phí thuê xe</div>
-                    <div style={{ fontSize: 22, fontWeight: 800, color: '#111' }}>{(priceEstimate.breakdown?.vehicleFee || priceEstimate.subtotal || 0).toLocaleString()} VNĐ</div>
+                <div style={{ marginBottom: 15, borderBottom: '1px solid #f0f0f0', paddingBottom: 10 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                    <span style={{ color: '#595959' }}><CarOutlined /> Phí thuê xe ({priceEstimate.breakdown?.suggestedVehicle})</span>
+                    <span style={{ fontWeight: 600 }}>{(priceEstimate.breakdown?.vehicleFee || 0).toLocaleString()} ₫</span>
                   </div>
+
+                  {(priceEstimate.breakdown?.laborFee > 0) && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                      <span style={{ color: '#595959' }}>Phí nhân công ({priceEstimate.breakdown?.suggestedStaffCount - 1} người)</span>
+                      <span style={{ fontWeight: 600 }}>{(priceEstimate.breakdown.laborFee).toLocaleString()} ₫</span>
+                    </div>
+                  )}
+
+                  {(priceEstimate.breakdown?.assemblingFee > 0) && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                      <span style={{ color: '#595959' }}>Phí tháo lắp</span>
+                      <span style={{ fontWeight: 600 }}>{(priceEstimate.breakdown.assemblingFee).toLocaleString()} ₫</span>
+                    </div>
+                  )}
+
+                  {(priceEstimate.breakdown?.packingFee > 0) && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                      <span style={{ color: '#595959' }}>Phí đóng gói</span>
+                      <span style={{ fontWeight: 600 }}>{(priceEstimate.breakdown.packingFee).toLocaleString()} ₫</span>
+                    </div>
+                  )}
                 </div>
 
-                {/* VAT and deposit rows */}
-                <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', color: '#595959' }}>
-                    <div>Thuế VAT</div>
-                    <div>{(priceEstimate.tax || 0).toLocaleString()} VNĐ</div>
+                    <div>Tạm tính</div>
+                    <div>{(priceEstimate.subtotal || 0).toLocaleString()} ₫</div>
                   </div>
-
+                  <div style={{ display: 'flex', justifyContent: 'space-between', color: '#595959' }}>
+                    <div>Thuế VAT (10%)</div>
+                    <div>{(priceEstimate.tax || 0).toLocaleString()} ₫</div>
+                  </div>
                   {priceEstimate.depositAmount ? (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', color: '#595959' }}>
-                      <div>Cọc (30%)</div>
-                      <div>{priceEstimate.depositAmount.toLocaleString()} VNĐ</div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', color: '#8c8c8c', fontStyle: 'italic' }}>
+                      <div>Tiền cọc dự kiến (30%)</div>
+                      <div>{priceEstimate.depositAmount.toLocaleString()} ₫</div>
                     </div>
                   ) : null}
                 </div>
 
-                <div style={{ marginTop: 12, display: 'flex', justifyContent: 'space-between', fontSize: 18, fontWeight: 800 }}>
-                  <div>Tổng</div>
-                  <div>{(priceEstimate.totalPrice || 0).toLocaleString()} VNĐ</div>
+                <div style={{ marginTop: 15, paddingTop: 10, borderTop: '2px solid #2D4F36', display: 'flex', justifyContent: 'space-between', fontSize: 18, fontWeight: 800 }}>
+                  <div style={{ color: '#2D4F36' }}>TỔNG CỘNG</div>
+                  <div style={{ color: '#2D4F36' }}>{(priceEstimate.totalPrice || 0).toLocaleString()} ₫</div>
                 </div>
 
-                <div style={{ marginTop: 12, color: '#595959' }}>
-                  <InfoCircleOutlined style={{ color: '#8c8c8c', marginRight: 6 }} />
-                  <span>Giá hiển thị hiện chỉ bao gồm phí xe và VAT. Các khoản phụ phí khác (nếu có) sẽ được thông báo.</span>
+                <div style={{ marginTop: 12, padding: '8px 12px', background: '#fff7e6', border: '1px solid #ffd591', borderRadius: 4, fontSize: 12, color: '#d46b08' }}>
+                  <InfoCircleOutlined style={{ marginRight: 6 }} />
+                  <span>Đây là giá tạm tính dựa trên thông tin bạn cung cấp. Dispatcher sẽ kiểm tra lại và gửi báo giá chính thức.</span>
                 </div>
 
                 <div style={{ marginTop: 18, display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
