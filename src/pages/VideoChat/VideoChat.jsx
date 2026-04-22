@@ -13,6 +13,10 @@ import {
   MessageOutlined,
   TeamOutlined,
   LoadingOutlined,
+  PaperClipOutlined,
+  FileImageOutlined,
+  EyeOutlined,
+  DownloadOutlined
 } from '@ant-design/icons';
 import AppHeader from '../../components/header/header';
 import AppFooter from '../../components/footer/footer';
@@ -102,6 +106,10 @@ function VideoChat() {
   const peerConnectionRef = useRef(null);
   const localStreamRef = useRef(null);
   const pendingCandidatesRef = useRef([]);
+  const fileInputRef = useRef(null);
+
+  const [isUploading, setIsUploading] = useState(false);
+  const [isCalling, setIsCalling] = useState(false);
 
   // Setup Socket connection with authentication
   useEffect(() => {
@@ -164,6 +172,8 @@ function VideoChat() {
     const handleChatHistory = (history) => {
       const formattedHistory = history.map(msg => ({
         message: msg.content,
+        type: msg.type,
+        attachments: msg.attachments,
         sender: msg.senderName,
         time: new Date(msg.timestamp).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
       }));
@@ -280,6 +290,7 @@ function VideoChat() {
     peerConnectionRef.current.ontrack = (event) => {
       if (remoteVideoRef.current && remoteVideoRef.current.srcObject !== event.streams[0]) {
         remoteVideoRef.current.srcObject = event.streams[0];
+        setIsCalling(false); // Stop showing "Calling..." when remote stream is received
       }
     };
   };
@@ -289,6 +300,7 @@ function VideoChat() {
     const stream = await startMediaStream();
     if (!stream) return;
     setIsInCall(true);
+    setIsCalling(true);
     createPeerConnection(roomId);
     try {
       const offer = await peerConnectionRef.current.createOffer();
@@ -296,6 +308,7 @@ function VideoChat() {
       socket.emit('offer', { target: roomId, caller: socket.id, callerName: userName, offer });
     } catch (err) {
       console.error('Lỗi tạo offer:', err);
+      setIsCalling(false);
     }
   };
 
@@ -321,6 +334,7 @@ function VideoChat() {
 
   const endCall = () => {
     setIsInCall(false);
+    setIsCalling(false);
     setIncomingCallFrom(null);
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach(track => track.stop());
@@ -336,16 +350,56 @@ function VideoChat() {
   };
 
   const handleSendMessage = (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     if (!messageInput.trim() || !socket) return;
     const data = {
       roomId,
       message: messageInput,
+      type: 'Text',
       sender: userName,
       time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
     };
     socket.emit('send_message', data);
     setMessageInput('');
+  };
+
+  const handleFileUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length || !socket) return;
+
+    setIsUploading(true);
+    const formData = new FormData();
+    files.forEach(file => formData.append('files', file));
+
+    try {
+      const res = await api.post('/uploads/chat-media', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      if (res.data?.success) {
+        const uploadedMedia = res.data.data;
+        const attachments = uploadedMedia.map(item => ({
+          url: item.url,
+          type: item.resourceType === 'image' ? 'Image' : (item.resourceType === 'video' ? 'Video' : 'File')
+        }));
+
+        const data = {
+          roomId,
+          message: '',
+          type: 'Media',
+          attachments,
+          sender: userName,
+          time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+        };
+        socket.emit('send_message', data);
+      }
+    } catch (err) {
+      console.error('Lỗi tải file:', err);
+      alert('Không thể tải file. Vui lòng thử lại.');
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
   };
 
   const toggleVideo = () => {
@@ -457,7 +511,35 @@ function VideoChat() {
                 return (
                   <div key={idx} className={`vc-message ${isMine ? 'vc-message--mine' : 'vc-message--other'}`}>
                     {!isMine && <div className="vc-message-sender">{msg.sender}</div>}
-                    <div className="vc-message-bubble">{msg.message}</div>
+                    <div className="vc-message-bubble">
+                      {msg.type === 'Media' && msg.attachments && msg.attachments.length > 0 && (
+                        <div className="vc-message-attachments">
+                          {msg.attachments.map((att, attIdx) => (
+                            <div key={attIdx} className="vc-attachment-item">
+                              {att.type === 'Image' ? (
+                                <div className="vc-image-container">
+                                  <img src={att.url} alt="attachment" className="vc-chat-image" onClick={() => window.open(att.url, '_blank')} />
+                                  <div className="vc-image-overlay">
+                                    <EyeOutlined onClick={() => window.open(att.url, '_blank')} />
+                                  </div>
+                                </div>
+                              ) : att.type === 'Video' ? (
+                                <div className="vc-video-container">
+                                  <video src={att.url} controls className="vc-chat-video" />
+                                </div>
+                              ) : (
+                                <div className="vc-file-container" onClick={() => window.open(att.url, '_blank')}>
+                                  <PaperClipOutlined />
+                                  <span className="vc-file-name">Tệp đính kèm</span>
+                                  <DownloadOutlined />
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {msg.message && <div className="vc-message-text">{msg.message}</div>}
+                    </div>
                     <div className="vc-message-time">{msg.time}</div>
                   </div>
                 );
@@ -467,12 +549,29 @@ function VideoChat() {
 
             <form className="vc-chat-input" onSubmit={handleSendMessage}>
               <input
+                type="file"
+                multiple
+                hidden
+                ref={fileInputRef}
+                onChange={handleFileUpload}
+                accept="image/*,video/*,.pdf,.doc,.docx,.txt"
+              />
+              <button
+                type="button"
+                className="vc-btn-attach"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
+              >
+                {isUploading ? <LoadingOutlined /> : <PaperClipOutlined />}
+              </button>
+              <input
                 className="vc-input"
                 placeholder="Nhập tin nhắn..."
                 value={messageInput}
                 onChange={(e) => setMessageInput(e.target.value)}
+                disabled={isUploading}
               />
-              <button type="submit" className="vc-btn-send">
+              <button type="submit" className="vc-btn-send" disabled={isUploading || !messageInput.trim()}>
                 <SendOutlined />
               </button>
             </form>
@@ -495,7 +594,16 @@ function VideoChat() {
                   <div className="vc-video-label">{userName} (Bạn)</div>
                 </div>
                 <div className="vc-video-wrapper">
-                  <video ref={remoteVideoRef} autoPlay playsInline className="vc-video vc-video--remote" />
+                  {isCalling ? (
+                    <div className="vc-video-placeholder">
+                      <div className="vc-calling-animation">
+                        <LoadingOutlined />
+                      </div>
+                      <p>Đang kết nối với {receiverName}...</p>
+                    </div>
+                  ) : (
+                    <video ref={remoteVideoRef} autoPlay playsInline className="vc-video vc-video--remote" />
+                  )}
                   <div className="vc-video-label">{receiverName}</div>
                 </div>
               </div>
