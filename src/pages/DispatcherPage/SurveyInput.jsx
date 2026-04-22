@@ -769,7 +769,23 @@ const SurveyInput = () => {
       title: 'Mã Ticket',
       dataIndex: 'code',
       fontWeight: 'bold',
-      render: (text) => <Text strong>{text}</Text>
+      render: (text, r) => (
+        <Space direction="vertical" size={0}>
+          <Text strong>{text}</Text>
+          <div style={{ display: 'flex', gap: 4 }}>
+            {r.isHighValue && (
+              <Tag color="#d4b106" style={{ fontSize: '10px', margin: 0, padding: '0 4px', border: 'none', fontWeight: 700 }}>
+                💎 GIÁ TRỊ CAO
+              </Tag>
+            )}
+            {r.insurance?.isInsured && (
+              <Tag color="#10b981" style={{ fontSize: '10px', margin: 0, padding: '0 4px', border: 'none', fontWeight: 700 }}>
+                🛡️ BẢO HIỂM
+              </Tag>
+            )}
+          </div>
+        </Space>
+      )
     },
     {
       title: 'Khách hàng',
@@ -885,6 +901,40 @@ const SurveyInput = () => {
         }
       >
         <Form form={form} layout="vertical" onFinish={handleSaveSurvey} style={{ marginTop: 20 }} disabled={isReadOnly}>
+          {(selectedTicket?.isHighValue || selectedTicket?.insurance?.isInsured) && (
+            <Alert
+              message={
+                <Space>
+                  <ExclamationCircleFilled style={{ color: '#d4b106' }} />
+                  <Text strong style={{ color: '#44624A' }}>ĐƠN HÀNG ĐẶC BIỆT CẦN LƯU Ý</Text>
+                </Space>
+              }
+              description={
+                <div style={{ marginTop: 8 }}>
+                  {selectedTicket?.isHighValue && (
+                    <div style={{ marginBottom: 4 }}>
+                      <Tag color="#d4b106">💎 HÀNG GIÁ TRỊ CAO</Tag>
+                      <Text>Giá trị khai báo: </Text>
+                      <Text strong>{(selectedTicket.highValueDetails?.declaredValue || 0).toLocaleString()} ₫</Text>
+                      <br />
+                      <Text italic type="secondary">{selectedTicket.highValueDetails?.description}</Text>
+                    </div>
+                  )}
+                  {selectedTicket?.insurance?.isInsured && (
+                    <div>
+                      <Tag color="#10b981">🛡️ ĐÃ CÓ BẢO HIỂM</Tag>
+                      <Text>Gói: </Text><Tag color="cyan">{selectedTicket.insurance.packageId}</Tag>
+                      <Text>Mức bồi thường tối đa: </Text>
+                      <Text strong>{(selectedTicket.insurance.coverageAmount || 0).toLocaleString()} ₫</Text>
+                    </div>
+                  )}
+                </div>
+              }
+              type="warning"
+              showIcon={false}
+              style={{ marginBottom: 20, borderRadius: 12, border: '1px solid #d4b106', background: '#fffef0' }}
+            />
+          )}
           <Row gutter={24}>
 
             {/* --- CỘT TRÁI: THÔNG TIN CHI TIẾT --- */}

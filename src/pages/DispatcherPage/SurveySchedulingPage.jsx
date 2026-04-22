@@ -121,7 +121,6 @@ const SurveySchedulingPage = () => {
   const [activeFilter, setActiveFilter] = useState('ALL');
 
   // Modals
-  const [isApproveModalVisible, setIsApproveModalVisible] = useState(false);  // FULL_HOUSE approve
   const [isRejectModalVisible, setIsRejectModalVisible] = useState(false);
   const [isManualAssignModalVisible, setIsManualAssignModalVisible] = useState(false); // ASSIGNMENT_FAILED fallback
   const [isAcceptProposedModalVisible, setIsAcceptProposedModalVisible] = useState(false);
@@ -134,7 +133,7 @@ const SurveySchedulingPage = () => {
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [previewPricingData, setPreviewPricingData] = useState(null);
   const [isCalculatingPreview, setIsCalculatingPreview] = useState(false);
-  
+
   const [form] = Form.useForm();
   const [formReject] = Form.useForm();
   const [formManual] = Form.useForm();
@@ -194,12 +193,6 @@ const SurveySchedulingPage = () => {
 
   // ── Action Handlers ─────────────────────────────────────────────────────────
 
-  // "Duyệt đơn" for FULL_HOUSE → open modal to pick surveyor
-  const openApproveModal = (ticket) => {
-    setSelectedTicket(ticket);
-    form.resetFields();
-    setIsApproveModalVisible(true);
-  };
 
   // "Duyệt đơn" for SPECIFIC_ITEMS → direct API call
   const handleDirectApprove = async (ticket) => {
@@ -216,7 +209,7 @@ const SurveySchedulingPage = () => {
   const openTruckRentalQuoteModal = async (ticket) => {
     setSelectedTicket(ticket);
     const rental = ticket.rentalDetails || {};
-    
+
     // Reset and then set values to ensure checkboxes update correctly
     formTruckRental.resetFields();
     formTruckRental.setFieldsValue({
@@ -258,12 +251,12 @@ const SurveySchedulingPage = () => {
         items: [],
         status: 'COMPLETED'
       };
-      
+
       // Step 1: Complete Survey
       await surveyService.completeSurvey(selectedTicket._id, payload);
-      
+
       // Step 2: Transition is already handled by completeSurvey in BE (transitions to QUOTED)
-      
+
       message.success(`Đã báo giá thành công cho đơn ${selectedTicket.code}`);
       setIsPreviewPricingModalVisible(false);
       setIsTruckRentalModalVisible(false);
@@ -274,19 +267,6 @@ const SurveySchedulingPage = () => {
     }
   };
 
-  // FULL_HOUSE approve modal submit → calls /approve with surveyorId
-  const handleApproveSubmit = async (values) => {
-    try {
-      await requestTicketService.approveTicket(selectedTicket._id, {
-        surveyorId: values.surveyorId,
-      });
-      message.success(`Đã duyệt và phân công khảo sát cho đơn ${selectedTicket.code}`);
-      setIsApproveModalVisible(false);
-      fetchData();
-    } catch (error) {
-      message.error(error.response?.data?.message || "Có lỗi xảy ra khi xác nhận!");
-    }
-  };
 
   // "Từ chối" → propose new time
   const handleCancelTicket = (ticket) => {
@@ -356,7 +336,23 @@ const SurveySchedulingPage = () => {
     {
       title: "Mã Đơn",
       dataIndex: "code",
-      render: (code) => <strong>{code}</strong>
+      render: (code, r) => (
+        <Space direction="vertical" size={2}>
+          <Text strong>{code}</Text>
+          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+            {r.isHighValue && (
+              <Tag color="#d4b106" style={{ fontSize: '10px', margin: 0, border: 'none', fontWeight: 700 }}>
+                💎 GIÁ TRỊ CAO
+              </Tag>
+            )}
+            {r.insurance?.isInsured && (
+              <Tag color="#10b981" style={{ fontSize: '10px', margin: 0, border: 'none', fontWeight: 700 }}>
+                🛡️ BẢO HIỂM
+              </Tag>
+            )}
+          </div>
+        </Space>
+      )
     },
     {
       title: "Loại dịch vụ",
@@ -366,6 +362,24 @@ const SurveySchedulingPage = () => {
     {
       title: "Khách hàng",
       render: (_, r) => <div>{r.customerId?.fullName}</div>
+    },
+    {
+      title: "Ghi chú đặc biệt",
+      render: (_, r) => (
+        <div style={{ maxWidth: 200 }}>
+          {r.isHighValue && (
+            <div style={{ marginBottom: 4 }}>
+              <Text type="secondary" size="small">Giá trị: </Text>
+              <Text strong>{(r.highValueDetails?.declaredValue || 0).toLocaleString()} ₫</Text>
+              <br />
+              <Text italic style={{ fontSize: '12px' }}>{r.highValueDetails?.description}</Text>
+            </div>
+          )}
+          {r.insurance?.isInsured && (
+            <Tag color="cyan">Gói: {r.insurance.packageId}</Tag>
+          )}
+        </div>
+      )
     },
     {
       title: "Yêu cầu khảo sát",
@@ -442,7 +456,7 @@ const SurveySchedulingPage = () => {
                   type="primary"
                   style={{ background: "#44624a", borderColor: "#44624a" }}
                   icon={<CheckCircleOutlined />}
-                  onClick={() => record.moveType === 'FULL_HOUSE' ? openApproveModal(record) : handleDirectApprove(record)}
+                  onClick={() => handleDirectApprove(record)}
                 >
                   Duyệt đơn
                 </Button>
@@ -459,14 +473,14 @@ const SurveySchedulingPage = () => {
 
           {/* WAITING_REVIEW for TRUCK_RENTAL — also allow Quoting here */}
           {record.status === "WAITING_REVIEW" && record.moveType === 'TRUCK_RENTAL' && (
-             <Button
-                type="primary"
-                style={{ background: "#44624a", borderColor: "#44624a" }}
-                icon={<DollarCircleOutlined />}
-                onClick={() => openTruckRentalQuoteModal(record)}
-              >
-                Xem xét & Báo giá
-              </Button>
+            <Button
+              type="primary"
+              style={{ background: "#44624a", borderColor: "#44624a" }}
+              icon={<DollarCircleOutlined />}
+              onClick={() => openTruckRentalQuoteModal(record)}
+            >
+              Xem xét & Báo giá
+            </Button>
           )}
 
           {/* WAITING_SURVEY — Show Accept Proposed button if exists */}
@@ -675,9 +689,9 @@ const SurveySchedulingPage = () => {
         onCancel={() => setIsTruckRentalModalVisible(false)}
         footer={[
           <Button key="close" onClick={() => setIsTruckRentalModalVisible(false)}>Hủy</Button>,
-          <Button 
-            key="preview" 
-            type="primary" 
+          <Button
+            key="preview"
+            type="primary"
             icon={<DollarCircleOutlined />}
             loading={isCalculatingPreview}
             onClick={handlePreviewTruckRentalPricing}
@@ -713,19 +727,19 @@ const SurveySchedulingPage = () => {
           </Row>
           <Row gutter={16}>
             <Col span={24}>
-              <Form.Item 
-                name="suggestedStaffCount" 
-                label="Tổng nhân sự (Tài xế + Người giúp)" 
+              <Form.Item
+                name="suggestedStaffCount"
+                label="Tổng nhân sự (Tài xế + Người giúp)"
                 rules={[{ required: true }]}
                 extra={(() => {
                   const v = formTruckRental.getFieldValue('suggestedVehicle');
                   return `Tối đa ${1 + (MAX_PORTERS[v] || 0)} người cho xe này (Đã bao gồm 1 tài xế)`;
                 })()}
               >
-                <InputNumber 
-                  min={1} 
-                  max={1 + (MAX_PORTERS[formTruckRental.getFieldValue('suggestedVehicle')] || 4)} 
-                  style={{ width: '100%' }} 
+                <InputNumber
+                  min={1}
+                  max={1 + (MAX_PORTERS[formTruckRental.getFieldValue('suggestedVehicle')] || 4)}
+                  style={{ width: '100%' }}
                 />
               </Form.Item>
             </Col>
