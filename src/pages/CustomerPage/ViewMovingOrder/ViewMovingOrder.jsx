@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Layout, Modal, message, Spin, Tour, Button, ConfigProvider, Row, Col, Tag, Divider, Typography, Tooltip, Empty } from "antd";
+import { Layout, Modal, message, Spin, Tour, Button, ConfigProvider, Row, Col, Tag, Divider, Typography, Tooltip, Pagination } from "antd";
 import viVN from 'antd/locale/vi_VN';
 import { useLocation, useNavigate } from "react-router-dom";
 import {
@@ -176,6 +176,7 @@ const OrderCard = ({
   const [dispatchDetails, setDispatchDetails] = useState(null);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const [hasFetchedDetails, setHasFetchedDetails] = useState(false);
+  
   const navigate = useNavigate();
 
   const fetchAdditionalDetails = async () => {
@@ -776,8 +777,11 @@ const ViewMovingOrder = () => {
   const [isRescheduleModalVisible, setIsRescheduleModalVisible] = useState(false);
   const [actionTicket, setActionTicket] = useState(null);
 
+const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(3);
+
   // [TOUR] State & Refs
-  const refStatus = useRef(null);
+  const refStatus = useRef(null); 
   const refRoute = useRef(null);
   const refMeta = useRef(null);
   const refPricing = useRef(null);
@@ -1146,7 +1150,12 @@ const ViewMovingOrder = () => {
   const countFor = (key) => tickets.filter((t) => matchFilter(t, key)).length;
 
   const displayTickets = tourOpen && tickets.length === 0 ? [mockTicketForTour] : (tourOpen ? [mockTicketForTour, ...filtered] : filtered);
-
+useEffect(() => {
+    setCurrentPage(1);
+  }, [activeFilter]);
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const paginatedTickets = displayTickets.slice(startIndex, endIndex);
   return (
     <Layout className="view-order-page">
       <AppHeader />
@@ -1195,24 +1204,42 @@ const ViewMovingOrder = () => {
           ) : displayTickets.length === 0 ? (
             <div className="mo-empty"><p>Không có đơn hàng nào.</p></div>
           ) : (
+            <>
             <div className="mo-card-list">
-              {displayTickets.map((ticket, idx) => (
-                <OrderCard
-                  key={ticket._id}
-                  ticket={ticket}
-                  tourRefs={idx === 0 && tourOpen ? { refStatus, refRoute, refMeta, refPricing, refActions } : null}
-                  onViewSurvey={ticket.isMock ? () => message.info('Đây là dữ liệu mẫu.') : handleViewSurvey}
-                  onReportIncident={ticket.isMock ? () => message.info('Đây là dữ liệu mẫu.') : handleReportIncident}
-                  onViewIncident={ticket.isMock ? () => message.info('Đây là dữ liệu mẫu.') : handleViewIncident}
-                  onDepositPayment={ticket.isMock ? () => message.info('Đây là dữ liệu mẫu.') : handleDepositPayment}
-                  onPayRemaining={ticket.isMock ? () => message.info('Đây là dữ liệu mẫu.') : handleRemainingPayment}
-                  onCancelQuote={ticket.isMock ? () => message.info('Đây là dữ liệu mẫu.') : handleCancelQuote}
-                  onRateService={ticket.isMock ? () => message.info('Đây là dữ liệu mẫu.') : handleRateService}
-                  onCancelTicketRequest={ticket.isMock ? () => message.info('Đây là dữ liệu mẫu.') : handleCancelTicketRequest}
-                  onRescheduleSurveyRequest={ticket.isMock ? () => message.info('Đây là dữ liệu mẫu.') : handleRescheduleSurveyRequest}
+            {paginatedTickets.map((ticket, idx) => (
+                  <OrderCard
+                    key={ticket._id}
+                    ticket={ticket}
+                    tourRefs={idx === 0 && tourOpen ? { refStatus, refRoute, refMeta, refPricing, refActions } : null}
+                    onViewSurvey={ticket.isMock ? () => message.info('Đây là dữ liệu mẫu.') : handleViewSurvey}
+                    onReportIncident={ticket.isMock ? () => message.info('Đây là dữ liệu mẫu.') : handleReportIncident}
+                    onViewIncident={ticket.isMock ? () => message.info('Đây là dữ liệu mẫu.') : handleViewIncident}
+                    onDepositPayment={ticket.isMock ? () => message.info('Đây là dữ liệu mẫu.') : handleDepositPayment}
+                    onPayRemaining={ticket.isMock ? () => message.info('Đây là dữ liệu mẫu.') : handleRemainingPayment}
+                    onCancelQuote={ticket.isMock ? () => message.info('Đây là dữ liệu mẫu.') : handleCancelQuote}
+                    onRateService={ticket.isMock ? () => message.info('Đây là dữ liệu mẫu.') : handleRateService}
+                    onCancelTicketRequest={ticket.isMock ? () => message.info('Đây là dữ liệu mẫu.') : handleCancelTicketRequest}
+                    onRescheduleSurveyRequest={ticket.isMock ? () => message.info('Đây là dữ liệu mẫu.') : handleRescheduleSurveyRequest}
+                  />
+                ))}
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'center', marginTop: 24, paddingBottom: 24 }}>
+                <Pagination
+                  current={currentPage}
+                  pageSize={pageSize}
+                  total={displayTickets.length}
+                  onChange={(page, size) => {
+                    setCurrentPage(page);
+                    setPageSize(size);
+                    // Tự động cuộn lên đầu danh sách khi chuyển trang
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  showSizeChanger
+                  pageSizeOptions={['3','5', '10', '20']}
+                  locale={{ items_per_page: '/ trang' }}
                 />
-              ))}
-            </div>
+              </div>
+              </>
           )}
         </section>
 
