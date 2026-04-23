@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import {
-  Table, Button, Tag, Modal, Form, Select, message, Space, Card, Typography, Descriptions, DatePicker, Divider,
+  Table, Button, Tag, Modal, Form, Select, message, Space, Card, Typography, DatePicker, Divider,
   Row, Col, InputNumber, Checkbox, Alert, Input,Image
 } from "antd";
 import {
@@ -62,7 +62,7 @@ const parseSurveyInfoFromNotes = (notesString) => {
 };
 const isAiGeneratedTicket = (notesString) => {
   if (!notesString) return false;
-  return notesString.includes("[TẠO TỪ AI BOT"); 
+  return notesString.includes("[TẠO TỪ AI BOT");
 };
 // ─── MoveType Badge ───────────────────────────────────────────────────────────
 const MoveTypeBadge = ({ moveType }) => {
@@ -140,7 +140,6 @@ const SurveySchedulingPage = () => {
   const [previewPricingData, setPreviewPricingData] = useState(null);
   const [isCalculatingPreview, setIsCalculatingPreview] = useState(false);
 
-  const [form] = Form.useForm();
   const [formReject] = Form.useForm();
   const [formManual] = Form.useForm();
   const [formTruckRental] = Form.useForm();
@@ -181,23 +180,6 @@ const SurveySchedulingPage = () => {
       setFilteredTickets(tickets.filter(t => t.moveType === activeFilter));
     }
   }, [tickets, activeFilter]);
-
-  // ── Helper: Route Distance ──────────────────────────────────────────────────
-  const getRouteDistance = async (origin, destination) => {
-    const getLat = (c) => (c && typeof c.lat !== 'undefined' ? c.lat : (Array.isArray(c) ? c[1] : null));
-    const getLng = (c) => (c && typeof c.lng !== 'undefined' ? c.lng : (Array.isArray(c) ? c[0] : null));
-    const olat = getLat(origin); const olng = getLng(origin);
-    const dlat = getLat(destination); const dlng = getLng(destination);
-    if (!olat || !olng || !dlat || !dlng) return 0;
-    try {
-      const url = `https://router.project-osrm.org/route/v1/driving/${olng},${olat};${dlng},${dlat}?overview=false`;
-      const res = await fetch(url);
-      const data = await res.json();
-      const meters = data?.routes?.[0]?.distance;
-      if (meters > 0) return Math.round(meters / 100) / 10;
-    } catch (e) { console.warn('[Route] OSRM failed:', e.message); }
-    return 0;
-  };
 
   // ── Action Handlers ─────────────────────────────────────────────────────────
  const openAiReviewModal = async (ticket) => {
@@ -639,53 +621,8 @@ const SurveySchedulingPage = () => {
           </Space>
         );
       },
-            </>
-          )}
-
-          {/* WAITING_REVIEW for TRUCK_RENTAL — also allow Quoting here */}
-          {record.status === "WAITING_REVIEW" && record.moveType === 'TRUCK_RENTAL' && (
-            <Button
-              type="primary"
-              block
-              style={{ background: "#44624a", borderColor: "#44624a" }}
-              icon={<DollarCircleOutlined />}
-              onClick={() => openTruckRentalQuoteModal(record)}
-            >
-              Xem xét & Báo giá
-            </Button>
-          )}
-
-          {/* WAITING_SURVEY — Show Accept Proposed button if exists */}
-          {record.status === "WAITING_SURVEY" && record.proposedSurveyTimes?.length > 0 && (
-            <Button
-              type="primary"
-              block
-              style={{ background: "#44624a", borderColor: "#8ba888" }}
-              icon={<CheckCircleOutlined />}
-              onClick={() => openAcceptProposedModal(record)}
-            >
-              Xem đề xuất khách
-            </Button>
-          )}
-
-          {/* ASSIGNMENT_FAILED — Manual fallback */}
-          {record.status === "ASSIGNMENT_FAILED" && (
-            <Button
-              type="primary"
-              danger
-              block
-              icon={<UserSwitchOutlined />}
-              onClick={() => openManualAssignModal(record)}
-            >
-              Phân công thủ công
-            </Button>
-          )}
-        </Space>
-      ),
     },
   ];
-
-  const modalSurveyInfo = parseSurveyInfoFromNotes(selectedTicket?.notes);
 
   return (
     <Card>
