@@ -1,8 +1,9 @@
-import React from 'react';
-import { Modal, Alert, Space, Typography, Card, Button, Tag } from 'antd';
+import React, { useState } from 'react';
+import { Modal, Alert, Space, Typography, Card, Button, Tag, Progress, Divider, Checkbox, Row, Col } from 'antd';
+import { CalendarOutlined, InfoCircleOutlined, WarningOutlined, CloseCircleOutlined, CheckCircleOutlined, ClockCircleOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 
-const { Text } = Typography;
+const { Text, Title } = Typography;
 
 const InsufficientResourcesModal = ({
     open,
@@ -13,139 +14,215 @@ const InsufficientResourcesModal = ({
     onPickAlternativeTime,
     onForceProceed,
 }) => {
+    const [understoodRisk, setUnderstoodRisk] = useState(false);
+
     if (!data) return null;
 
+    const feasibility = data.feasibility || {};
+    const decision = feasibility.decision || 'CONFIRM';
+    const staffingRatio = feasibility.staffingRatio || 0;
+    const staffingLevel = feasibility.staffingLevel || 'SAFE';
+    const hasConflict = feasibility.hasConflict || false;
+    const impactLevel = feasibility.impactLevel || 'LOW';
+
+    const getStaffingColor = (level) => {
+        if (level === 'SAFE') return '#52c41a';
+        if (level === 'WARNING') return '#faad14';
+        return '#f5222d';
+    };
+
     const sameTeam =
-        !data.suggestedTeam.leaderId ||
+        !data.suggestedTeam?.leaderId ||
         (data.valuesSnapshot &&
             data.suggestedTeam.leaderId === data.valuesSnapshot.leaderId &&
             (data.suggestedTeam.driverIds || []).length === (data.valuesSnapshot.driverIds || []).length &&
             (data.suggestedTeam.staffIds || []).length === (data.valuesSnapshot.staffIds || []).length);
 
-    return (
-        <Modal
-            title="⚠️ Phát hiện thiếu hụt nhân sự"
-            open={open}
-            onCancel={onClose}
-            footer={null}
-            width={650}
-        >
-            <Space direction="vertical" style={{ width: '100%' }}>
+    const renderHeader = () => {
+        if (decision === 'BLOCK') {
+            return (
+                <Alert
+                    type="error"
+                    showIcon
+                    icon={<CloseCircleOutlined />}
+                    message={<Text strong style={{ fontSize: 16 }}>ĐIỀU PHỐI BỊ CHẶN</Text>}
+                    description="Kế hoạch này vi phạm các tiêu chuẩn an toàn hoặc giới hạn thời gian (10h). Không thể thực hiện dispatch với cấu hình này."
+                />
+            );
+        }
+        if (decision === 'REQUIRE_CUSTOMER') {
+            return (
                 <Alert
                     type="warning"
                     showIcon
-                    message="Không đủ nhân sự rảnh rỗi vào khung giờ đã chọn!"
-                    description={
-                        <div style={{ marginTop: 8 }}>
-                            <Text style={{ display: 'block', marginBottom: 8 }}>So sánh yêu cầu phân công và số lượng rảnh rỗi thực tế:</Text>
-                            <div style={{ background: '#fff', padding: '8px 12px', borderRadius: 6, border: '1px solid #ffe58f' }}>
-                                {/* Header */}
-                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                                    <Text type="secondary" style={{ fontSize: 13 }}>Vai trò</Text>
-                                    <div style={{ width: 140, display: 'flex', justifyContent: 'space-between' }}>
-                                        <Text type="secondary" style={{ fontSize: 13 }}>Yêu cầu</Text>
-                                        <Text type="secondary" style={{ fontSize: 13 }}>Hiện có</Text>
-                                    </div>
+                    icon={<WarningOutlined />}
+                    message={<Text strong style={{ fontSize: 16 }}>CẦN KHÁCH HÀNG PHÊ DUYỆT</Text>}
+                    description="Mức độ thiếu hụt nhân sự nghiêm trọng (< 50%). Hệ thống yêu cầu gửi đề xuất để khách hàng xác nhận chấp nhận rủi ro hoặc dời lịch."
+                />
+            );
+        }
+        return (
+            <Alert
+                type="warning"
+                showIcon
+                message={<Text strong style={{ fontSize: 16 }}>CẢNH BÁO RỦI RO LỊCH TRÌNH</Text>}
+                description="Việc thiếu nhân sự hoặc xung đột thời gian có thể ảnh hưởng đến chất lượng dịch vụ và các đơn hàng tiếp theo."
+            />
+        );
+    };
+
+    return (
+        <Modal
+            title={
+                <Space>
+                    <InfoCircleOutlined style={{ color: '#1890ff' }} />
+                    <span>Đánh giá tính khả thi điều phối</span>
+                </Space>
+            }
+            open={open}
+            onCancel={onClose}
+            footer={null}
+            width={700}
+            centered
+        >
+            <Space direction="vertical" style={{ width: '100%' }} size="large">
+                {renderHeader()}
+
+                {/* Dashboard Layer */}
+                <Card size="small" className="feasibility-dashboard" style={{ background: '#fafafa', borderRadius: 8 }}>
+                    <Row gutter={[24, 16]}>
+                        <Col span={12}>
+                            <div style={{ marginBottom: 8 }}>
+                                <Text type="secondary" size="small">Mức độ đáp ứng nhân sự</Text>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+                                    <Progress 
+                                        percent={Math.round(staffingRatio * 100)} 
+                                        strokeColor={getStaffingColor(staffingLevel)}
+                                        size="small"
+                                        showInfo={false}
+                                    />
+                                    <Tag color={getStaffingColor(staffingLevel)} style={{ margin: 0 }}>
+                                        {staffingLevel === 'SAFE' ? 'AN TOÀN' : staffingLevel === 'WARNING' ? 'CẢNH BÁO' : 'TỚI HẠN'}
+                                    </Tag>
                                 </div>
-                                {/* Leader */}
-                                <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid #f0f0f0', paddingTop: 6, paddingBottom: 4 }}>
-                                    <Text style={{ fontSize: 13 }}>Trưởng nhóm (Tài xế chính)</Text>
-                                    <div style={{ width: 140, display: 'flex', justifyContent: 'space-between' }}>
-                                        <Text strong>{data.shortages.required.leader}</Text>
-                                        <Text strong type={data.shortages.available.leader < data.shortages.required.leader ? 'danger' : 'success'}>{data.shortages.available.leader}</Text>
-                                    </div>
-                                </div>
-                                {/* Drivers */}
-                                <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid #f0f0f0', paddingTop: 6, paddingBottom: 4 }}>
-                                    <Text style={{ fontSize: 13 }}>Tài xế phụ</Text>
-                                    <div style={{ width: 140, display: 'flex', justifyContent: 'space-between' }}>
-                                        <Text strong>{data.shortages.required.drivers}</Text>
-                                        <Text strong type={data.shortages.available.drivers < data.shortages.required.drivers ? 'danger' : 'success'}>{data.shortages.available.drivers}</Text>
-                                    </div>
-                                </div>
-                                {/* Helpers */}
-                                <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid #f0f0f0', paddingTop: 6 }}>
-                                    <Text style={{ fontSize: 13 }}>Nhân viên phụ bốc xếp</Text>
-                                    <div style={{ width: 140, display: 'flex', justifyContent: 'space-between' }}>
-                                        <Text strong>{data.shortages.required.helpers}</Text>
-                                        <Text strong type={data.shortages.available.helpers < data.shortages.required.helpers ? 'danger' : 'success'}>{data.shortages.available.helpers}</Text>
-                                    </div>
+                                <Text style={{ fontSize: 12 }}>
+                                    {Math.round(staffingRatio * 100)}% yêu cầu ({feasibility.estimatedDuration / 60}h dự kiến)
+                                </Text>
+                            </div>
+                        </Col>
+                        <Col span={12}>
+                            <div style={{ marginBottom: 8 }}>
+                                <Text type="secondary" size="small">Xung đột lịch trình (Domino Effect)</Text>
+                                <div style={{ marginTop: 4 }}>
+                                    {hasConflict ? (
+                                        <Space direction="vertical" size={2}>
+                                            <Tag color={impactLevel === 'HIGH' ? 'red' : 'orange'} icon={<WarningOutlined />}>
+                                                XUNG ĐỘT {impactLevel === 'HIGH' ? 'CAO' : 'THẤP'}
+                                            </Tag>
+                                            <Text type="danger" style={{ fontSize: 12 }}>
+                                                Gây trễ đơn sau khoảng {Math.round(feasibility.maxDelayMinutes)} phút
+                                            </Text>
+                                        </Space>
+                                    ) : (
+                                        <Tag color="green" icon={<CheckCircleOutlined />}>KHÔNG CÓ XUNG ĐỘT</Tag>
+                                    )}
                                 </div>
                             </div>
-                        </div>
-                    }
-                />
+                        </Col>
+                    </Row>
+                </Card>
 
-                <div style={{ marginTop: 16 }}>
+                <div>
                     <Text strong>Các phương án xử lý:</Text>
 
                     {/* Option 1: Rebuild team */}
-                    <Card size="small" style={{ marginTop: 8, borderColor: '#1890ff' }}>
+                    <Card size="small" style={{ marginTop: 12, borderLeft: '4px solid #1890ff' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <div>
+                            <div style={{ flex: 1, paddingRight: 16 }}>
                                 <Text strong>1. Tái cấu trúc theo thực tế (Hệ thống gợi ý)</Text>
-                                {sameTeam ? (
-                                    <div style={{ color: '#cf1322', fontSize: 13, marginTop: 4 }}>
-                                        Hiện tại không có nhân sự trống lịch nào khác ngoài đội hình bạn đã chọn. Không thể áp dụng đội hình mới.
-                                        <br />Vui lòng dời ngày hoặc tiếp tục phân công với tình trạng thiếu hụt.
-                                    </div>
-                                ) : (
-                                    <div style={{ color: '#595959', fontSize: 13, marginTop: 4 }}>
-                                        Sử dụng đội hình có sẵn tại thời điểm này: <br />
-                                        • Trưởng nhóm: 1 <br />
-                                        • Tài xế phụ: {data.suggestedTeam.driverIds?.length || 0} <br />
-                                        • Nhân viên hậu cần: {data.suggestedTeam.staffIds?.length || 0} <br />
-                                        Hệ thống sẽ cập nhật lại Form để bạn xem lại và nhấn xác nhận.
-                                    </div>
-                                )}
+                                <div style={{ color: '#595959', fontSize: 13, marginTop: 4 }}>
+                                    {sameTeam ? (
+                                        <Text type="secondary">Không tìm thấy đội hình thay thế nào rảnh vào giờ này.</Text>
+                                    ) : (
+                                        <span>Cập nhật Form với nhân sự rảnh rỗi nhất hiện tại.</span>
+                                    )}
+                                </div>
                             </div>
                             <Button type="primary" onClick={onRebuildTeam} disabled={sameTeam}>
-                                Áp dụng Đội hình này
+                                Áp dụng
                             </Button>
                         </div>
                     </Card>
 
                     {/* Option 2: Pick alternative time */}
-                    <Card size="small" style={{ marginTop: 8 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <div>
-                                <Text strong>2. Dời thời gian vận chuyển</Text>
-                                <div style={{ color: '#595959', fontSize: 13, marginTop: 4 }}>
-                                    Hệ thống quét được các khung giờ sau sẽ đủ đội hình như bạn mong muốn (Nhấn chọn): <br />
-                                    {data.nextAvailableSlots.length > 0 ? (
-                                        <Space style={{ marginTop: 8, flexWrap: 'wrap' }}>
-                                            {data.nextAvailableSlots.map((s, i) => (
-                                                <Tag
-                                                    color="geekblue"
-                                                    key={i}
-                                                    style={{ cursor: 'pointer', padding: '4px 8px', fontSize: 13, margin: '4px 0' }}
-                                                    onClick={typeof s === 'string' ? () => onPickAlternativeTime(s) : undefined}
-                                                >
-                                                    {dayjs(s).format('HH:mm DD/MM')}
-                                                </Tag>
-                                            ))}
-                                        </Space>
-                                    ) : (
-                                        <Text type="danger">Không tìm thấy khung giờ phù hợp trong ngày.</Text>
-                                    )}
-                                </div>
+                    <Card size="small" style={{ marginTop: 12, borderLeft: '4px solid #44624a' }}>
+                        <div>
+                            <Text strong>2. Dời thời gian vận chuyển sang khung giờ trống</Text>
+                            <div style={{ marginTop: 8 }}>
+                                {data.nextAvailableSlots?.length > 0 ? (
+                                    <Space wrap size={[8, 8]}>
+                                        {data.nextAvailableSlots.map((s, i) => (
+                                            <Tag
+                                                key={i}
+                                                color="#44624a"
+                                                style={{ cursor: 'pointer', padding: '4px 10px', borderRadius: 4 }}
+                                                onClick={() => onPickAlternativeTime(s)}
+                                            >
+                                                <CalendarOutlined style={{ marginRight: 4 }} />
+                                                {dayjs(s).format('HH:mm - DD/MM')}
+                                            </Tag>
+                                        ))}
+                                    </Space>
+                                ) : (
+                                    <Text type="secondary" style={{ fontSize: 13 }}>Không tìm thấy khung giờ thay thế khả thi.</Text>
+                                )}
                             </div>
                         </div>
                     </Card>
 
-                    {/* Option 3: Force proceed */}
-                    {data.canForce && (
-                        <Card size="small" style={{ marginTop: 8, background: '#fff1f0', borderColor: '#ffa39e' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <div>
-                                    <Text strong type="danger">3. Buộc thực hiện (Thiếu người)</Text>
-                                    <div style={{ color: '#595959', fontSize: 13, marginTop: 4 }}>
-                                        Lệnh điều phối sẽ tiếp tục với số người thực tế có sẵn. <br />
-                                        <Text type="danger" style={{ fontSize: 12 }}>* Khách hàng sẽ nhận được thông báo thiếu hụt nhân sự.</Text>
+                    {/* Option 3: Force/Proposal */}
+                    <Divider style={{ margin: '24px 0 16px' }} />
+                    
+                    {decision === 'BLOCK' ? (
+                        <div style={{ textAlign: 'center', padding: '12px', background: '#fff1f0', borderRadius: 8 }}>
+                            <Text type="danger" strong>
+                                <CloseCircleOutlined /> Kế hoạch bị chặn do vượt quá giới hạn an toàn.
+                            </Text>
+                        </div>
+                    ) : (
+                        <Card size="small" style={{ 
+                            background: decision === 'REQUIRE_CUSTOMER' ? '#fff7e6' : '#fff1f0', 
+                            borderColor: decision === 'REQUIRE_CUSTOMER' ? '#ffd591' : '#ffa39e' 
+                        }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                <div style={{ flex: 1, paddingRight: 16 }}>
+                                    <Text strong type={decision === 'REQUIRE_CUSTOMER' ? 'warning' : 'danger'}>
+                                        {decision === 'REQUIRE_CUSTOMER' ? 'Gửi đề xuất cho Khách hàng' : 'Vẫn tiến hành (Chấp nhận rủi ro)'}
+                                    </Text>
+                                    <div style={{ fontSize: 12, color: '#595959', marginTop: 4 }}>
+                                        {decision === 'REQUIRE_CUSTOMER' 
+                                            ? 'Mức độ thiếu hụt lớn. Sau khi bạn xác nhận, khách hàng sẽ nhận được thông báo và cần nhấn "Chấp nhận" để ca vận chuyển bắt đầu.'
+                                            : hasConflict 
+                                                ? 'Lưu ý: Lựa chọn này sẽ trực tiếp làm trễ các đơn hàng tiếp theo và yêu cầu khách hàng xác nhận chấp nhận rủi ro trễ lịch.'
+                                                : 'Lưu ý: Thiếu hụt nhân sự sẽ được gửi tới khách hàng để xác nhận chấp nhận rủi ro.'}
                                     </div>
+                                    <Checkbox 
+                                        style={{ marginTop: 8 }}
+                                        checked={understoodRisk}
+                                        onChange={e => setUnderstoodRisk(e.target.checked)}
+                                    >
+                                        Tôi xác nhận và {decision === 'REQUIRE_CUSTOMER' ? 'muốn gửi đề xuất này' : 'chấp nhận rủi ro trễ lịch'}
+                                    </Checkbox>
                                 </div>
-                                <Button danger onClick={onForceProceed} loading={submitting}>
-                                    Vẫn tiến hành
+                                <Button 
+                                    type="primary"
+                                    danger={decision !== 'REQUIRE_CUSTOMER'}
+                                    style={decision === 'REQUIRE_CUSTOMER' ? { background: '#faad14', borderColor: '#faad14' } : {}}
+                                    onClick={onForceProceed} 
+                                    loading={submitting}
+                                    disabled={!understoodRisk}
+                                >
+                                    Xác nhận Force Dispatch
                                 </Button>
                             </div>
                         </Card>

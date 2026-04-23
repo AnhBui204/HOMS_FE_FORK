@@ -17,7 +17,8 @@ const ResourceAllocation = () => {
         invoices, loading,
         isModalVisible, selectedInvoice, submitting,
         isResolutionModalVisible, insufficientResourcesData,
-        form, vehicleType, dispatchTime, currentLeaderId, currentDriverIds,
+        form, vehicleType, dispatchTime, currentLeaderId, currentDriverIds, currentStaffIds,
+        totalHours, missingStaffCount, originalHours, penaltyHours,
         drivers, staff, vehicleStats,
         allAdminRoutes, mapCoords,
         setReloadTrigger,
@@ -87,7 +88,8 @@ const ResourceAllocation = () => {
                 onCancel={handleCancel}
                 footer={null}
                 width={1500}
-                style={{ top: 20, paddingBottom: 0 }}
+                centered
+                style={{ paddingBottom: 0 }}
                 styles={{ body: { maxHeight: 'calc(100vh - 80px)', overflowY: 'auto', overflowX: 'hidden', paddingRight: '4px' } }}
                 destroyOnClose={true}
             >
@@ -109,6 +111,11 @@ const ResourceAllocation = () => {
                                     staff={staff}
                                     currentLeaderId={currentLeaderId}
                                     currentDriverIds={currentDriverIds}
+                                    currentStaffIds={currentStaffIds}
+                                    totalHours={totalHours}
+                                    missingStaffCount={missingStaffCount}
+                                    originalHours={originalHours}
+                                    penaltyHours={penaltyHours}
                                     handleAutoFill={handleAutoFill}
                                     setReloadTrigger={setReloadTrigger}
                                 />
@@ -139,6 +146,7 @@ const ResourceAllocation = () => {
                                 submitting={submitting}
                                 handleCancel={handleCancel}
                                 form={form}
+                                totalHours={totalHours}
                             />
                         </Col>
                     </Row>

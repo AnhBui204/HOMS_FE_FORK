@@ -21,7 +21,7 @@ const renderVehicleOption = (label, type, vehicleStats) => {
     );
 };
 
-const DispatchPlanCard = ({ vehicleStats, submitting, handleCancel, form }) => (
+const DispatchPlanCard = ({ vehicleStats, submitting, handleCancel, form, totalHours }) => (
     <>
         <Card
             size="small"
@@ -154,8 +154,16 @@ const DispatchPlanCard = ({ vehicleStats, submitting, handleCancel, form }) => (
             </Form.Item>
             <Space style={{ flexShrink: 0 }}>
                 <Button onClick={handleCancel}>Hủy</Button>
-                <Button type="primary" htmlType="submit" loading={submitting} size="large" style={{ background: '#44624a' }}>
-                    Xác nhận điều phối
+                <Button 
+                    type="primary" 
+                    htmlType="submit" 
+                    loading={submitting} 
+                    size="large" 
+                    style={{ background: totalHours > 10 ? '#d9d9d9' : '#44624a' }}
+                    disabled={totalHours > 10}
+                    title={totalHours > 10 ? "Thời gian vận chuyển vượt quá 10 tiếng. Vui lòng bổ sung nhân sự." : ""}
+                >
+                    {totalHours > 10 ? "Bị chặn ( > 10h)" : "Xác nhận điều phối"}
                 </Button>
             </Space>
         </div>

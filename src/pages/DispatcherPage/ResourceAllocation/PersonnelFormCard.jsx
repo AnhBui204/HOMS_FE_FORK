@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, Button, Select, Form, Divider, Tag, Row, Col, Space, Typography, message } from 'antd';
-import { ReloadOutlined, BulbOutlined, CarOutlined, TeamOutlined } from '@ant-design/icons';
+import { ReloadOutlined, BulbOutlined, CarOutlined, TeamOutlined, CalendarOutlined } from '@ant-design/icons';
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -58,6 +58,11 @@ const PersonnelFormCard = ({
     staff,
     currentLeaderId,
     currentDriverIds,
+    currentStaffIds = [],
+    totalHours,
+    missingStaffCount: missingStaff,
+    originalHours,
+    penaltyHours,
     handleAutoFill,
     setReloadTrigger,
 }) => {
@@ -116,6 +121,42 @@ const PersonnelFormCard = ({
                                 </div>
                             </div>
                         </Col>
+                        <Col span={24}>
+                            <div style={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                justifyContent: 'space-between',
+                                background: '#ffffff', 
+                                padding: '10px 14px', 
+                                borderRadius: '6px', 
+                                border: '1px solid #c0cfb2',
+                                marginTop: '4px'
+                            }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <div style={{ background: '#f5f5f5', padding: '6px', borderRadius: '50%', color: '#8ba888', display: 'flex' }}>
+                                        <CalendarOutlined />
+                                    </div>
+                                    <div>
+                                        <div style={{ fontSize: '12px', color: '#8ba888' }}>Thời gian hoàn thành dự kiến</div>
+                                        <div style={{ 
+                                            fontWeight: '700', 
+                                            fontSize: '15px',
+                                            color: totalHours > 10 ? '#f5222d' : '#44624a' 
+                                        }}>
+                                            {totalHours.toFixed(1)} giờ 
+                                            {missingStaff > 0 && (
+                                                <span style={{ fontSize: '12px', fontWeight: '400', marginLeft: '8px', color: '#8c8c8c' }}>
+                                                    (Gốc: {originalHours}h + {penaltyHours.toFixed(1)}h bù thiếu {missingStaff} người)
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                                {totalHours > 10 && (
+                                    <Tag color="error" style={{ margin: 0 }}>Vượt giới hạn 10h</Tag>
+                                )}
+                            </div>
+                        </Col>
                     </Row>
                 </div>
             )}
@@ -137,7 +178,7 @@ const PersonnelFormCard = ({
             </Form.Item>
 
             <Form.Item name="driverIds" label="Tài xế phụ">
-                <Select mode="multiple" placeholder="Chọn tên tài xế bổ sung" allowClear optionLabelProp="label" menuItemSelectedIcon={null}>
+                <Select mode="multiple" maxTagCount="responsive" placeholder="Chọn tên tài xế bổ sung" allowClear optionLabelProp="label" menuItemSelectedIcon={null}>
                     {drivers.map(d => (
                         <Option key={d._id} value={d._id} disabled={d.availabilityStatus === 'UNAVAILABLE' || d._id === currentLeaderId} label={d.fullName}>
                             {renderResourceOption(d)}
@@ -147,7 +188,7 @@ const PersonnelFormCard = ({
             </Form.Item>
 
             <Form.Item name="staffIds" label="Nhân viên phụ bốc xếp">
-                <Select mode="multiple" placeholder="Chọn tên nhân viên bốc xếp" allowClear optionLabelProp="label" menuItemSelectedIcon={null}>
+                <Select mode="multiple" maxTagCount="responsive" placeholder="Chọn tên nhân viên bốc xếp" allowClear optionLabelProp="label" menuItemSelectedIcon={null}>
                     {staff.map(s => (
                         <Option key={s._id} value={s._id} disabled={s.availabilityStatus === 'UNAVAILABLE'} label={s.fullName}>
                             {renderResourceOption(s)}

@@ -24,6 +24,15 @@ export const useResourceAllocation = () => {
     const dispatchTime = Form.useWatch('dispatchTime', form);
     const currentLeaderId = Form.useWatch('leaderId', form);
     const currentDriverIds = Form.useWatch('driverIds', form) || [];
+    const currentStaffIds = Form.useWatch('staffIds', form) || [];
+
+    const svData = selectedInvoice?.requestTicketId?.surveyDataId;
+    const originalHours = svData?.estimatedHours || 8;
+    const idealStaffCount = svData?.suggestedStaffCount || 2;
+    const actualStaffCount = (currentLeaderId ? 1 : 0) + currentDriverIds.length + currentStaffIds.length;
+    const missingStaffCount = Math.max(0, idealStaffCount - actualStaffCount);
+    const penaltyHours = missingStaffCount * 1.3;
+    const totalHours = originalHours + penaltyHours;
 
     const [drivers, setDrivers] = useState([]);
     const [staff, setStaff] = useState([]);
@@ -217,7 +226,7 @@ export const useResourceAllocation = () => {
             fetchInvoices();
         } catch (error) {
             const errRes = error.response?.data;
-            if (errRes?.message === 'INSUFFICIENT_RESOURCES') {
+            if (errRes?.message === 'INSUFFICIENT_RESOURCES' || errRes?.message === 'MAX_DURATION_EXCEEDED') {
                 setInsufficientResourcesData({ ...errRes.data, valuesSnapshot: values });
                 setIsResolutionModalVisible(true);
                 setReloadTrigger(prev => prev + 1);
@@ -344,7 +353,8 @@ export const useResourceAllocation = () => {
         invoices, loading,
         isModalVisible, selectedInvoice, submitting,
         isResolutionModalVisible, insufficientResourcesData,
-        form, vehicleType, dispatchTime, currentLeaderId, currentDriverIds,
+        form, vehicleType, dispatchTime, currentLeaderId, currentDriverIds, currentStaffIds,
+        totalHours, missingStaffCount, originalHours, penaltyHours,
         drivers, staff, vehicleStats,
         routesList, allAdminRoutes, mapCoords,
         setDrivers, setStaff,
