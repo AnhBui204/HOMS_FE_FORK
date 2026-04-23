@@ -580,7 +580,7 @@ const MovingInformationPage = () => {
                                     </div>
 
                                     {/* High-value & Insurance Section */}
-                                    <div className="premium-services-section" style={{ marginTop: '20px', padding: '15px', background: '#f9f9f9', borderRadius: '10px', border: '1px dashed #d9d9d9' }}>
+                                    {/* <div className="premium-services-section" style={{ marginTop: '20px', padding: '15px', background: '#f9f9f9', borderRadius: '10px', border: '1px dashed #d9d9d9' }}>
                                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
                                             <span style={{ fontWeight: 600, color: '#d48806' }}>💎 Vận chuyển hàng giá trị cao</span>
                                             <Checkbox 
@@ -625,7 +625,7 @@ const MovingInformationPage = () => {
                                                 </div>
                                             </div>
                                         )}
-                                    </div>
+                                    </div> */}
 
                                     {pickupLocation && dropoffLocation && (
                                         <div className="location-summary">
