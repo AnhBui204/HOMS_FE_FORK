@@ -239,7 +239,7 @@ const OrderCard = ({
   // Cần thanh toán cọc: ACCEPTED + đã ký + invoice UNPAID
   const needsDepositPayment = ticket.status === 'ACCEPTED'
     && isContractSigned
-    && ticket.invoice?.paymentStatus === 'UNPAID';
+    && (!ticket.invoice || ticket.invoice.paymentStatus === 'UNPAID');
 
   return (
     <div className={`mo-card ${isQuoted ? 'mo-card--highlight' : ''}`}>

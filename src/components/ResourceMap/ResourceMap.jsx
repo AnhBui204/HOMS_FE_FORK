@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -231,13 +231,42 @@ const ResourceMap = ({ pickup, delivery, allRoutes = [], vehicleType, dispatchTi
         fetchRoute();
     }, [fetchRoute]);
 
+    const routesWithInfo = useMemo(() => {
+        return routes.map((r, idx) => {
+            const coords = r.geometry.coordinates.map(c => ({ lat: c[1], lng: c[0] }));
+            const uniqueResIds = new Set();
+            const encounterRestrictions = [];
+
+            coords.forEach(p => {
+                const res = isPointRestricted(p, allRoutes, vehicleType, dispatchTime);
+                if (res && !uniqueResIds.has(res._id)) {
+                    uniqueResIds.add(res._id);
+                    encounterRestrictions.push(res);
+                }
+            });
+
+            return {
+                ...r,
+                index: idx,
+                restrictions: encounterRestrictions,
+                isSafe: encounterRestrictions.length === 0
+            };
+        }).sort((a, b) => {
+            if (a.isSafe && !b.isSafe) return -1;
+            if (!a.isSafe && b.isSafe) return 1;
+            return a.distance - b.distance;
+        });
+    }, [routes, allRoutes, vehicleType, dispatchTime]);
+
     useEffect(() => {
-        if (routes.length === 0) {
+        if (routesWithInfo.length === 0) {
             setSegments([]);
             return;
         }
 
-        const route = routes[selectedRouteIdx];
+        const route = routesWithInfo[selectedRouteIdx];
+        if (!route) return;
+
         const coordinates = route.geometry.coordinates.map(c => ({ lat: c[1], lng: c[0] }));
 
         const newSegments = [];
@@ -263,7 +292,7 @@ const ResourceMap = ({ pickup, delivery, allRoutes = [], vehicleType, dispatchTi
         newSegments.push(currentSegment);
         setSegments(newSegments);
 
-    }, [routes, selectedRouteIdx, allRoutes, vehicleType, dispatchTime]);
+    }, [routesWithInfo, selectedRouteIdx, allRoutes, vehicleType, dispatchTime]);
 
     if (!pickup || !delivery) {
         return (
@@ -285,31 +314,6 @@ const ResourceMap = ({ pickup, delivery, allRoutes = [], vehicleType, dispatchTi
     });
 
     const bounds = L.latLngBounds(boundPoints);
-
-    const routesWithInfo = routes.map((r, idx) => {
-        const coords = r.geometry.coordinates.map(c => ({ lat: c[1], lng: c[0] }));
-        const uniqueResIds = new Set();
-        const encounterRestrictions = [];
-
-        coords.forEach(p => {
-            const res = isPointRestricted(p, allRoutes, vehicleType, dispatchTime);
-            if (res && !uniqueResIds.has(res._id)) {
-                uniqueResIds.add(res._id);
-                encounterRestrictions.push(res);
-            }
-        });
-
-        return {
-            ...r,
-            index: idx,
-            restrictions: encounterRestrictions,
-            isSafe: encounterRestrictions.length === 0
-        };
-    }).sort((a, b) => {
-        if (a.isSafe && !b.isSafe) return -1;
-        if (!a.isSafe && b.isSafe) return 1;
-        return a.distance - b.distance;
-    });
 
     const currentRouteInfo = routesWithInfo[selectedRouteIdx];
 

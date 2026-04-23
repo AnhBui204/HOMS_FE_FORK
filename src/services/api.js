@@ -28,6 +28,8 @@ const PUBLIC_ENDPOINTS = [
   '/orders/validate',
   '/public/estimate-price',
   '/public/best-moving-time',
+  '/public/ratings',
+  '/public/recent-orders',
   '/csrf-token',
 ];
 let csrfToken = null;
@@ -66,7 +68,8 @@ export const setupInterceptors = (contextLogout) => {
           config.headers['X-CSRF-Token'] = csrfToken;
         }
       }
-      const isPublicPage = PUBLIC_ENDPOINTS.some(endpoint => config.url.endsWith(endpoint));
+      const urlPath = config.url.split('?')[0];
+      const isPublicPage = PUBLIC_ENDPOINTS.some(endpoint => urlPath.endsWith(endpoint));
       if (isPublicPage) {
         return config;
       }

@@ -18,6 +18,16 @@ const statusColorMap = {
   CANCELLED: 'red'
 };
 
+const statusTextMap = {
+  DRAFT: 'Nháp',
+  CONFIRMED: 'Đã xác nhận',
+  ASSIGNED: 'Đã phân công',
+  ACCEPTED: 'Đã chấp nhận',
+  IN_PROGRESS: 'Đang thực hiện',
+  COMPLETED: 'Hoàn thành',
+  CANCELLED: 'Đã hủy'
+};
+
 const MyInvoice = () => {
   const [loading, setLoading] = useState(false);
   const [invoices, setInvoices] = useState([]);
@@ -117,7 +127,7 @@ const MyInvoice = () => {
 
   const columns = [
     { title: 'Mã hóa đơn', dataIndex: 'code', key: 'code', render: (t) => <Text strong>{t}</Text> },
-    { title: 'Trạng thái', dataIndex: 'status', key: 'status', render: s => <Tag color={statusColorMap[s] || 'default'}>{s}</Tag> },
+    { title: 'Trạng thái', dataIndex: 'status', key: 'status', render: s => <Tag color={statusColorMap[s] || 'default'}>{statusTextMap[s] || s}</Tag> },
     { title: 'Thời gian', dataIndex: 'createdAt', key: 'createdAt', render: d => d ? new Date(d).toLocaleString() : '—' },
     { title: 'Hành động', key: 'action', render: (_, record) => (
         <Space>
@@ -197,7 +207,7 @@ const MyInvoice = () => {
                   }}
                 >
                   {Object.keys(statusColorMap).map((key) => (
-                    <Option value={key} key={key}><Text>{key}</Text></Option>
+                    <Option value={key} key={key}><Text>{statusTextMap[key] || key}</Text></Option>
                   ))}
                 </Select>
 
@@ -287,7 +297,13 @@ const MyInvoice = () => {
                       <div style={{ fontSize: 14, fontWeight: 800, color: primaryColor }}>HÓA ĐƠN</div>
                       <div style={{ marginTop: 8 }}>Mã: <Text strong>{data.invoice?.code}</Text></div>
                       <div>Ngày: <Text>{data.invoice?.date ? new Date(data.invoice.date).toLocaleString() : '—'}</Text></div>
-                      {data.invoice?.status ? <div style={{ marginTop: 8 }}><Tag color="blue">{data.invoice.status}</Tag></div> : null}
+                      {data.invoice?.status ? (
+                        <div style={{ marginTop: 8 }}>
+                          <Tag color={statusColorMap[data.invoice.status] || 'blue'}>
+                            {statusTextMap[data.invoice.status] || data.invoice.status}
+                          </Tag>
+                        </div>
+                      ) : null}
                     </div>
                   </div>
                 </div>

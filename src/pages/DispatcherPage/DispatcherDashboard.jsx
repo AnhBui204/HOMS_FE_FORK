@@ -50,29 +50,36 @@ const DispatcherDashboard = () => {
             title: 'Mã đơn',
             dataIndex: 'code',
             key: 'code',
-            render: (text) => <Text strong>{text}</Text>
+            width: 140,
+            render: (text) => <Text strong style={{ whiteSpace: 'nowrap' }}>{text}</Text>
         },
         {
             title: 'Khách hàng',
             dataIndex: ['customerId', 'fullName'],
-            key: 'customer'
+            key: 'customer',
+            width: 140,
+            ellipsis: true
         },
         {
             title: 'Điều phối viên',
             dataIndex: ['dispatcherId', 'fullName'],
             key: 'dispatcher',
+            width: 140,
+            ellipsis: true,
             render: (name) => name || <Text type="secondary">Chưa gán</Text>
         },
         {
             title: 'Ngày tạo',
             dataIndex: 'createdAt',
             key: 'createdAt',
+            width: 150,
             render: (date) => dayjs(date).format('HH:mm DD/MM/YYYY')
         },
         {
             title: 'Trạng thái',
             dataIndex: 'status',
             key: 'status',
+            width: 160,
             render: (status) => {
                 let color = 'blue';
                 let text = status;
@@ -96,11 +103,19 @@ const DispatcherDashboard = () => {
                     color = 'purple';
                     text = 'Đã chấp nhận báo giá';
                 }
-                if (status === 'CONVERTED') {
-                    color = 'geekblue';
-                    text = 'Đã tạo HĐ';
+                if (status === 'WAITING_REVIEW') {
+                    color = 'gold';
+                    text = 'Chờ xem xét';
                 }
-                return <Tag color={color}>{text}</Tag>;
+                if (status === 'DRAFT') {
+                    color = 'default';
+                    text = 'Nháp';
+                }
+                if (status === 'CANCELLED') {
+                    color = 'red';
+                    text = 'Đã hủy';
+                }
+                return <Tag color={color} style={{ minWidth: 80, textAlign: 'center' }}>{text}</Tag>;
             }
         },
         {
@@ -123,22 +138,28 @@ const DispatcherDashboard = () => {
             title: 'Mã HĐ',
             dataIndex: 'code',
             key: 'code',
-            render: (text) => <Text strong>{text}</Text>
+            width: 140,
+            render: (text) => <Text strong style={{ whiteSpace: 'nowrap' }}>{text}</Text>
         },
         {
             title: 'Khách hàng',
             dataIndex: ['customerId', 'fullName'],
-            key: 'customer'
+            key: 'customer',
+            width: 140,
+            ellipsis: true
         },
         {
             title: 'Điều phối viên',
+            key: 'dispatcher',
+            width: 140,
+            ellipsis: true,
             render: (_, record) => record.requestTicketId?.dispatcherId?.fullName || <Text type="secondary">Chưa gán</Text>,
-            key: 'dispatcher'
         },
         {
             title: 'Trạng thái',
             dataIndex: 'status',
             key: 'status',
+            width: 140,
             render: (status) => {
                 let color = 'blue';
                 let text = status;
@@ -146,8 +167,9 @@ const DispatcherDashboard = () => {
                 if (status === 'ASSIGNED') { color = 'warning'; text = 'Đã điều phối'; }
                 if (status === 'ACCEPTED') { color = 'cyan'; text = 'Tài xế đã nhận'; }
                 if (status === 'IN_PROGRESS') { color = 'purple'; text = 'Đang thực hiện'; }
-                if (status === 'COMPLETED') { color = 'success'; text = 'Đã hoàn tất'; }
-                return <Tag color={color}>{text}</Tag>;
+                if (status === 'DRAFT') { color = 'default'; text = 'Nháp'; }
+                if (status === 'CANCELLED') { color = 'red'; text = 'Đã hủy'; }
+                return <Tag color={color} style={{ minWidth: 80, textAlign: 'center' }}>{text}</Tag>;
             }
         },
         {
@@ -230,6 +252,7 @@ const DispatcherDashboard = () => {
                                 pagination={false}
                                 rowKey="_id"
                                 size="small"
+                                scroll={{ x: 900 }}
                             />
                         )}
                     </Card>
@@ -243,6 +266,7 @@ const DispatcherDashboard = () => {
                                 pagination={false}
                                 rowKey="_id"
                                 size="small"
+                                scroll={{ x: 900 }}
                             />
                         )}
                     </Card>
