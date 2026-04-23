@@ -30,21 +30,26 @@ const iceServers = {
   iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },
     { urls: 'stun:stun1.l.google.com:19302' },
-    { urls: 'stun:stun2.l.google.com:19302' },
+    { urls: 'stun:stun.relay.metered.ca:80' },
     {
-      urls: 'turn:openrelay.metered.ca:80',
-      username: 'openrelayproject',
-      credential: 'openrelayproject',
+      urls: 'turn:global.relay.metered.ca:80',
+      username: '98c57974889108f36474ce71',
+      credential: 'PMVbUKy2rpWEKy/H',
     },
     {
-      urls: 'turn:openrelay.metered.ca:443',
-      username: 'openrelayproject',
-      credential: 'openrelayproject',
+      urls: 'turn:global.relay.metered.ca:80?transport=tcp',
+      username: '98c57974889108f36474ce71',
+      credential: 'PMVbUKy2rpWEKy/H',
     },
     {
-      urls: 'turn:openrelay.metered.ca:443?transport=tcp',
-      username: 'openrelayproject',
-      credential: 'openrelayproject',
+      urls: 'turn:global.relay.metered.ca:443',
+      username: '98c57974889108f36474ce71',
+      credential: 'PMVbUKy2rpWEKy/H',
+    },
+    {
+      urls: 'turns:global.relay.metered.ca:443?transport=tcp',
+      username: '98c57974889108f36474ce71',
+      credential: 'PMVbUKy2rpWEKy/H',
     }
   ],
 };
@@ -185,7 +190,7 @@ function VideoChat() {
       try {
         await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(answer));
         console.log('[WebRTC] Thiết lập remote description thành công.');
-        processPendingCandidates();
+        await processPendingCandidates();
       } catch (err) {
         console.error('Lỗi xử lý phản hồi cuộc gọi:', err);
       }
@@ -234,16 +239,16 @@ function VideoChat() {
     };
   }, [socket]);
 
-  const processPendingCandidates = () => {
+  const processPendingCandidates = async () => {
     if (peerConnectionRef.current?.remoteDescription) {
       console.log(`[WebRTC] Đang xử lý ${pendingCandidatesRef.current.length} ICE candidates đệm...`);
-      pendingCandidatesRef.current.forEach(async (candidate) => {
+      for (const candidate of pendingCandidatesRef.current) {
         try {
           await peerConnectionRef.current.addIceCandidate(new RTCIceCandidate(candidate));
         } catch (e) {
           console.error('Lỗi thêm ICE candidate từ đệm:', e);
         }
-      });
+      }
       pendingCandidatesRef.current = [];
     }
   };
