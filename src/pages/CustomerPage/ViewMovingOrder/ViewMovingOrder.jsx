@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Layout, Modal, message, Spin, Tour, Button, ConfigProvider, Row, Col, Tag, Divider, Typography, Tooltip } from "antd";
+import { Layout, Modal, message, Spin, Tour, Button, ConfigProvider, Row, Col, Tag, Divider, Typography, Tooltip, Pagination } from "antd";
 import viVN from 'antd/locale/vi_VN';
 import { useLocation, useNavigate } from "react-router-dom";
 import {
@@ -179,6 +179,7 @@ const OrderCard = ({
   onCancelTicketRequest,
   onRescheduleSurveyRequest,
   onConfirmReschedule,
+  onConfirmUnderstaffed,
 }) => {
   const [expanded, setExpanded] = useState(false);
   const [surveyDetails, setSurveyDetails] = useState(null);
@@ -251,6 +252,9 @@ const OrderCard = ({
     && ticket.invoice?.paymentStatus === 'UNPAID';
 
   const isReschedulePending = ticket.invoice?.rescheduleStatus === 'PENDING_APPROVAL';
+  const feasibility = ticket.invoice?.dispatchAssignmentId?.feasibility || {};
+  const isUnderstaffedApprovalPending = (feasibility.decision === 'REQUIRE_CUSTOMER' || feasibility.decision === 'CONFIRM') 
+                                        && !ticket.invoice?.understaffedApproval;
 
   return (
     <div className={`mo-card ${isQuoted ? 'mo-card--highlight' : ''}`}>
@@ -267,6 +271,14 @@ const OrderCard = ({
         <div className="mo-quoted-notice" style={{ backgroundColor: '#fffbe6', borderColor: '#ffe58f', color: '#d46b08' }}>
           <CalendarOutlined className="mo-quoted-notice-icon mo-shake-animation" style={{ color: '#fa8c16' }} />
           <span>Điều phối viên đề xuất dời lịch vận chuyển sang <b>{fmtDate(ticket.invoice?.proposedDispatchTime)}</b>. Vui lòng xác nhận!</span>
+        </div>
+      )}
+
+      {/* ── UNDERSTAFFED notice ── */}
+      {isUnderstaffedApprovalPending && (
+        <div className="mo-quoted-notice" style={{ backgroundColor: '#fff1f0', borderColor: '#ffa39e', color: '#cf1322' }}>
+          <WarningOutlined className="mo-quoted-notice-icon mo-shake-animation" style={{ color: '#f5222d' }} />
+          <span>Hệ thống phát hiện <b>thiếu hụt nhân sự lớn</b> cho ca vận chuyển này. Thời gian có thể kéo dài thêm khoảng <b>{Math.round(feasibility.estimatedDuration / 60)} tiếng</b>. Vui lòng xác nhận để chúng tôi tiến hành!</span>
         </div>
       )}
 
@@ -444,6 +456,18 @@ const OrderCard = ({
             <button className="mo-btn mo-btn--report" onClick={() => onReportIncident(ticket)}>
               <WarningOutlined /> Báo cáo sự cố
             </button>
+          )}
+
+          {/* Chấp nhận thiếu nhân sự */}
+          {isUnderstaffedApprovalPending && (
+             <>
+               <button className="mo-btn mo-btn--accept" onClick={() => onConfirmUnderstaffed(ticket, 'ACCEPT')}>
+                 <CheckCircleOutlined /> Chấp nhận rủi ro
+               </button>
+               <button className="mo-btn mo-btn--reject" onClick={() => onConfirmUnderstaffed(ticket, 'REJECT')}>
+                 <CalendarOutlined /> Yêu cầu dời lịch
+               </button>
+             </>
           )}
 
           {/* Đánh giá */}
@@ -789,6 +813,12 @@ const ViewMovingOrder = () => {
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState("ALL");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(5);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeFilter]);
   const [isSurveyModalVisible, setIsSurveyModalVisible] = useState(false);
   const [selectedSurvey, setSelectedSurvey] = useState(null);
   const [selectedTicket, setSelectedTicket] = useState(null);
@@ -1038,6 +1068,32 @@ const ViewMovingOrder = () => {
     });
   };
 
+  const handleConfirmUnderstaffed = (ticket, action) => {
+    confirm({
+      title: action === 'ACCEPT' ? "Chấp nhận vận chuyển (Thiếu nhân sự)?" : "Từ chối và yêu cầu dời lịch?",
+      content: action === 'ACCEPT'
+        ? "Bạn đồng ý vận chuyển với số lượng nhân sự ít hơn? Thời gian vận chuyển thực tế có thể kéo dài thêm do thiếu hụt nhân lực."
+        : "Hệ thống sẽ ghi nhận yêu cầu và điều phối viên sẽ đề xuất lịch trình mới phù hợp hơn cho bạn.",
+      okText: "Xác nhận",
+      onOk: async () => {
+        try {
+          await api.patch(`/invoices/${ticket.invoice._id}/confirm-understaffed`, { action });
+          message.success("Đã gửi phản hồi thành công.");
+          setTickets((prev) =>
+            prev.map((t) => {
+              if (t._id === ticket._id) {
+                return { ...t, invoice: { ...t.invoice, understaffedApproval: action } };
+              }
+              return t;
+            })
+          );
+        } catch (err) {
+          message.error("Lỗi: " + (err.response?.data?.message || err.message));
+        }
+      },
+    });
+  };
+
   const handleConfirmReschedule = (ticket, action) => {
     confirm({
       title: action === 'ACCEPT' ? "Chấp nhận dời lịch vận chuyển?" : "Từ chối dời lịch vận chuyển?",
@@ -1208,7 +1264,8 @@ const ViewMovingOrder = () => {
   const filtered = tickets.filter((t) => matchFilter(t, activeFilter));
   const countFor = (key) => tickets.filter((t) => matchFilter(t, key)).length;
 
-  const displayTickets = tourOpen && tickets.length === 0 ? [mockTicketForTour] : (tourOpen ? [mockTicketForTour, ...filtered] : filtered);
+  const allDisplayTickets = tourOpen && tickets.length === 0 ? [mockTicketForTour] : (tourOpen ? [mockTicketForTour, ...filtered] : filtered);
+  const displayTickets = allDisplayTickets.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   return (
     <Layout className="view-order-page">
@@ -1276,6 +1333,18 @@ const ViewMovingOrder = () => {
                   onConfirmReschedule={ticket.isMock ? () => message.info('Đây là dữ liệu mẫu.') : handleConfirmReschedule}
                 />
               ))}
+            </div>
+          )}
+
+          {allDisplayTickets.length > pageSize && (
+            <div style={{ display: 'flex', justifyContent: 'center', marginTop: 32, marginBottom: 40 }}>
+              <Pagination
+                current={currentPage}
+                pageSize={pageSize}
+                total={allDisplayTickets.length}
+                onChange={(page) => setCurrentPage(page)}
+                showSizeChanger={false}
+              />
             </div>
           )}
         </section>
