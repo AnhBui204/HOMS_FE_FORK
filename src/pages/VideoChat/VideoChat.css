@@ -964,15 +964,3 @@
   color: #94a3b8;
   margin: 0;
 }
-
-.vc-video-grid {
-  grid-template-columns: 1fr;
-}
-
-.vc-panel {
-  border-radius: 0;
-}
-
-.vc-sidebar {
-  width: 100%;
-}
