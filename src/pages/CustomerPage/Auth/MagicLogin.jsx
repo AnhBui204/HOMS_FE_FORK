@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Card, Input, Button, Typography, message, Layout } from 'antd';
-import { LockOutlined, UserOutlined, MailOutlined } from '@ant-design/icons';
+import { LockOutlined, UserOutlined, MailOutlined,PhoneOutlined } from '@ant-design/icons';
 import api from '../../../services/api'; 
 import useUser from '../../../contexts/UserContext'; 
 import { saveAccessToken } from '../../../services/authService';
@@ -13,9 +13,9 @@ const MagicLogin = () => {
   const navigate = useNavigate();
   
   const [loading, setLoading] = useState(false);
-  const [userInfo, setUserInfo] = useState({ fullName: '', email: '' });
+  const [userInfo, setUserInfo] = useState({ fullName: '', email: '',phone:'' });
   const [password, setPassword] = useState(''); 
-  
+  const [confirmPassword, setConfirmPassword] = useState('');
   const searchParams = new URLSearchParams(location.search);
   const token = searchParams.get('token');
   const redirectUrl = searchParams.get('redirect') || '/customer/order';
@@ -36,7 +36,8 @@ const MagicLogin = () => {
       const decodedPayload = JSON.parse(jsonPayload);
       setUserInfo({
         fullName: decodedPayload.fullName || 'Khách hàng',
-        email: decodedPayload.email || ''
+        email: decodedPayload.email || '',
+        phone:decodedPayload.phone || ''
       });
     } catch (e) {
       console.log('Lỗi giải mã token', e);
@@ -47,10 +48,12 @@ const MagicLogin = () => {
     if (!password) {
       return message.warning('Vui lòng tạo mật khẩu của bạn.');
     }
-
+ if (password !== confirmPassword) {
+    return message.error('Mật khẩu xác nhận không khớp!');
+  }
     setLoading(true);
     try {
-      const res = await api.post('/auth/magic', { token, password });
+      const res = await api.post('/auth/magic', { token, password, phone: userInfo.phone,confirmPassword });
 
       if (res.data.success) {
        if (res.data.accessToken) {
@@ -65,9 +68,24 @@ const MagicLogin = () => {
         message.success('Thiết lập tài khoản thành công!');
         navigate(redirectUrl); 
       }
-    } catch (error) {
-      message.error(error.response?.data?.message || 'Có lỗi xảy ra, vui lòng thử lại.');
-    } finally {
+    }catch (error) {
+  const responseData = error.response?.data;
+  
+  if (responseData?.errors && Array.isArray(responseData.errors) && responseData.errors.length > 0) {
+
+    const errorMsg = responseData.errors[0].message;
+    message.error(errorMsg);
+  } else if (responseData?.message) {
+
+    message.error(responseData.message);
+  } else {
+    message.error('Có lỗi xảy ra, vui lòng thử lại sau.');
+  }
+
+  if (responseData?.message?.includes('đã được sử dụng')) {
+    setTimeout(() => navigate('/login'), 2000);
+  }
+}finally {
       setLoading(false);
     }
   };
@@ -89,6 +107,16 @@ const MagicLogin = () => {
           <Text strong>Email nhận OTP</Text>
           <Input size="large" prefix={<MailOutlined />} value={userInfo.email} disabled style={{ marginTop: 8 }} />
         </div>
+        <div style={{ marginBottom: 16 }}>
+  <Text strong>Số điện thoại</Text>
+  <Input 
+    size="large" 
+    prefix={<PhoneOutlined />} 
+    value={userInfo.phone} 
+    onChange={(e) => setUserInfo({...userInfo, phone: e.target.value})}
+    style={{ marginTop: 8 }} 
+  />
+</div>
 
         <div style={{ marginBottom: 24 }}>
           <Text strong>Tạo mật khẩu mới</Text>
@@ -99,9 +127,17 @@ const MagicLogin = () => {
             style={{ marginTop: 8 }} 
           />
         </div>
-
+<div style={{ marginBottom: 24 }}>
+  <Text strong>Xác nhận mật khẩu</Text>
+  <Input.Password 
+    size="large" prefix={<LockOutlined />} placeholder="Nhập lại mật khẩu" 
+    value={confirmPassword}
+    onChange={(e) => setConfirmPassword(e.target.value)}
+    style={{ marginTop: 8 }} 
+  />
+</div>
         <Button type="primary" size="large" block loading={loading} onClick={handleSubmit} style={{ background: '#2D4F36', borderColor: '#2D4F36' }}>
-          Lưu & Tiến hành ký Hợp Đồng
+          Lưu & Xem xét đơn hàng
         </Button>
       </Card>
     </Layout>
