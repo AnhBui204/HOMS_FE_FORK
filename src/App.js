@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { useState,useEffect } from "react";
+import { Provider } from 'react-redux';
+import { store } from './store/index';
 import LandingPage from "./pages/CommonPage/LandingPage/LandingPage";
 import HomeRedirect from "./pages/CommonPage/LandingPage/HomeRedirect";
 import About from "./pages/CommonPage/About/About";
@@ -35,6 +37,7 @@ function App() {
     <GoogleOAuthProvider clientId={googleClientId}>
       <BrowserRouter>
         <ScrollToTop />
+         <Provider store={store}>
         <UserProvider>
           <Routes>
             <Route path="/" element={<HomeRedirect />} />
@@ -56,6 +59,7 @@ function App() {
             <Route path="*" element={<NotFound />} />
           </Routes>
         </UserProvider>
+        </Provider>
       </BrowserRouter>
     </GoogleOAuthProvider>
   );
