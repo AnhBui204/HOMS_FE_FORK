@@ -120,6 +120,16 @@ const adminRouteService = {
             throw error;
         }
     }
+    ,
+    filterRoutes: async (payload) => {
+        try {
+            const response = await api.post('/admin/routes/filter', payload);
+            return response.data;
+        } catch (error) {
+            console.error('Error filtering routes', error);
+            throw error;
+        }
+    }
 };
 
 export default adminRouteService;

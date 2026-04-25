@@ -123,11 +123,9 @@ const RouteManagement = () => {
     const applyFilters = async () => {
         try {
             setLoading(true);
-            const params = {};
-            if (filterValues.isActive && filterValues.isActive !== 'all') params.isActive = filterValues.isActive;
-            if (filterValues.district) params.district = filterValues.district;
-            const data = await adminRouteService.getAllRoutes(params);
-            setRoutes(data.data || []);
+            const payload = { ...filterValues, search: searchText };
+            const res = await adminRouteService.filterRoutes(payload);
+            setRoutes(res.data || []);
             setFilterPopoverVisible(false);
         } catch (error) {
             console.error('Filter failed', error);
