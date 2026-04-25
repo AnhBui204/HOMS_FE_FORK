@@ -110,6 +110,16 @@ const adminRouteService = {
             throw error;
         }
     }
+,
+    getRouteStats: async () => {
+        try {
+            const response = await api.get('/admin/routes/stats');
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching route stats', error);
+            throw error;
+        }
+    }
 };
 
 export default adminRouteService;

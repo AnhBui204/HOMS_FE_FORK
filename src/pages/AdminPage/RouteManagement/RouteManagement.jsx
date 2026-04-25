@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Button, Modal, Form, Input, Card, Select, Space, Tag, message, Popconfirm, Row, Col, InputNumber, Typography, Divider, Tooltip, List, Badge } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, InfoCircleOutlined, EnvironmentOutlined, SearchOutlined, ClearOutlined, UndoOutlined, CompassOutlined, EyeOutlined } from '@ant-design/icons';
+import { Table, Button, Modal, Form, Input, Card, Select, Space, Tag, message, Popconfirm, Row, Col, InputNumber, Typography, Divider, Tooltip, List, Badge, Drawer } from 'antd';
+import { PlusOutlined, EditOutlined, DeleteOutlined, InfoCircleOutlined, EnvironmentOutlined, SearchOutlined, ClearOutlined, UndoOutlined, CompassOutlined, EyeOutlined, FilterOutlined } from '@ant-design/icons';
 import { MapContainer, TileLayer, Marker, Polyline, useMapEvents, useMap, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -79,6 +79,9 @@ const RouteManagement = () => {
     const [loading, setLoading] = useState(false);
     const [searchText, setSearchText] = useState('');
     const [searchLoading, setSearchLoading] = useState(false);
+    const [stats, setStats] = useState({ total: 0, active: 0, inactive: 0, withRules: 0 });
+    const [filterDrawerVisible, setFilterDrawerVisible] = useState(false);
+    const [filterValues, setFilterValues] = useState({ district: '', isActive: 'all' });
 
     // Modal States
     const [isRouteModalVisible, setIsRouteModalVisible] = useState(false);
@@ -108,7 +111,35 @@ const RouteManagement = () => {
         finally { setLoading(false); }
     };
 
+    const fetchStats = async () => {
+        try {
+            const res = await adminRouteService.getRouteStats();
+            if (res && res.data) setStats(res.data);
+        } catch (error) {
+            console.error('Failed to load route stats', error);
+        }
+    };
+
+    const applyFilters = async () => {
+        try {
+            setLoading(true);
+            const params = {};
+            if (filterValues.isActive && filterValues.isActive !== 'all') params.isActive = filterValues.isActive;
+            if (filterValues.district) params.district = filterValues.district;
+            const data = await adminRouteService.getAllRoutes(params);
+            setRoutes(data.data || []);
+            setFilterDrawerVisible(false);
+        } catch (error) {
+            console.error('Filter failed', error);
+            message.error('Lọc thất bại');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => { fetchRoutes(); }, []);
+
+    useEffect(() => { fetchStats(); }, []);
 
     // --- ROUTE WORKSPACE ---
     const showViewWorkspace = (record) => {
@@ -436,6 +467,43 @@ const RouteManagement = () => {
                     Tạo Tuyến Mới
                 </Button>
             </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
+                    <Button type="default" icon={<FilterOutlined />} onClick={() => setFilterDrawerVisible(true)}>
+                        Lọc
+                    </Button>
+                    <Card style={{ width: 300, marginLeft: 16 }}>
+                        <p>Tổng số tuyến: {stats.total}</p>
+                        <p>Đang hoạt động: {stats.active}</p>
+                        <p>Không hoạt động: {stats.inactive}</p>
+                    </Card>
+                </div>
+                <Drawer
+                    title="Lọc Tuyến"
+                    placement="right"
+                    closable={false}
+                    onClose={() => setFilterDrawerVisible(false)}
+                    visible={filterDrawerVisible}
+                    width={400}
+                >
+                    <Form layout="vertical" onFinish={applyFilters}>
+                        <Form.Item label="Quận/Huyện">
+                            <Select value={filterValues.district} onChange={value => setFilterValues({ ...filterValues, district: value })}>
+                                <Option value="">Tất cả</Option>
+                                {DISTRICTS.map(d => <Option key={d} value={d}>{DISTRICT_LABELS[d]}</Option>)}
+                            </Select>
+                        </Form.Item>
+                        <Form.Item label="Trạng thái">
+                            <Select value={filterValues.isActive} onChange={value => setFilterValues({ ...filterValues, isActive: value })}>
+                                <Option value="all">Tất cả</Option>
+                                <Option value="active">Đang hoạt động</Option>
+                                <Option value="inactive">Không hoạt động</Option>
+                            </Select>
+                        </Form.Item>
+                        <Form.Item>
+                            <Button type="primary" htmlType="submit">Áp dụng</Button>
+                        </Form.Item>
+                    </Form>
+                </Drawer>
 
             <Card style={{ borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.05)', border: 'none' }}>
                 <div style={{ marginBottom: 24 }}>
