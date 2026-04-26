@@ -1,9 +1,9 @@
 import React from "react";
 import { Navigate, useLocation } from "react-router-dom";
-import useUser from "../../contexts/UserContext";
+import { useSelector } from "react-redux";
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
-  const { user, isAuthenticated, loading } = useUser();
+const { user, isAuthenticated, loading } = useSelector((state) => state.auth);
   const location = useLocation();
 
   // Đang gọi API check token thì hiện loading

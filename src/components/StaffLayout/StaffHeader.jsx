@@ -2,16 +2,15 @@ import React from 'react';
 import { Layout, Button, Breadcrumb, Badge } from 'antd';
 import { BellOutlined, SettingOutlined, UserOutlined, LogoutOutlined, MenuUnfoldOutlined, MenuFoldOutlined } from '@ant-design/icons';
 import { useLocation, useNavigate } from 'react-router-dom';
-import useUser from '../../contexts/UserContext';
-import { clearAccessToken } from '../../services/authService';
+import { useDispatch } from 'react-redux';
+import { logoutUserThunk } from '../../store/authSlice';
 
 const { Header } = Layout;
 
 const StaffHeader = ({ collapsed, onCollapse }) => {
     const location = useLocation();
     const navigate = useNavigate();
-    const { logout } = useUser();
-
+     const dispatch = useDispatch();
     const PAGE_LABELS = {
         staff: 'Staff', dashboard: 'Dashboard', orders: 'Order List',
         delivery: 'Delivery', incidents: 'Incident Report', chat: 'Chat',
@@ -21,11 +20,11 @@ const StaffHeader = ({ collapsed, onCollapse }) => {
         title: PAGE_LABELS[name] || name.charAt(0).toUpperCase() + name.slice(1),
     }));
 
-    const handleLogout = () => {
-        logout();
-        clearAccessToken();
+    const handleLogout = async () => {
+        await dispatch(logoutUserThunk());
         navigate('/login');
     };
+
 
     return (
         <Header style={{

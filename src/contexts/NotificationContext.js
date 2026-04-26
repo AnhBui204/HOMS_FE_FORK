@@ -1,7 +1,7 @@
 // src/contexts/NotificationContext.js
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useSocket } from "./SocketContext";
-import useUser from "./UserContext";
+import { useSelector } from "react-redux";
 import { message } from "antd";
 import api from "../services/api";
 
@@ -9,7 +9,7 @@ const NotificationContext = createContext();
 
 export const NotificationProvider = ({ children }) => {
   const { socket } = useSocket();
-  const { user } = useUser();
+ const { user } = useSelector((state) => state.auth);
 
   const [pendingRequestCount, setPendingRequestCount] = useState(0);
   const [hasVisitResponse, setHasVisitResponse] = useState(false);

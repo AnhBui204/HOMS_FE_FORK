@@ -5,7 +5,8 @@ import { Navigate, useNavigate } from 'react-router-dom';
 
 import AppHeader from '../../../components/header/header';
 import AppFooter from '../../../components/footer/footer';
-import useUser from '../../../contexts/UserContext';
+import { useDispatch, useSelector } from 'react-redux';
+import { updateUser, logoutStore } from '../../../store/authSlice'; 
 import './Profile.css';
 
 const { Content } = Layout;
@@ -31,7 +32,8 @@ const formatCreatedAt = (value) => {
 };
 
 const ProfilePage = () => {
-    const { user, setUser, logout, loading, isAuthenticated } = useUser();
+   const dispatch = useDispatch(); 
+    const { user, loading, isAuthenticated } = useSelector((state) => state.auth);
     const [editing, setEditing] = useState(false);
     const [uploadingAvatar, setUploadingAvatar] = useState(false);
     const [form] = Form.useForm();
@@ -64,7 +66,7 @@ const ProfilePage = () => {
             const updated = res.data?.data || res.data;
 
             if (updated) {
-                setUser(updated);
+                  dispatch(updateUser(updated)); 
             }
 
             message.success(res.data?.message || 'Đã cập nhật ảnh đại diện');
@@ -88,7 +90,7 @@ const ProfilePage = () => {
                     const { logoutAllSessions } = await import('../../../services/userService');
                     const res = await logoutAllSessions();
                     message.success(res.data?.message || 'Đã đăng xuất tất cả phiên');
-                    await logout();
+                     dispatch(logoutStore()); 
                     navigate('/login');
                 } catch (err) {
                     console.error(err);
@@ -141,6 +143,7 @@ const ProfilePage = () => {
                         }
                         centered
                         open={editing}
+                         forceRender
                         onCancel={() => setEditing(false)}
                         footer={null}
                         bodyStyle={{ borderRadius: 8 }}
@@ -156,7 +159,8 @@ const ProfilePage = () => {
                                 const res = await updateUserInfo(fd);
                                 const updated = res.data?.data || res.data;
                                 message.success(res.data?.message || 'Cập nhật thành công');
-                                if (updated) setUser(updated);
+                                if (updated) {
+                                dispatch(updateUser(updated));}
                                 setEditing(false);
                             } catch (err) {
                                 console.error(err);
@@ -171,9 +175,9 @@ const ProfilePage = () => {
                                 <Input prefix={<PhoneOutlined style={{ color: '#2D4F36' }} />} placeholder="Số điện thoại" />
                             </Form.Item>
 
-                            <Form.Item name="address" label="Địa chỉ">
-                                <Input.TextArea rows={2} prefix={<HomeOutlined style={{ color: '#2D4F36' }} />} placeholder="Địa chỉ liên hệ" />
-                            </Form.Item>
+                          <Form.Item name="address" label="Địa chỉ">
+    <Input prefix={<HomeOutlined style={{ color: '#2D4F36' }} />} placeholder="Địa chỉ liên hệ" />
+</Form.Item>
 
                             <Divider />
 
@@ -202,12 +206,13 @@ const ProfilePage = () => {
                             <div className="profile-row">
                                 <span>Địa chỉ</span>
                                 <strong>
-                                    {user.address || '26 Lê Trung Đình, Phường Hòa Hải, Quận Ngũ Hành Sơn, TP. Đà Nẵng'}
+                                    {user.address || 'Chưa cập nhật'}
                                 </strong>
                             </div>
 
                             <Button className="btn-primary" onClick={() => {
-                                form.setFieldsValue({ fullName: user.fullName, phone: user.phone, address: user.address });
+                                 const currentAddress = user.address || '26 Lê Trung Đình, Phường Hòa Hải, Quận Ngũ Hành Sơn, TP. Đà Nẵng';
+                                form.setFieldsValue({ fullName: user.fullName, phone: user.phone, address: currentAddress });
                                 setEditing(true);
                             }}>
                                 Cập nhật thông tin

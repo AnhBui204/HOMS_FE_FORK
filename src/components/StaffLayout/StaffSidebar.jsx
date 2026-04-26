@@ -10,7 +10,7 @@ import {
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import logo from '../../assets/images/logo.png';
-import useUser from '../../contexts/UserContext';
+import { useSelector } from 'react-redux';
 
 const { Sider } = Layout;
 
@@ -25,7 +25,7 @@ const menuItems = [
 const StaffSidebar = ({ collapsed, onCollapse }) => {
     const navigate = useNavigate();
     const location = useLocation();
-    const { user } = useUser();
+      const { user } = useSelector((state) => state.auth);
 
     return (
         <Sider

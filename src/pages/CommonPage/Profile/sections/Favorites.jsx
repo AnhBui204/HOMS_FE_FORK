@@ -3,13 +3,13 @@ import React, { useEffect, useState } from "react";
 import { Card, Spin, Row, Col, Pagination, Button, message as antMessage, Tag, Empty } from "antd";
 import { Link } from 'react-router-dom';
 import { getUserFavorites, removeFavorite } from "../../../../services/profileServices"; // Import service calls
-import useUser from "../../../../contexts/UserContext";
+import { useSelector } from "react-redux";
 
 const Favorites = () => {
-  const { user, loading: userLoading } = useUser();
+ const { user, loading: userLoading } = useSelector((state) => state.auth);
   const [favorites, setFavorites] = useState([]);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [isFetching, setIsFetching] = useState(false); 
   const [messageApi, contextHolder] = antMessage.useMessage();
   const API_BASE = (process.env.REACT_APP_API_URL && process.env.REACT_APP_API_URL.replace(/\/api$/, '')) || 'http://localhost:5000';
   const [currentPage, setCurrentPage] = useState(1);
@@ -21,7 +21,7 @@ const Favorites = () => {
       setError("Bạn phải đăng nhập để xem mục yêu thích.");
       return;
     }
-    setLoading(true);
+    setIsFetching(true); 
     getUserFavorites()
       .then((res) => {
         if (res && Array.isArray(res.favorites)) {
@@ -35,7 +35,7 @@ const Favorites = () => {
         setError("Lỗi khi lấy danh sách yêu thích.");
       })
       .finally(() => {
-        setLoading(false);
+        setIsFetching(false);
       });
   }, [user, userLoading]);
 
@@ -54,7 +54,7 @@ const Favorites = () => {
     }
   };
 
-  if (userLoading || loading) return <div style={{ textAlign: 'center', marginTop: 50 }}><Spin size="large" /></div>;
+  if (userLoading ||  isFetching) return <div style={{ textAlign: 'center', marginTop: 50 }}><Spin size="large" /></div>;
   if (error) return <p style={{ color: "red", textAlign: 'center', marginTop: 50 }}>{error}</p>;
 
   const startIndex = (currentPage - 1) * pageSize;

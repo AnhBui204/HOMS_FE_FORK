@@ -11,7 +11,6 @@ import {
   loginFacebook,
   saveAccessToken,
 } from "../../../services/authService";
-import useUser from "../../../contexts/UserContext";
 import { GoogleLogin } from "@react-oauth/google";
 import FacebookLogin from "@greatsumini/react-facebook-login";
 import api, { resetCsrfToken } from "../../../services/api";
@@ -24,7 +23,6 @@ const LoginForm = () => {
   const [fbReady, setFbReady] = useState(false);
   const [fbError, setFbError] = useState(false);
     const dispatch = useDispatch();
-  const { setUser, setIsAuthenticated } = useUser();
   const navigate = useNavigate();
 
   const appId = process.env.REACT_APP_FACEBOOK_APP_ID;
@@ -93,10 +91,6 @@ const LoginForm = () => {
     // 1. Lưu token và nạp ngay vào Header API
     saveAccessToken(accessToken, expiresInMs || 30 * 60 * 1000);
     api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
-    
-    // 2. Cập nhật Context
-    setUser(userData);
-    setIsAuthenticated(true);
     // Cập nhật redux
      dispatch(setCredentials({ user: userData }));
     resetCsrfToken();

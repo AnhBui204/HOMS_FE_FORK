@@ -3,15 +3,16 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { Card, Input, Button, Typography, message, Layout } from 'antd';
 import { LockOutlined, UserOutlined, MailOutlined,PhoneOutlined } from '@ant-design/icons';
 import api from '../../../services/api'; 
-import useUser from '../../../contexts/UserContext'; 
+import { useDispatch } from 'react-redux';
+import { setCredentials } from '../../../store/authSlice';
 import { saveAccessToken } from '../../../services/authService';
 const { Title, Text } = Typography;
 
 const MagicLogin = () => {
-  const { setUser, setIsAuthenticated } = useUser(); 
+
   const location = useLocation();
   const navigate = useNavigate();
-  
+   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
   const [userInfo, setUserInfo] = useState({ fullName: '', email: '',phone:'' });
   const [password, setPassword] = useState(''); 
@@ -62,9 +63,8 @@ const MagicLogin = () => {
         }
 
         if (res.data.data && res.data.data.user) {
-            setUser(res.data.data.user);
-        }
-        setIsAuthenticated(true);
+    dispatch(setCredentials({ user: res.data.data.user }));
+}
         message.success('Thiết lập tài khoản thành công!');
         navigate(redirectUrl); 
       }

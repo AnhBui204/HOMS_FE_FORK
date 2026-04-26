@@ -36,7 +36,7 @@ import {
 } from "@ant-design/icons";
 import AppHeader from "../../../components/header/header";
 import AppFooter from "../../../components/footer/footer";
-import useUser from "../../../contexts/UserContext";
+import { useSelector } from "react-redux"; 
 import api from "../../../services/api";
 import orderService from "../../../services/orderService";
 import ReportIncidentModal from "../../../components/MovingOrder/ReportIncidentModal";
@@ -753,8 +753,7 @@ const OrderCard = ({
 /* ─── main page ───────────────────────────────────────────── */
 const ViewMovingOrder = () => {
   const location = useLocation();
-  const { user, isAuthenticated } = useUser();
-
+    const { user, isAuthenticated } = useSelector((state) => state.auth);
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState("ALL");

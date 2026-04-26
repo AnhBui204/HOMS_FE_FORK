@@ -1,10 +1,10 @@
 import React from "react";
 import { Navigate } from "react-router-dom";
-import useUser from "../../../contexts/UserContext";
+import { useSelector } from "react-redux";
 import LandingPage from "./LandingPage";
 
 const HomeRedirect = () => {
-  const { user, isAuthenticated, loading } = useUser();
+ const { user, isAuthenticated, loading } = useSelector((state) => state.auth);
 
   if (loading) {
     return null; // Đợi load xong context

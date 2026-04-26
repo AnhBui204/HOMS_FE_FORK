@@ -5,7 +5,7 @@ import dayjs from 'dayjs';
 
 import AppHeader from '../../../components/header/header';
 import AppFooter from '../../../components/footer/footer';
-import useUser from '../../../contexts/UserContext';
+import { useSelector } from "react-redux";
 
 import './SurveyAgreement.css';
 
@@ -14,7 +14,7 @@ const { Content } = Layout;
 const SurveyAgreement = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const { isAuthenticated } = useUser();
+    const { isAuthenticated } = useSelector((state) => state.auth);
 
     const [orderData, setOrderData] = useState(location.state?.orderData || null);
     const [surveyData, setSurveyData] = useState(location.state?.surveyData || null);

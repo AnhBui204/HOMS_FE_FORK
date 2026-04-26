@@ -7,7 +7,8 @@ import dayjs from 'dayjs';
 import AppHeader from "../../../components/header/header";
 import AppFooter from "../../../components/footer/footer";
 import { createOrder, updateTicketStatus, createPaymentLink } from "../../../services/orderService";
-import useUser from "../../../contexts/UserContext";
+import { useSelector } from "react-redux";
+
 
 import "./style.css";
 
@@ -17,7 +18,7 @@ const { Option } = Select;
 const Deposit = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const { user, isAuthenticated } = useUser();
+    const { user, isAuthenticated } = useSelector((state) => state.auth);
 
     // Get data from previous steps or from localStorage
     const [orderData, setOrderData] = useState(location.state?.orderData || null);

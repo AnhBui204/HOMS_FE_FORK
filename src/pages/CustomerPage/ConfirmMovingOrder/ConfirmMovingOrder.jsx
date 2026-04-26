@@ -9,7 +9,7 @@ import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 
 import AppHeader from "../../../components/header/header";
 import AppFooter from "../../../components/footer/footer";
-import useUser from "../../../contexts/UserContext";
+import { useSelector } from "react-redux";
 import { createOrder } from "../../../services/orderService";
 
 import "./style.css";
@@ -21,7 +21,7 @@ const { Content } = Layout;
 const ConfirmMovingOrder = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const { user, isAuthenticated } = useUser();
+    const { user, isAuthenticated } = useSelector((state) => state.auth);
 
     // Get order data from previous step
     const orderData = location.state?.orderData;

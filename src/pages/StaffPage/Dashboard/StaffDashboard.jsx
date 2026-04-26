@@ -7,7 +7,7 @@ import {
 } from 'recharts';
 import { ArrowUpOutlined, ArrowDownOutlined, FileDoneOutlined, CheckCircleOutlined, CarOutlined, WarningOutlined, TruckOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import useUser from '../../../contexts/UserContext';
+
 import './StaffDashboard.css';
 
 const { Text } = Typography;
@@ -118,7 +118,6 @@ const OrderCard = ({ order }) => {
 ───────────────────────────────────────────── */
 const StaffDashboard = () => {
     const navigate = useNavigate();
-    useUser();
     const [loading, setLoading] = useState(false);
     const [stats] = useState({ assigned: 26, completed: 357, inTransit: 65, incident: 65 });
     const [weeklyData] = useState(WEEKLY_ORDERS);

@@ -15,7 +15,7 @@ import {
 import api from '../../../services/api';
 import AppHeader from "../../../components/header/header";
 import AppFooter from "../../../components/footer/footer";
-import useUser from "../../../contexts/UserContext";
+import { useSelector } from "react-redux";
 import "./Dashboard.css";
 
 const { Option } = Select;
@@ -169,7 +169,7 @@ const translateTruckType = (code) => {
 
 const Dashboard = () => {
     const navigate = useNavigate();
-    const { user, isAuthenticated } = useUser();
+    const { user, isAuthenticated } = useSelector((state) => state.auth);
 
     const [activeTicket, setActiveTicket] = useState(null);
     const [loading, setLoading] = useState(true);

@@ -19,7 +19,9 @@ import {
   updateUserInfo,
   changePassword
 } from '../../../../services/profileServices';
-import useUser from '../../../../contexts/UserContext';
+import { useSelector, useDispatch } from 'react-redux';
+import { setCredentials } from '../../../../store/authSlice';
+import { getUserInfo } from '../../../../services/userService';
 import './PersonalInfo.css';
 const capitalize = (str) => str && typeof str === 'string'
   ? str.charAt(0).toUpperCase() + str.slice(1).toLowerCase()
@@ -27,7 +29,8 @@ const capitalize = (str) => str && typeof str === 'string'
 const { Title, Text } = Typography;
 
 const PersonalInfo = () => {
-  const { user, setUser, fetchUser } = useUser();
+    const { user } = useSelector((state) => state.auth);
+  const dispatch = useDispatch();
   const [editingField, setEditingField] = useState('');
   const [fieldValues, setFieldValues] = useState({});
   const [avatarPreview, setAvatarPreview] = useState('');
@@ -41,7 +44,14 @@ const PersonalInfo = () => {
     confirmPassword: ''
   });
   const [isChangingPassword, setIsChangingPassword] = useState(false);
-
+ const refreshUserData = async () => {
+    try {
+      const userData = await getUserInfo();
+      dispatch(setCredentials({ user: userData }));
+    } catch (error) {
+      console.error("Lỗi cập nhật Redux:", error);
+    }
+  };
   useEffect(() => {
 
     if (user) {
@@ -66,7 +76,7 @@ const PersonalInfo = () => {
       const formData = new FormData();
       formData.append(field, fieldValues[field]);
       await updateUserInfo(formData);
-      await fetchUser();
+        await refreshUserData();
       messageApi.success("Cập nhật thành công");
       setEditingField('');
     } catch (err) {
@@ -90,7 +100,7 @@ const PersonalInfo = () => {
     formData.append("avatar", file);
     try {
       await updateUserInfo(formData);
-      await fetchUser();
+     await refreshUserData();
       messageApi.success("Cập nhật ảnh đại diện thành công");
     } catch {
       messageApi.error("Không thể cập nhật ảnh đại diện");

@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { Layout, Table, Typography, Tag, Button, Space, Card, Badge } from "antd";
 import { getNotifications, markNotificationRead } from "../../../services/notificationService";
-import useUser from "../../../contexts/UserContext";
+import { useSelector } from "react-redux";
 
 const { Title, Text } = Typography;
 const { Content } = Layout;
 
 const NotificationPage = () => {
-  const { user } = useUser();
+   const { user } = useSelector((state) => state.auth);
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
 

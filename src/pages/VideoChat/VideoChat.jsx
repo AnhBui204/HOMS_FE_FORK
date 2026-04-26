@@ -20,7 +20,7 @@ import {
 } from '@ant-design/icons';
 import AppHeader from '../../components/header/header';
 import AppFooter from '../../components/footer/footer';
-import useUser from '../../contexts/UserContext';
+import { useSelector } from 'react-redux';
 import { getValidAccessToken } from '../../services/authService';
 import api from '../../services/api';
 import './VideoChat.css';
@@ -72,7 +72,7 @@ const getStatus = (status) => STATUS_MAP[status] || { label: status, color: '#6b
 const { Content } = Layout;
 
 function VideoChat() {
-  const { user } = useUser();
+   const { user } = useSelector((state) => state.auth);
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
   const isCustomer = location.pathname.startsWith('/customer');

@@ -9,7 +9,7 @@ import HomeRedirect from "./pages/CommonPage/LandingPage/HomeRedirect";
 import About from "./pages/CommonPage/About/About";
 import LoginPage from "./pages/CustomerPage/Auth/LoginPage";
 import RegisterPage from "./pages/CustomerPage/Auth/RegisterPage";
-import { UserProvider } from "./contexts/UserContext";
+import { AuthWrapper } from './components/AuthWrapper';
 import ForgotPasswordPage from "./pages/CustomerPage/Auth/ForgotPasswordPage";
 import ChangePasswordPage from "./pages/CustomerPage/Auth/ChangePasswordPage";
 import VerifyOTPPage from "./pages/CustomerPage/Auth/VerifyOTPPage";
@@ -39,7 +39,7 @@ function App() {
       <BrowserRouter>
         <ScrollToTop />
          <Provider store={store}>
-        <UserProvider>
+        <AuthWrapper>
           <Routes>
             <Route path="/" element={<HomeRedirect />} />
             <Route path="/landing" element={<HomeRedirect />} />
@@ -59,7 +59,7 @@ function App() {
             <Route path="/staff/*" element={<RoutesStaff />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
-        </UserProvider>
+        </AuthWrapper>
         </Provider>
       </BrowserRouter>
     </GoogleOAuthProvider>

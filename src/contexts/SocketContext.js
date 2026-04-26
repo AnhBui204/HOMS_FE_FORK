@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { io } from "socket.io-client";
-import useUser from "./UserContext";
+import { useSelector } from "react-redux";
 
 // Create Context and Hook
 const SocketContext = createContext(null);
@@ -22,7 +22,7 @@ const SOCKET_OPTIONS = {
 };
 
 export const SocketProvider = ({ children }) => {
-  const { user, loading } = useUser();
+ const { user, loading } = useSelector((state) => state.auth);
 
   const socketRef = useRef(null);
   const [isConnected, setIsConnected] = useState(false);
