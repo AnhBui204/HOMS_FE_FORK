@@ -1,6 +1,5 @@
-import { Form, Input, Button, Divider, message, Space } from "antd";
-import { EyeInvisibleOutlined, EyeTwoTone, FacebookFilled } from "@ant-design/icons";
-import { FcGoogle } from "react-icons/fc";
+import { Form, Input, Button, Divider, message } from "antd";
+import { EyeInvisibleOutlined, EyeTwoTone, FacebookFilled } from "ant-design/icons";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from 'react-redux';
@@ -85,9 +84,9 @@ const LoginForm = () => {
     }, 8000);
 
     return () => clearTimeout(timer);
-  }, [isAppIdValid]); // Chỉ chạy lại nếu App ID thay đổi
+  }, [isAppIdValid, fbReady, fbError]); // Chỉ chạy lại nếu App ID thay đổi
 
-  const handleLoginSuccess = (userData, accessToken, expiresInMs) => {
+  const handleLoginSuccess = async (userData, accessToken, expiresInMs) => {
     // 1. Lưu token và nạp ngay vào Header API
     saveAccessToken(accessToken, expiresInMs || 30 * 60 * 1000);
     api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
@@ -99,12 +98,32 @@ const LoginForm = () => {
     
     let redirectPath = "/";
     const searchParams = new URLSearchParams(window.location.search);
-    const returnUrl = searchParams.get("returnUrl");
-    
-    if (returnUrl) {
-      redirectPath = returnUrl;
+    const returnUrl = searchParams.get("redirect") || searchParams.get("returnUrl");
+      if (returnUrl) {
+      try {
+        // Tách link_token ra khỏi chuỗi URL một cách an toàn
+        // (Ví dụ returnUrl đang là: /customer/order?link_token=eyJh...)
+        const urlObj = new URL(returnUrl, window.location.origin);
+        const linkToken = urlObj.searchParams.get("link_token");
+
+        if (linkToken) {
+          // Gọi API backend để chốt nối tài khoản
+          await api.post('/auth/link-messenger', { linkToken });
+          message.success("Đã đồng bộ đơn hàng từ Messenger vào tài khoản của bạn!");
+          
+          // Xóa chữ link_token khỏi URL để nhìn cho sạch sẽ trước khi chuyển trang
+          urlObj.searchParams.delete("link_token");
+          redirectPath = urlObj.pathname + urlObj.search;
+        } else {
+          redirectPath = returnUrl;
+        }
+      } catch (error) {
+        console.error("Lỗi đồng bộ Messenger:", error);
+        message.warning("Đăng nhập thành công nhưng liên kết Messenger bị lỗi (hoặc hết hạn).");
+        redirectPath = returnUrl.split('?')[0]; // Cứ cho vào trang order, bỏ qua lỗi
+      }
     } else {
-      // Khôi phục các path chuẩn của dự án bạn
+      // Khôi phục các path chuẩn nếu không có redirectUrl
       switch (userData.role) {
         case "dispatcher": redirectPath = "/dispatcher/surveys"; break;
         case "customer":   redirectPath = "/customer/order"; break;
@@ -114,7 +133,7 @@ const LoginForm = () => {
       }
     }
 
-    // 3. Một chút delay (500ms) để React Context và các Service kịp đồng bộ hoàn toàn
+    // 3. Chuyển hướng
     setTimeout(() => {
       navigate(redirectPath);
     }, 500);
