@@ -74,10 +74,16 @@ const PricingManagement = () => {
 
     const handleDelete = async (id) => {
         try {
+            // Optimistic UI: remove locally first, then call server
+            const before = priceLists.slice();
+            setPriceLists(prev => prev.filter(p => p._id !== id));
+            setFilteredPriceLists(prev => prev.filter(p => p._id !== id));
+
             await adminPriceService.deletePriceList(id);
             notification.success({ message: 'Đã xóa bảng giá' });
-            fetchPriceLists();
         } catch (error) {
+            // revert optimistic removal on error
+            await fetchPriceLists();
             notification.error({ message: 'Không thể xóa', description: error.response?.data?.message || error.message });
         }
     };

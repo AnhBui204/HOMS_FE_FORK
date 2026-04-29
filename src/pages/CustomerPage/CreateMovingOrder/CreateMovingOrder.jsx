@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Layout, Steps, Card, Row, Col, Input, Button, DatePicker, message, Alert, Tour, ConfigProvider, Popover } from "antd";
+import { Layout, Steps, Card, Row, Col, Input, Button, DatePicker, message, Alert, Tour, ConfigProvider, Popover, Checkbox, Select, Typography } from "antd";
 import { QuestionCircleOutlined, EnvironmentOutlined, StarOutlined, HourglassOutlined, BulbOutlined } from "@ant-design/icons";
 import viVN from 'antd/locale/vi_VN';
 import dayjs from 'dayjs';
@@ -14,6 +14,8 @@ import "./style.css";
 
 const { Content } = Layout;
 const { TextArea } = Input;
+const { Option } = Select;
+const { Text } = Typography;
 
 // Rough distance calculation between two coordinates (Haversine formula)
 const calculateDistanceKm = (fromLocation, toLocation) => {
@@ -93,6 +95,26 @@ const MovingInformationPage = () => {
     const [isRecommending, setIsRecommending] = useState(false);
     const [recommendError, setRecommendError] = useState(null);
     const [experimentGroup, setExperimentGroup] = useState(null);
+    
+    // High-value and Insurance state
+    const [isHighValue, setIsHighValue] = useState(false);
+    const [declaredValue, setDeclaredValue] = useState(0);
+    const [highValueDesc, setHighValueDesc] = useState('');
+    const [insurancePkg, setInsurancePkg] = useState('BASIC');
+    const [insurancePackages, setInsurancePackages] = useState([]);
+    
+    // Fetch insurance packages
+    React.useEffect(() => {
+        const fetchPackages = async () => {
+            try {
+                const res = await api.get('/insurance/packages');
+                if (res.data?.success) setInsurancePackages(res.data.data);
+            } catch (err) {
+                console.error('Error fetching insurance packages', err);
+            }
+        };
+        fetchPackages();
+    }, []);
 
     // Save state changes to Session Storage
     React.useEffect(() => {
@@ -272,7 +294,17 @@ const MovingInformationPage = () => {
             dropoffLocation,
             pickupDescription,
             dropoffDescription,
-            movingDate: movingDate.toISOString()
+            movingDate: movingDate.toISOString(),
+            isHighValue,
+            highValueDetails: {
+                declaredValue,
+                description: highValueDesc,
+                category: 'GENERAL'
+            },
+            insurance: {
+                isInsured: isHighValue,
+                packageId: insurancePkg
+            }
         };
 
         console.log('📦 Passing order data to confirmation/analysis:', orderData);
@@ -546,6 +578,54 @@ const MovingInformationPage = () => {
                                             Nơi chuyển đến
                                         </Button>
                                     </div>
+
+                                    {/* High-value & Insurance Section */}
+                                    {/* <div className="premium-services-section" style={{ marginTop: '20px', padding: '15px', background: '#f9f9f9', borderRadius: '10px', border: '1px dashed #d9d9d9' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                                            <span style={{ fontWeight: 600, color: '#d48806' }}>💎 Vận chuyển hàng giá trị cao</span>
+                                            <Checkbox 
+                                                checked={isHighValue} 
+                                                onChange={e => setIsHighValue(e.target.checked)}
+                                            >
+                                                Kích hoạt
+                                            </Checkbox>
+                                        </div>
+                                        
+                                        {isHighValue && (
+                                            <div className="insurance-options animated fadeIn">
+                                                <Text type="secondary" style={{ fontSize: '12px' }}>Vui lòng khai báo giá trị để nhận bảo hiểm từ đối tác HOMS Protect</Text>
+                                                <Input 
+                                                    type="number" 
+                                                    prefix="VNĐ"
+                                                    placeholder="Giá trị hàng hóa khai báo" 
+                                                    style={{ marginTop: '10px' }}
+                                                    value={declaredValue}
+                                                    onChange={e => setDeclaredValue(Number(e.target.value))}
+                                                />
+                                                <TextArea 
+                                                    placeholder="Mô tả hàng giá trị (Vd: Tranh sơn mài, Đồ cổ...)"
+                                                    style={{ marginTop: '10px' }}
+                                                    rows={2}
+                                                    value={highValueDesc}
+                                                    onChange={e => setHighValueDesc(e.target.value)}
+                                                />
+                                                <div style={{ marginTop: '15px' }}>
+                                                    <div style={{ marginBottom: '5px', fontSize: '13px', fontWeight: 500 }}>Chọn gói bảo hiểm:</div>
+                                                    <Select 
+                                                        style={{ width: '100%' }}
+                                                        value={insurancePkg}
+                                                        onChange={v => setInsurancePkg(v)}
+                                                    >
+                                                        {insurancePackages.map(pkg => (
+                                                            <Option key={pkg.id} value={pkg.id}>
+                                                                {pkg.name} (Phí: {pkg.premiumRate * 100}% - Đền bù {pkg.coverageRate * 100}%)
+                                                            </Option>
+                                                        ))}
+                                                    </Select>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div> */}
 
                                     {pickupLocation && dropoffLocation && (
                                         <div className="location-summary">

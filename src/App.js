@@ -1,12 +1,15 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { useState,useEffect } from "react";
+import { Provider } from 'react-redux';
+import { store } from './store'; 
+import { injectStore } from './services/api';
 import LandingPage from "./pages/CommonPage/LandingPage/LandingPage";
 import HomeRedirect from "./pages/CommonPage/LandingPage/HomeRedirect";
 import About from "./pages/CommonPage/About/About";
 import LoginPage from "./pages/CustomerPage/Auth/LoginPage";
 import RegisterPage from "./pages/CustomerPage/Auth/RegisterPage";
-import { UserProvider } from "./contexts/UserContext";
+import { AuthWrapper } from './components/AuthWrapper';
 import ForgotPasswordPage from "./pages/CustomerPage/Auth/ForgotPasswordPage";
 import ChangePasswordPage from "./pages/CustomerPage/Auth/ChangePasswordPage";
 import VerifyOTPPage from "./pages/CustomerPage/Auth/VerifyOTPPage";
@@ -21,7 +24,7 @@ import NotFound from "./pages/CommonPage/NotFound/NotFound";
 import { initCsrfToken } from './services/api';
 import ScrollToTop from "./components/common/ScrollToTop";
 import MagicLogin from "./pages/CustomerPage/Auth/MagicLogin";
-
+injectStore(store);
 function App() {
    const [csrfReady, setCsrfReady] = useState(false);
 
@@ -35,7 +38,8 @@ function App() {
     <GoogleOAuthProvider clientId={googleClientId}>
       <BrowserRouter>
         <ScrollToTop />
-        <UserProvider>
+         <Provider store={store}>
+        <AuthWrapper>
           <Routes>
             <Route path="/" element={<HomeRedirect />} />
             <Route path="/landing" element={<HomeRedirect />} />
@@ -55,7 +59,8 @@ function App() {
             <Route path="/staff/*" element={<RoutesStaff />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
-        </UserProvider>
+        </AuthWrapper>
+        </Provider>
       </BrowserRouter>
     </GoogleOAuthProvider>
   );

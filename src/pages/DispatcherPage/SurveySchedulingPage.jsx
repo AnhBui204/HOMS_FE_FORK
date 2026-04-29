@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import {
-  Table, Button, Tag, Modal, Form, Select, message, Space, Card, Typography, Descriptions, DatePicker, Divider,
-  Row, Col, InputNumber, Checkbox, Alert, Input
+  Table, Button, Tag, Modal, Form, Select, message, Space, Card, Typography, DatePicker, Divider,
+  Row, Col, InputNumber, Checkbox, Alert, Input, Image
 } from "antd";
 import {
   CheckCircleOutlined, CloseCircleOutlined, RobotOutlined, UserSwitchOutlined, CalendarOutlined, ClockCircleOutlined
@@ -29,8 +29,11 @@ const STATUS_MAP = {
   CREATED: { label: 'Chờ xác nhận', color: 'blue' },
   WAITING_SURVEY: { label: 'Đã phân công KS', color: 'green' },
   WAITING_REVIEW: { label: 'Chờ xem xét', color: 'gold' },
+  SURVEYED: { label: 'Đã khảo sát', color: 'cyan' },
   QUOTED: { label: 'Đã báo giá', color: 'green' },
+  ACCEPTED: { label: 'Đã chấp nhận báo giá', color: 'purple' },
   ASSIGNMENT_FAILED: { label: 'Lỗi phân công', color: 'red' },
+  CANCELLED: { label: 'Đã hủy', color: 'red' },
 };
 
 const MAX_PORTERS = {
@@ -57,7 +60,10 @@ const parseSurveyInfoFromNotes = (notesString) => {
   if (dateMatch && dateMatch[1]) scheduledDate = dateMatch[1];
   return { surveyType, scheduledDate };
 };
-
+const isAiGeneratedTicket = (notesString) => {
+  if (!notesString) return false;
+  return notesString.includes("[TẠO TỪ AI BOT");
+};
 // ─── MoveType Badge ───────────────────────────────────────────────────────────
 const MoveTypeBadge = ({ moveType }) => {
   const cfg = MOVE_TYPE_CONFIG[moveType] || { label: moveType, color: '#ccc', textColor: '#333' };
@@ -133,12 +139,13 @@ const SurveySchedulingPage = () => {
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [previewPricingData, setPreviewPricingData] = useState(null);
   const [isCalculatingPreview, setIsCalculatingPreview] = useState(false);
-  
-  const [form] = Form.useForm();
+
   const [formReject] = Form.useForm();
   const [formManual] = Form.useForm();
   const [formTruckRental] = Form.useForm();
-
+  const [isAiReviewModalVisible, setIsAiReviewModalVisible] = useState(false);
+  const [currentAiSurveyData, setCurrentAiSurveyData] = useState(null);
+  const [formAiReview] = Form.useForm();
   // ── Data Fetching ───────────────────────────────────────────────────────────
   const fetchData = async () => {
     setLoading(true);
@@ -174,26 +181,81 @@ const SurveySchedulingPage = () => {
     }
   }, [tickets, activeFilter]);
 
-  // ── Helper: Route Distance ──────────────────────────────────────────────────
-  const getRouteDistance = async (origin, destination) => {
-    const getLat = (c) => (c && typeof c.lat !== 'undefined' ? c.lat : (Array.isArray(c) ? c[1] : null));
-    const getLng = (c) => (c && typeof c.lng !== 'undefined' ? c.lng : (Array.isArray(c) ? c[0] : null));
-    const olat = getLat(origin); const olng = getLng(origin);
-    const dlat = getLat(destination); const dlng = getLng(destination);
-    if (!olat || !olng || !dlat || !dlng) return 0;
+  // ── Action Handlers ─────────────────────────────────────────────────────────
+  const openAiReviewModal = async (ticket) => {
+    setSelectedTicket(ticket);
+    setLoading(true);
     try {
-      const url = `https://router.project-osrm.org/route/v1/driving/${olng},${olat};${dlng},${dlat}?overview=false`;
-      const res = await fetch(url);
-      const data = await res.json();
-      const meters = data?.routes?.[0]?.distance;
-      if (meters > 0) return Math.round(meters / 100) / 10;
-    } catch (e) { console.warn('[Route] OSRM failed:', e.message); }
-    return 0;
+      // Gọi API lấy dữ liệu khảo sát (Backend đã viết sẵn hàm tự động fallback nếu cần)
+      const res = await surveyService.getSurveyByTicket(ticket._id);
+      const surveyData = res.data?.data || res.data || res;
+      setCurrentAiSurveyData(surveyData);
+
+      // Đổ dữ liệu AI đề xuất vào form để dispatcher có thể sửa nếu muốn
+      formAiReview.resetFields();
+      formAiReview.setFieldsValue({
+        suggestedVehicle: surveyData.suggestedVehicle || '1TON',
+        suggestedStaffCount: surveyData.suggestedStaffCount || 2,
+        distanceKm: surveyData.distanceKm || ticket.distanceKm || 0,
+        needsAssembling: !!surveyData.needsAssembling,
+        needsPacking: !!surveyData.needsPacking,
+        notes: surveyData.notes || ""
+      });
+
+      setIsAiReviewModalVisible(true);
+    } catch (error) {
+      message.error("Lỗi khi tải dữ liệu AI từ hệ thống!");
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // ── Action Handlers ─────────────────────────────────────────────────────────
 
+  const handlePreviewAiPricing = async () => {
+    try {
+      const values = await formAiReview.validateFields();
+      setIsCalculatingPreview(true);
 
+      const payload = { ...currentAiSurveyData, ...values };
+      const res = await surveyService.previewPricing(selectedTicket._id, payload);
+      const apiData = res.data?.data || res.data;
+
+      if (apiData.breakdown) {
+        apiData.breakdown.suggestedVehicle = apiData.breakdown.suggestedVehicle || values.suggestedVehicle;
+        apiData.breakdown.suggestedStaffCount = apiData.breakdown.suggestedStaffCount || values.suggestedStaffCount;
+      }
+
+      setPreviewPricingData(apiData);
+      setIsPreviewPricingModalVisible(true);
+    } catch (error) {
+      message.error("Vui lòng kiểm tra lại thông tin!");
+    } finally {
+      setIsCalculatingPreview(false);
+    }
+  };
+
+  // Nút chốt báo giá cuối cùng từ Modal Preview
+  const handleConfirmAiQuote = async () => {
+    try {
+      const values = await formAiReview.validateFields();
+      const payload = {
+        ...currentAiSurveyData,
+        ...values,
+        status: 'COMPLETED'
+      };
+
+      // Gửi API completeSurvey -> Backend sẽ tự chuyển thành QUOTED và gửi cho khách
+      await surveyService.completeSurvey(selectedTicket._id, payload);
+
+      message.success(`Đã báo giá thành công cho đơn AI ${selectedTicket.code}`);
+      setIsPreviewPricingModalVisible(false);
+      setIsAiReviewModalVisible(false);
+      fetchData();
+    } catch (error) {
+      message.error(error.response?.data?.message || "Lỗi khi chốt báo giá!");
+    }
+  };
 
   // "Duyệt đơn" for SPECIFIC_ITEMS → direct API call
   const handleDirectApprove = async (ticket) => {
@@ -210,7 +272,7 @@ const SurveySchedulingPage = () => {
   const openTruckRentalQuoteModal = async (ticket) => {
     setSelectedTicket(ticket);
     const rental = ticket.rentalDetails || {};
-    
+
     // Reset and then set values to ensure checkboxes update correctly
     formTruckRental.resetFields();
     formTruckRental.setFieldsValue({
@@ -235,6 +297,13 @@ const SurveySchedulingPage = () => {
         items: [] // Truck rental usually doesn't need detailed items for pricing
       };
       const res = await surveyService.previewPricing(selectedTicket._id, payload);
+      const apiData = res.data?.data || res.data;
+
+      if (apiData.breakdown) {
+        apiData.breakdown.suggestedVehicle = apiData.breakdown.suggestedVehicle || values.suggestedVehicle;
+        apiData.breakdown.suggestedStaffCount = apiData.breakdown.suggestedStaffCount || values.suggestedStaffCount;
+      }
+
       setPreviewPricingData(res.data);
       setIsPreviewPricingModalVisible(true);
     } catch (error) {
@@ -254,12 +323,12 @@ const SurveySchedulingPage = () => {
         items: [],
         status: 'COMPLETED'
       };
-      
+
       // Step 1: Complete Survey
       await surveyService.completeSurvey(selectedTicket._id, payload);
-      
+
       // Step 2: Transition is already handled by completeSurvey in BE (transitions to QUOTED)
-      
+
       message.success(`Đã báo giá thành công cho đơn ${selectedTicket.code}`);
       setIsPreviewPricingModalVisible(false);
       setIsTruckRentalModalVisible(false);
@@ -269,8 +338,6 @@ const SurveySchedulingPage = () => {
       message.error(error.response?.data?.message || "Lỗi khi báo giá!");
     }
   };
-
-
 
   // "Từ chối" → propose new time
   const handleCancelTicket = (ticket) => {
@@ -340,20 +407,68 @@ const SurveySchedulingPage = () => {
     {
       title: "Mã Đơn",
       dataIndex: "code",
-      render: (code) => <strong>{code}</strong>
+      width: 150,
+      render: (code, r) => (
+        <div style={{ minWidth: 140 }}>
+          <Text strong>{code}</Text>
+          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 4 }}>
+            {r.isHighValue && (
+              <Tag color="#d4b106" style={{ fontSize: '10px', margin: 0, border: 'none', fontWeight: 700 }}>
+                💎 GIÁ TRỊ CAO
+              </Tag>
+            )}
+            {r.insurance?.isInsured && (
+              <Tag color="#10b981" style={{ fontSize: '10px', margin: 0, border: 'none', fontWeight: 700 }}>
+                🛡️ BẢO HIỂM
+              </Tag>
+            )}
+          </div>
+        </div>
+      )
     },
     {
       title: "Loại dịch vụ",
       dataIndex: "moveType",
+      width: 130,
       render: (moveType) => <MoveTypeBadge moveType={moveType} />,
     },
     {
       title: "Khách hàng",
-      render: (_, r) => <div>{r.customerId?.fullName}</div>
+      width: 160,
+      ellipsis: true,
+      render: (_, r) => <div style={{ minWidth: 140 }}>{r.customerId?.fullName}</div>
     },
+    // {
+    //   title: "Ghi chú đặc biệt",
+    //   width: 220,
+    //   render: (_, r) => (
+    //     <div style={{ minWidth: 200 }}>
+    //       {r.isHighValue && (
+    //         <div style={{ marginBottom: 4 }}>
+    //           <Text type="secondary" size="small">Giá trị: </Text>
+    //           <Text strong>{(r.highValueDetails?.declaredValue || 0).toLocaleString()} ₫</Text>
+    //           <br />
+    //           <Text italic style={{ fontSize: '12px' }}>{r.highValueDetails?.description}</Text>
+    //         </div>
+    //       )}
+    //       {r.insurance?.isInsured && (
+    //         <Tag color="cyan">Gói: {r.insurance.packageId}</Tag>
+    //       )}
+    //     </div>
+    //   )
+    // },
     {
       title: "Yêu cầu khảo sát",
+      width: 200,
       render: (_, r) => {
+        if (isAiGeneratedTicket(r.notes)) {
+          return (
+            <div>
+              <b>Thời gian:</b> <Tag color="purple">Tự động (AI)</Tag> <br />
+              <b>Hình thức:</b> <Tag color="purple">Trực tuyến (AI)</Tag>
+            </div>
+          );
+        }
         if (r.moveType !== 'FULL_HOUSE') {
           return (
             <Tag
@@ -385,6 +500,7 @@ const SurveySchedulingPage = () => {
     },
     {
       title: "Khu vực",
+      width: 110,
       render: (_, r) => (
         <Tag color="orange" style={{ fontWeight: 'bold' }}>
           {r.pickup?.district || "Chưa xác định"}
@@ -393,95 +509,114 @@ const SurveySchedulingPage = () => {
     },
     {
       title: "Tuyến đường",
+      width: 280,
       render: (_, r) => (
-        <div>Từ: {r.pickup?.address} <br />Đến: {r.delivery?.address}</div>
+        <div style={{ maxWidth: 260 }}>
+          <div style={{ marginBottom: 4 }}>
+            <Text type="secondary" small>Từ: </Text>
+            <Text ellipsis={{ tooltip: r.pickup?.address }}>{r.pickup?.address}</Text>
+          </div>
+          <div>
+            <Text type="secondary" small>Đến: </Text>
+            <Text ellipsis={{ tooltip: r.delivery?.address }}>{r.delivery?.address}</Text>
+          </div>
+        </div>
       ),
     },
     {
       title: "Trạng thái",
       dataIndex: "status",
+      width: 150,
       render: (status) => {
         const config = STATUS_MAP[status] || { label: status, color: "default" };
-        return <Tag color={config.color}>{config.label}</Tag>;
+        return <Tag color={config.color} style={{ minWidth: 100, textAlign: 'center' }}>{config.label}</Tag>;
       },
     },
     {
       title: "Hành động",
-      render: (_, record) => (
-        <Space size="small" direction="vertical">
-          {/* CREATED — Approve button (both types) */}
-          {record.status === "CREATED" && (
-            <>
-              {record.moveType === 'TRUCK_RENTAL' ? (
-                <Button
-                  type="primary"
-                  style={{ background: "#44624a", borderColor: "#44624a" }}
-                  icon={<DollarCircleOutlined />}
-                  onClick={() => openTruckRentalQuoteModal(record)}
-                >
-                  Báo giá
+      render: (_, record) => {
+        const isAi = isAiGeneratedTicket(record.notes);
+
+        return (
+          <Space size="small" direction="vertical">
+            {/* --- ĐỐI VỚI TRẠNG THÁI CREATED --- */}
+            {record.status === "CREATED" && (
+              <>
+                {!isAi && record.moveType === 'TRUCK_RENTAL' ? (
+                  <Button
+                    type="primary"
+                    style={{ background: "#44624a", borderColor: "#44624a" }}
+                    icon={<DollarCircleOutlined />}
+                    onClick={() => openTruckRentalQuoteModal(record)}
+                  >
+                    Báo giá
+                  </Button>
+                ) : (
+                  <Button
+                    type="primary"
+                    style={{ background: "#44624a", borderColor: "#44624a" }}
+                    icon={<CheckCircleOutlined />}
+                    onClick={() => handleDirectApprove(record)}
+                  >
+                    Duyệt đơn
+                  </Button>
+                )}
+                <Button danger icon={<CloseCircleOutlined />} onClick={() => handleCancelTicket(record)}>
+                  Từ chối
                 </Button>
-              ) : (
-                <Button
-                  type="primary"
-                  style={{ background: "#44624a", borderColor: "#44624a" }}
-                  icon={<CheckCircleOutlined />}
-                  onClick={() => handleDirectApprove(record)}
-                >
-                  Duyệt đơn
-                </Button>
-              )}
+              </>
+            )}
+            {/* --- STATE: WAITING_REVIEW --- */}
+            {record.status === "WAITING_REVIEW" && (
+              <>
+                {record.moveType === 'TRUCK_RENTAL' ? (
+                  <Button
+                    type="primary"
+                    style={{ background: "#44624a", borderColor: "#44624a" }}
+                    icon={<DollarCircleOutlined />}
+                    onClick={() => openTruckRentalQuoteModal(record)}
+                  >
+                    Xem xét & Báo giá
+                  </Button>
+                ) : (
+                  <Button
+                    type="primary"
+                    style={{
+                      background: isAi ? "#722ed1" : "#1890ff",
+                      borderColor: isAi ? "#722ed1" : "#1890ff"
+                    }}
+                    icon={isAi ? <RobotOutlined /> : <EyeOutlined />}
+                    onClick={() => openAiReviewModal(record)}
+                  >
+                    {isAi ? "Xem DL AI & Báo giá" : "Xem xét & Báo giá"}
+                  </Button>
+                )}
+              </>
+            )}
+
+            {/* --- STATE: WAITING_SURVEY --- */}
+            {record.status === "WAITING_SURVEY" && record.proposedSurveyTimes?.length > 0 && (
               <Button
-                danger
-                icon={<CloseCircleOutlined />}
-                onClick={() => handleCancelTicket(record)}
-              >
-                Từ chối
-              </Button>
-            </>
-          )}
-
-          {/* WAITING_REVIEW for TRUCK_RENTAL — also allow Quoting here */}
-          {record.status === "WAITING_REVIEW" && record.moveType === 'TRUCK_RENTAL' && (
-             <Button
                 type="primary"
-                style={{ background: "#44624a", borderColor: "#44624a" }}
-                icon={<DollarCircleOutlined />}
-                onClick={() => openTruckRentalQuoteModal(record)}
+                style={{ background: "#44624a", borderColor: "#8ba888" }}
+                icon={<CheckCircleOutlined />}
+                onClick={() => openAcceptProposedModal(record)}
               >
-                Xem xét & Báo giá
+                Xem đề xuất khách
               </Button>
-          )}
+            )}
 
-          {/* WAITING_SURVEY — Show Accept Proposed button if exists */}
-          {record.status === "WAITING_SURVEY" && record.proposedSurveyTimes?.length > 0 && (
-            <Button
-              type="primary"
-              style={{ background: "#44624a", borderColor: "#8ba888" }}
-              icon={<CheckCircleOutlined />}
-              onClick={() => openAcceptProposedModal(record)}
-            >
-              Xem đề xuất khách
-            </Button>
-          )}
-
-          {/* ASSIGNMENT_FAILED — Manual fallback */}
-          {record.status === "ASSIGNMENT_FAILED" && (
-            <Button
-              type="primary"
-              danger
-              icon={<UserSwitchOutlined />}
-              onClick={() => openManualAssignModal(record)}
-            >
-              Phân công thủ công
-            </Button>
-          )}
-        </Space>
-      ),
+            {/* --- STATE: ASSIGNMENT_FAILED --- */}
+            {record.status === "ASSIGNMENT_FAILED" && (
+              <Button type="primary" danger icon={<UserSwitchOutlined />} onClick={() => openManualAssignModal(record)}>
+                Phân công thủ công
+              </Button>
+            )}
+          </Space>
+        );
+      },
     },
   ];
-
-  const modalSurveyInfo = parseSurveyInfoFromNotes(selectedTicket?.notes);
 
   return (
     <Card>
@@ -497,6 +632,7 @@ const SurveySchedulingPage = () => {
         dataSource={filteredTickets}
         rowKey="_id"
         loading={loading}
+        scroll={{ x: 1400 }}
         rowClassName={(record) =>
           record.status === 'ASSIGNMENT_FAILED' ? 'row-assignment-failed' : ''
         }
@@ -659,9 +795,9 @@ const SurveySchedulingPage = () => {
         onCancel={() => setIsTruckRentalModalVisible(false)}
         footer={[
           <Button key="close" onClick={() => setIsTruckRentalModalVisible(false)}>Hủy</Button>,
-          <Button 
-            key="preview" 
-            type="primary" 
+          <Button
+            key="preview"
+            type="primary"
             icon={<DollarCircleOutlined />}
             loading={isCalculatingPreview}
             onClick={handlePreviewTruckRentalPricing}
@@ -697,19 +833,19 @@ const SurveySchedulingPage = () => {
           </Row>
           <Row gutter={16}>
             <Col span={24}>
-              <Form.Item 
-                name="suggestedStaffCount" 
-                label="Tổng nhân sự (Tài xế + Người giúp)" 
+              <Form.Item
+                name="suggestedStaffCount"
+                label="Tổng nhân sự (Tài xế + Người giúp)"
                 rules={[{ required: true }]}
                 extra={(() => {
                   const v = formTruckRental.getFieldValue('suggestedVehicle');
                   return `Tối đa ${1 + (MAX_PORTERS[v] || 0)} người cho xe này (Đã bao gồm 1 tài xế)`;
                 })()}
               >
-                <InputNumber 
-                  min={1} 
-                  max={1 + (MAX_PORTERS[formTruckRental.getFieldValue('suggestedVehicle')] || 4)} 
-                  style={{ width: '100%' }} 
+                <InputNumber
+                  min={1}
+                  max={1 + (MAX_PORTERS[formTruckRental.getFieldValue('suggestedVehicle')] || 4)}
+                  style={{ width: '100%' }}
                 />
               </Form.Item>
             </Col>
@@ -743,7 +879,13 @@ const SurveySchedulingPage = () => {
             key="submit"
             type="primary"
             style={{ background: '#44624A', borderColor: '#44624A' }}
-            onClick={handleConfirmTruckRentalQuote}
+            onClick={() => {
+              if (isAiReviewModalVisible) {
+                handleConfirmAiQuote();
+              } else if (isTruckRentalModalVisible) {
+                handleConfirmTruckRentalQuote();
+              }
+            }}
           >
             Xác nhận & Gửi báo giá
           </Button>
@@ -785,6 +927,115 @@ const SurveySchedulingPage = () => {
             />
           </div>
         )}
+      </Modal>
+      <Modal
+        title={
+          <span style={{ color: '#722ed1', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <RobotOutlined /> DUYỆT DỮ LIỆU AI & BÁO GIÁ — #{selectedTicket?.code}
+          </span>
+        }
+        open={isAiReviewModalVisible}
+        onCancel={() => setIsAiReviewModalVisible(false)}
+        width={800}
+        footer={[
+          <Button key="close" onClick={() => setIsAiReviewModalVisible(false)}>Hủy</Button>,
+          <Button
+            key="preview"
+            type="primary"
+            icon={<DollarCircleOutlined />}
+            loading={isCalculatingPreview}
+            onClick={handlePreviewAiPricing}
+            style={{ background: '#722ed1', borderColor: '#722ed1' }}
+          >
+            Tính giá & Báo giá
+          </Button>
+        ]}
+      >
+        <Alert
+          message="Đơn hàng được phân tích tự động từ Facebook/AI"
+          description="Vui lòng kiểm tra lại danh sách đồ đạc AI đã quét và điều chỉnh loại xe/nhân sự nếu cần trước khi gửi báo giá cuối cùng cho khách."
+          type="info"
+          showIcon
+          style={{ marginBottom: 16 }}
+        />
+        <Typography.Title level={5}>🖼️ Ảnh chụp đồ đạc từ khách hàng:</Typography.Title>
+        <div style={{ marginBottom: 20 }}>
+          {currentAiSurveyData?.images?.length > 0 ? (
+            <Image.PreviewGroup>
+              <Space wrap>
+                {currentAiSurveyData.images.map((img, idx) => (
+                  <Image
+                    key={idx}
+                    width={100}
+                    height={100}
+                    src={img.url}
+                    alt={`Ảnh khách gửi ${idx + 1}`}
+                    style={{ objectFit: 'cover', borderRadius: '8px', border: '1px solid #d9d9d9' }}
+                  />
+                ))}
+              </Space>
+            </Image.PreviewGroup>
+          ) : (
+            <Text type="secondary" italic>Không có hình ảnh đính kèm từ khách hàng.</Text>
+          )}
+        </div>
+        {/* Hiển thị danh sách đồ đạc AI quét được */}
+        <Typography.Title level={5}>📦 Danh sách đồ đạc AI nhận diện:</Typography.Title>
+        <div style={{ maxHeight: '200px', overflowY: 'auto', marginBottom: 20, border: '1px solid #f0f0f0', borderRadius: 8, padding: 8 }}>
+          {currentAiSurveyData?.items?.length > 0 ? (
+            currentAiSurveyData.items.map((item, idx) => (
+              <Tag color="geekblue" key={idx} style={{ margin: '4px', fontSize: '13px', padding: '4px 8px' }}>
+                {item.name || item.itemName} (SL: {item.quantity || 1})
+              </Tag>
+            ))
+          ) : (
+            <Text type="secondary" italic>AI không bóc tách được chi tiết đồ đạc, hoặc chỉ quét ra khối lượng tổng.</Text>
+          )}
+        </div>
+
+        {/* Form điều chỉnh để Dispatcher sửa quyết định của AI */}
+        <Typography.Title level={5}>🛠️ Điều chỉnh phương án vận chuyển:</Typography.Title>
+        <Form form={formAiReview} layout="vertical">
+          <Row gutter={16}>
+            <Col span={8}>
+              <Form.Item name="suggestedVehicle" label="Loại xe tải đề xuất" rules={[{ required: true }]}>
+                <Select>
+                  <Option value="500KG">Xe 500 KG</Option>
+                  <Option value="1TON">Xe 1 Tấn</Option>
+                  <Option value="1.5TON">Xe 1.5 Tấn</Option>
+                  <Option value="2TON">Xe 2 Tấn</Option>
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item name="suggestedStaffCount" label="Số nhân viên (Gồm tài xế)" rules={[{ required: true }]}>
+                <InputNumber min={1} max={5} style={{ width: '100%' }} />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item name="distanceKm" label="Quãng đường (Km)" rules={[{ required: true }]}>
+                <InputNumber min={0.1} step={0.1} style={{ width: '100%' }} />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item name="needsAssembling" valuePropName="checked">
+                <Checkbox>Cần tháo lắp đồ đạc</Checkbox>
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="needsPacking" valuePropName="checked">
+                <Checkbox>Cần đóng gói đồ đạc</Checkbox>
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Form.Item name="notes" label="Ghi chú thêm (Gửi khách hàng)">
+            <TextArea rows={2} placeholder="Ví dụ: AI đã tính toán thiếu, chúng tôi bổ sung thêm xe..." />
+          </Form.Item>
+        </Form>
       </Modal>
     </Card>
   );

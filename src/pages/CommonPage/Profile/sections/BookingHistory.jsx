@@ -4,13 +4,13 @@ import { EyeOutlined, CalendarOutlined, HomeOutlined, DollarOutlined } from '@an
 import { AiOutlineLeft, AiOutlineRight } from "react-icons/ai";
 import { getUserBookingHistory } from '../../../../services/bookingService';
 import { getBoardingHouseById } from '../../../../services/boardingHouseAPI';
-import useUser from '../../../../contexts/UserContext';
+import { useSelector } from "react-redux";
 import './BookingHistory.css';
 import dayjs from "dayjs";
 
 const BookingHistory = () => {
   const [messageApi, contextHolder] = message.useMessage();
-  const { user } = useUser();
+  const { user, loading: userLoading } = useSelector((state) => state.auth);
   const API_BASE = (process.env.REACT_APP_API_URL && process.env.REACT_APP_API_URL.replace(/\/api$/, '')) || 'http://localhost:5000';
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(false);

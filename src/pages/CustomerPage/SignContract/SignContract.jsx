@@ -339,8 +339,9 @@ const SignContract = () => {
           message.warning('Không thể tạo link thanh toán, vui lòng thanh toán sau.');
           navigate('/customer/order');
         }
-      } catch {
-        message.warning('Có lỗi khi tạo thanh toán, vui lòng thanh toán cọc sau.');
+      } catch (err) {
+        const errorMsg = err.response?.data?.message || 'Có lỗi khi tạo thanh toán, vui lòng thanh toán cọc sau.';
+        message.warning(errorMsg);
         navigate('/customer/order');
       }
     } catch (err) {

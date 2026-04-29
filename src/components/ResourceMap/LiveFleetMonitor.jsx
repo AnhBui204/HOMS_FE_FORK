@@ -3,7 +3,7 @@ import { Card, Select, Badge, Typography } from 'antd';
 import { io } from 'socket.io-client';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
-
+import api from "../../services/api";
 const { Text } = Typography;
 
 // Custom Icons for Map
@@ -18,13 +18,37 @@ const driverIcon = new L.Icon({
 
 const LiveFleetMonitor = () => {
     const [fleetData, setFleetData] = useState({});
-    
+
     useEffect(() => {
+        const fetchInitialLocations = async () => {
+            try {
+                const response = await api.get('/customer/drivers');
+                if (response.data && response.data.success) {
+                    const initialData = {};
+                    response.data.data.forEach(driver => {
+                        if (driver.currentLocation && driver.currentLocation.coordinates) {
+                            initialData[driver._id] = {
+                                userId: driver._id,
+                                role: driver.role,
+                                fullName: driver.fullName,
+                                location: driver.currentLocation
+                            };
+                        }
+                    });
+                    setFleetData(initialData);
+                }
+            } catch (error) {
+                console.error('Lỗi khi tải vị trí ban đầu của đội xe:', error);
+            }
+        };
+
+        fetchInitialLocations();
+
         const rawUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
         const socketUrl = rawUrl.replace(/\/api\/?$/, ''); // Strip out /api if present
 
         const socket = io(socketUrl, {
-            transports: ['websocket'],
+            transports: ['polling', 'websocket'],
             withCredentials: true
         });
 
@@ -36,7 +60,10 @@ const LiveFleetMonitor = () => {
         socket.on('location_updated', (data) => {
             setFleetData(prev => ({
                 ...prev,
-                [data.userId]: data
+                [data.userId]: {
+                    ...prev[data.userId],
+                    ...data
+                }
             }));
         });
 
@@ -58,14 +85,14 @@ const LiveFleetMonitor = () => {
                     {activeDrivers.map((driver) => {
                         if (!driver.location || !driver.location.coordinates) return null;
                         return (
-                            <Marker 
-                                key={driver.userId} 
-                                position={[driver.location.coordinates[1], driver.location.coordinates[0]]} 
+                            <Marker
+                                key={driver.userId}
+                                position={[driver.location.coordinates[1], driver.location.coordinates[0]]}
                                 icon={driverIcon}
                             >
                                 <Popup>
                                     <div style={{ padding: '4px' }}>
-                                        <Text strong>Tài xế/Nhân viên</Text><br />
+                                        <Text strong>{driver.fullName || 'Tài xế/Nhân viên'}</Text><br />
                                         <Badge status="processing" text={driver.role || 'Đang hoạt động'} />
                                     </div>
                                 </Popup>

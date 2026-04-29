@@ -15,6 +15,7 @@ const AIPromotionAdvisor = () => {
   const handleOpen = async () => {
     setIsModalOpen(true);
     if (!advice) {
+
       setLoading(true);
       setError(null);
       try {
@@ -102,6 +103,7 @@ const AIPromotionAdvisor = () => {
         bodyStyle={{ maxHeight: '70vh', overflowY: 'auto' }}
       >
         <div style={{ minHeight: '100px', padding: '10px 0' }}>
+          <div style={{ fontSize: '12px', color: '#888', marginBottom: '8px' }}>Admin only • Added for admin diagnostics</div>
           {loading ? (
              <div style={{ textAlign: 'center', padding: '60px 0' }}>
                <Spin tip="AI đang phân tích hiệu suất xe tải và nhu cầu đơn hàng của hệ thống..." size="large" />

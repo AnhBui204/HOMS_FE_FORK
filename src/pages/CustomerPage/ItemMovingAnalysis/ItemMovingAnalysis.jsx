@@ -22,7 +22,7 @@ import { PiScrollDuotone } from 'react-icons/pi';
 
 import AppHeader from "../../../components/header/header";
 import AppFooter from "../../../components/footer/footer";
-import useUser from "../../../contexts/UserContext";
+import { useSelector } from "react-redux";
 import { analyzeMedia } from "../../../services/ai/geminiVisionService";
 import { createOrder } from "../../../services/orderService";
 import { normalizeAIItems } from '../../../services/ai/catalogMappingService';
@@ -317,7 +317,7 @@ const SummaryBar = ({ totalVolume, totalWeight, totalPrice }) => (
 const ItemMovingAnalysis = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const { isAuthenticated } = useUser();
+    const { isAuthenticated } = useSelector((state) => state.auth);
     const [form] = Form.useForm();
     const orderData = location.state?.orderData;
 

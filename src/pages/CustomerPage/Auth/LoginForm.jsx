@@ -1,15 +1,15 @@
-import { Form, Input, Button, Divider, message, Space } from "antd";
-import { EyeInvisibleOutlined, EyeTwoTone, FacebookFilled } from "@ant-design/icons";
-import { FcGoogle } from "react-icons/fc";
+import { Form, Input, Button, Divider, message } from "antd";
+import { EyeInvisibleOutlined, EyeTwoTone, FacebookFilled } from "@ant-design/icons"; 
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useDispatch } from 'react-redux';
+import { setCredentials } from '../../../store/authSlice';
 import {
   login,
   loginGoogle,
   loginFacebook,
   saveAccessToken,
 } from "../../../services/authService";
-import useUser from "../../../contexts/UserContext";
 import { GoogleLogin } from "@react-oauth/google";
 import FacebookLogin from "@greatsumini/react-facebook-login";
 import api, { resetCsrfToken } from "../../../services/api";
@@ -21,7 +21,7 @@ const LoginForm = () => {
   const [loading, setLoading] = useState(false);
   const [fbReady, setFbReady] = useState(false);
   const [fbError, setFbError] = useState(false);
-  const { setUser, setIsAuthenticated } = useUser();
+    const dispatch = useDispatch();
   const navigate = useNavigate();
 
   const appId = process.env.REACT_APP_FACEBOOK_APP_ID;
@@ -84,28 +84,46 @@ const LoginForm = () => {
     }, 8000);
 
     return () => clearTimeout(timer);
-  }, [isAppIdValid]); // Chỉ chạy lại nếu App ID thay đổi
+  }, [isAppIdValid, fbReady, fbError]); // Chỉ chạy lại nếu App ID thay đổi
 
-  const handleLoginSuccess = (userData, accessToken, expiresInMs) => {
+  const handleLoginSuccess = async (userData, accessToken, expiresInMs) => {
     // 1. Lưu token và nạp ngay vào Header API
     saveAccessToken(accessToken, expiresInMs || 30 * 60 * 1000);
     api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
-    
-    // 2. Cập nhật Context
-    setUser(userData);
-    setIsAuthenticated(true);
+    // Cập nhật redux
+     dispatch(setCredentials({ user: userData }));
     resetCsrfToken();
     
     message.success("Đăng nhập thành công!");
     
     let redirectPath = "/";
     const searchParams = new URLSearchParams(window.location.search);
-    const returnUrl = searchParams.get("returnUrl");
-    
-    if (returnUrl) {
-      redirectPath = returnUrl;
+    const returnUrl = searchParams.get("redirect"); 
+      if (returnUrl) {
+      try {
+        // Tách link_token ra khỏi chuỗi URL một cách an toàn
+        // (Ví dụ returnUrl đang là: /customer/order?link_token=eyJh...)
+        const decodedReturnUrl = decodeURIComponent(returnUrl);
+        const urlObj = new URL(decodedReturnUrl, window.location.origin);
+        const linkToken = urlObj.searchParams.get("link_token");
+
+        if (linkToken) {
+          // Gọi API backend để chốt nối tài khoản
+          await api.post('/auth/link-messenger', { linkToken });
+          message.success("Đã đồng bộ đơn hàng từ Messenger vào tài khoản của bạn!");
+          
+            redirectPath = urlObj.pathname + urlObj.search;
+            redirectPath = redirectPath.replace(`link_token=${linkToken}`, '').replace('?&', '?').replace(/\?$/, '');
+        } else {
+            redirectPath = decodedReturnUrl;
+        }
+      } catch (error) {
+        console.error("Lỗi đồng bộ Messenger:", error);
+        message.warning("Đăng nhập thành công nhưng liên kết Messenger bị lỗi (hoặc hết hạn).");
+         redirectPath = "/customer/order";
+      }
     } else {
-      // Khôi phục các path chuẩn của dự án bạn
+      // Khôi phục các path chuẩn nếu không có redirectUrl
       switch (userData.role) {
         case "dispatcher": redirectPath = "/dispatcher/surveys"; break;
         case "customer":   redirectPath = "/customer/order"; break;
@@ -115,7 +133,7 @@ const LoginForm = () => {
       }
     }
 
-    // 3. Một chút delay (500ms) để React Context và các Service kịp đồng bộ hoàn toàn
+    // 3. Chuyển hướng
     setTimeout(() => {
       navigate(redirectPath);
     }, 500);

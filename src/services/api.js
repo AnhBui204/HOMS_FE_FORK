@@ -2,7 +2,10 @@
 import axios from 'axios';
 import { notification } from 'antd';
 import { getValidAccessToken } from './authService';
-
+let injectedStore;
+export const injectStore = (store) => {
+  injectedStore = store;
+};
 const api = axios.create({
   baseURL: process.env.REACT_APP_API_URL,
   withCredentials: true,
@@ -28,6 +31,8 @@ const PUBLIC_ENDPOINTS = [
   '/orders/validate',
   '/public/estimate-price',
   '/public/best-moving-time',
+  '/public/ratings',
+  '/public/recent-orders',
   '/csrf-token',
 ];
 let csrfToken = null;
@@ -57,7 +62,7 @@ export const resetCsrfToken = () => {
 };
 
 // Hàm gắn interceptor
-export const setupInterceptors = (contextLogout) => {
+export const setupInterceptors = () => {
   api.interceptors.request.use(
     async (config) => {
       if (['post', 'put', 'patch', 'delete'].includes(config.method)) {
@@ -66,7 +71,8 @@ export const setupInterceptors = (contextLogout) => {
           config.headers['X-CSRF-Token'] = csrfToken;
         }
       }
-      const isPublicPage = PUBLIC_ENDPOINTS.some(endpoint => config.url.endsWith(endpoint));
+      const urlPath = config.url.split('?')[0];
+      const isPublicPage = PUBLIC_ENDPOINTS.some(endpoint => urlPath.endsWith(endpoint));
       if (isPublicPage) {
         return config;
       }
@@ -74,13 +80,19 @@ export const setupInterceptors = (contextLogout) => {
         const token = await getValidAccessToken();
         if (!token) {
           console.warn("⚠️ No valid token found, logging out...");
-          contextLogout();
+                      if (injectedStore) {
+             const { logoutUserThunk } = require('../store/authSlice');
+             injectedStore.dispatch(logoutUserThunk()); 
+          }
           return Promise.reject(new Error("Token không hợp lệ hoặc đã hết hạn"));
         }
         config.headers.Authorization = `Bearer ${token}`;
         return config;
       } catch (error) {
-        contextLogout();
+                 if (injectedStore) {
+             const { logoutUserThunk } = require('../store/authSlice');
+             injectedStore.dispatch(logoutUserThunk()); 
+        }
         return Promise.reject(error);
       }
     },

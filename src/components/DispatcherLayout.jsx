@@ -14,7 +14,7 @@ import {
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import AppHeader from './header/header';
 
-import useUser from '../contexts/UserContext';
+import { useSelector } from 'react-redux';
 
 const { Sider, Content } = Layout;
 
@@ -23,7 +23,7 @@ const DispatcherLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const isVideoChatRoute = location.pathname.includes('/dispatcher/video-chat');
-  const { user } = useUser();
+ const { user } = useSelector((state) => state.auth);
   // isGeneral có thể nằm trong user.dispatcherProfile (từ API) 
   // hoặc nằm thẳng trong user (nếu decode từ Token)
   const isGeneral = user?.isGeneral || user?.dispatcherProfile?.isGeneral;

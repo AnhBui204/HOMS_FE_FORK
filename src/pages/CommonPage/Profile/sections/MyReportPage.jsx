@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { Table, Tag, Typography, Spin, message as antMessage, Alert } from "antd";
 import { getMyReports } from "../../../../services/reportService";
-import useUser from "../../../../contexts/UserContext";
+import { useSelector } from "react-redux";
 import { render } from "@testing-library/react";
 
 const { Title } = Typography;
@@ -11,7 +11,7 @@ const MyReportsPage = () => {
     const [reports, setReports] = useState([]);
     const [loading, setLoading] = useState(true);
     const [messageApi, contextHolder] = antMessage.useMessage();
-    const { user, loading: userLoading } = useUser();
+const { user, loading: userLoading } = useSelector((state) => state.auth);
     const [errorShown, setErrorShown] = useState(false);
     useEffect(() => {
         if (!userLoading && user) {

@@ -15,6 +15,7 @@ const AIBusinessSummary = () => {
   const handleOpen = async () => {
     setIsModalOpen(true);
     if (!insight) {
+
       setLoading(true);
       setError(null);
       try {
@@ -102,6 +103,7 @@ const AIBusinessSummary = () => {
         bodyStyle={{ maxHeight: '70vh', overflowY: 'auto' }}
       >
         <div style={{ minHeight: '120px', padding: '10px 0' }}>
+          <div style={{ fontSize: '12px', color: '#888', marginBottom: '8px' }}>Admin only • Quick audit note</div>
           {loading ? (
             <div style={{ textAlign: 'center', padding: '60px 0' }}>
               <Spin tip="AI đang xử lý hàng triệu điểm dữ liệu kinh doanh của bạn..." size="large" />

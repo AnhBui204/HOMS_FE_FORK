@@ -14,6 +14,7 @@ const ReportManagement = () => {
     const API_BASE = (process.env.REACT_APP_API_URL && process.env.REACT_APP_API_URL.replace(/\/api$/, '')) || (process.env.REACT_APP_API_BASE_URL && process.env.REACT_APP_API_BASE_URL.replace(/\/+$/, '')) || 'http://localhost:5000';
     const [loading, setLoading] = useState(false);
     const [incidents, setIncidents] = useState([]);
+    const [dashboardStats, setDashboardStats] = useState({ total: 0, open: 0, investigating: 0, compensation: 0 });
 
     // Filters
     const [searchText, setSearchText] = useState('');
@@ -67,12 +68,33 @@ const ReportManagement = () => {
 
     useEffect(() => {
         loadData({ page, limit, search: '', type: filterType, status: filterStatus });
+        // load dashboard stats with current filters
+        loadDashboard({ search: '', type: filterType, status: filterStatus });
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [page, limit, filterType, filterStatus]);
+
+    const loadDashboard = async ({ search = searchText, type = filterType, status = filterStatus } = {}) => {
+        try {
+            const params = new URLSearchParams();
+            if (search) params.append('search', search);
+            if (type) params.append('type', type);
+            if (status) params.append('status', status);
+
+            const res = await fetch(`${API_BASE}/api/admin/incidents/dashboard?${params.toString()}`, { credentials: 'include' });
+            if (!res.ok) throw new Error(`Server error ${res.status}`);
+            const body = await res.json();
+            if (!body.success) throw new Error(body.message || 'Failed to load dashboard');
+            setDashboardStats(body.data || { total: 0, open: 0, investigating: 0, compensation: 0 });
+        } catch (err) {
+            console.warn('Could not load incident dashboard', err);
+        }
+    };
 
     const handleSearch = async () => {
         setPage(1);
         await loadData({ page: 1, limit, search: searchText, type: filterType, status: filterStatus });
+        // refresh dashboard according to search/filter
+        loadDashboard({ search: searchText, type: filterType, status: filterStatus });
     };
 
     const exportReports = () => {
@@ -221,6 +243,63 @@ const ReportManagement = () => {
 
             <Card style={{ borderRadius: '12px', border: 'none', marginBottom: 18, padding: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
                 <Row gutter={[12, 12]} align="middle">
+                    {/* Dashboard cards */}
+                    <Col xs={24} md={24} style={{ marginBottom: 12 }}>
+                        <Row gutter={[12, 12]}>
+                            <Col xs={24} sm={12} md={6}>
+                                <Card bordered={false} style={{ borderRadius: 10, background: '#f4fff3', padding: 12 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                        <div style={{ background: '#6dbb4f', borderRadius: 8, padding: 8, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                                            <CarOutlined style={{ color: '#fff', fontSize: 16 }} />
+                                        </div>
+                                        <div style={{ flex: 1 }}>
+                                            <div style={{ fontSize: 12, color: '#6b7a6b', marginBottom: 4 }}>Tổng báo cáo</div>
+                                            <div style={{ fontSize: 20, fontWeight: 700, color: '#19692a' }}>{dashboardStats.total || 0}</div>
+                                        </div>
+                                    </div>
+                                </Card>
+                            </Col>
+                            <Col xs={24} sm={12} md={6}>
+                                <Card bordered={false} style={{ borderRadius: 10, background: '#fff7f0', padding: 12 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                        <div style={{ background: '#ff9f43', borderRadius: 8, padding: 8, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                                            <ExclamationCircleOutlined style={{ color: '#fff', fontSize: 16 }} />
+                                        </div>
+                                        <div style={{ flex: 1 }}>
+                                            <div style={{ fontSize: 12, color: '#7a5b3a', marginBottom: 4 }}>Mở</div>
+                                            <div style={{ fontSize: 20, fontWeight: 600, color: '#a85c12' }}>{dashboardStats.open || 0}</div>
+                                        </div>
+                                    </div>
+                                </Card>
+                            </Col>
+                            <Col xs={24} sm={12} md={6}>
+                                <Card bordered={false} style={{ borderRadius: 10, background: '#f0f6ff', padding: 12 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                        <div style={{ background: '#4f86ff', borderRadius: 8, padding: 8, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                                            <SyncOutlined style={{ color: '#fff', fontSize: 16 }} />
+                                        </div>
+                                        <div style={{ flex: 1 }}>
+                                            <div style={{ fontSize: 12, color: '#5b6f8a', marginBottom: 4 }}>Đang điều tra</div>
+                                            <div style={{ fontSize: 20, fontWeight: 600, color: '#165db8' }}>{dashboardStats.investigating || 0}</div>
+                                        </div>
+                                    </div>
+                                </Card>
+                            </Col>
+                            <Col xs={24} sm={12} md={6}>
+                                <Card bordered={false} style={{ borderRadius: 10, background: '#fff5f8', padding: 12 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                        <div style={{ background: '#ff6b81', borderRadius: 8, padding: 8, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                                            <ExportOutlined style={{ color: '#fff', fontSize: 16 }} />
+                                        </div>
+                                        <div style={{ flex: 1 }}>
+                                            <div style={{ fontSize: 12, color: '#7a3b4e', marginBottom: 4 }}>Yêu cầu bồi thường</div>
+                                            <div style={{ fontSize: 20, fontWeight: 600, color: '#a8003e' }}>{dashboardStats.compensation || 0}</div>
+                                        </div>
+                                    </div>
+                                </Card>
+                            </Col>
+                        </Row>
+                    </Col>
                     <Col xs={24} sm={10} md={8} lg={7}>
                         <Input
                             placeholder="Tìm mã phiếu, mã hóa đơn, hoặc tên người báo..."
@@ -403,8 +482,9 @@ const ReportManagement = () => {
                                         if (!body.success) throw new Error(body.message || 'Failed to update incident');
                                         message.success('Cập nhật thành công');
                                         setSelectedIncident(body.data);
-                                        // refresh list
+                                        // refresh list and dashboard
                                         loadData({ page, limit, search: searchText, type: filterType, status: filterStatus });
+                                        loadDashboard();
                                     } catch (err) {
                                         console.error('Resolve failed', err);
                                         message.error('Không thể cập nhật phiếu');

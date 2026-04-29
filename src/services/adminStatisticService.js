@@ -60,6 +60,16 @@ const adminStatisticService = {
             throw error;
         }
     },
+    // Fetch a pre-computed UI bundle for dashboard to avoid heavy client-side processing
+    getDashboardUI: async (params) => {
+        try {
+            const response = await api.get('/admin/dashboard/ui', { params });
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching dashboard UI bundle', error);
+            throw error;
+        }
+    },
     // Fetch dispatcher stats (includes global invoice counts grouped by status)
     getDispatcherStats: async () => {
         try {

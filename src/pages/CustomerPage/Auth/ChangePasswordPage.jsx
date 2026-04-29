@@ -6,7 +6,7 @@ const ChangePasswordPage = () => {
   return (
     <AuthLayout>
       <AuthFormWrapper
-        title="Create a new password. Ensure it differs from previous one for security."
+        title=""
         subtitle=""
         linkText=""
         linkTo=""

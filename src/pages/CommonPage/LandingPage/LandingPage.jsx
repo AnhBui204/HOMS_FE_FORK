@@ -64,6 +64,7 @@ const CustomRightArrow = ({ currentSlide, slideCount, className, style, onClick,
 
 const LandingPage = () => {
     const [mobileMenuVisible, setMobileMenuVisible] = useState(false);
+    const [contactForm] = Form.useForm();
 
     const handleContactClick = () => {
         document.getElementById('contact-section').scrollIntoView({ behavior: 'smooth' });
@@ -71,6 +72,11 @@ const LandingPage = () => {
 
     const handleGetStarted = () => {
         document.getElementById('hero-form').scrollIntoView({ behavior: 'smooth' });
+    };
+
+    const handleContactSubmit = (values) => {
+        message.success('Cảm ơn bạn đã để lại thông tin. Đội ngũ HOMS sẽ liên hệ với bạn trong thời gian sớm nhất!');
+        contactForm.resetFields();
     };
 
     const [dbTestimonials, setDbTestimonials] = useState([]);
@@ -612,26 +618,26 @@ const LandingPage = () => {
                                             Để lại thông tin để được tư vấn gói dịch vụ phù hợp nhất.
                                         </p>
 
-                                        <Form layout="vertical" size="large">
+                                        <Form form={contactForm} layout="vertical" size="large" onFinish={handleContactSubmit}>
                                             {/* ... Các trường Input giữ nguyên ... */}
                                             <Row gutter={20}>
                                                 <Col xs={24} sm={12}>
-                                                    <Form.Item label="Họ tên">
+                                                    <Form.Item label="Họ tên" name="fullName" rules={[{ required: true, message: 'Vui lòng nhập họ tên!' }]}>
                                                         <Input placeholder="Nhập họ tên của bạn" />
                                                     </Form.Item>
                                                 </Col>
                                                 <Col xs={24} sm={12}>
-                                                    <Form.Item label="Số điện thoại">
+                                                    <Form.Item label="Số điện thoại" name="phone" rules={[{ required: true, message: 'Vui lòng nhập số điện thoại!' }]}>
                                                         <Input placeholder="Nhập số điện thoại" />
                                                     </Form.Item>
                                                 </Col>
                                             </Row>
 
-                                            <Form.Item label="Email">
+                                            <Form.Item label="Email" name="email">
                                                 <Input type="email" placeholder="Nhập email của bạn" />
                                             </Form.Item>
 
-                                            <Form.Item label="Vì sao bạn tìm đến chúng tôi?">
+                                            <Form.Item label="Vì sao bạn tìm đến chúng tôi?" name="source">
                                                 <Select placeholder="Chọn lý do...">
                                                     <Option value="google">Tìm thấy trên Google</Option>
                                                     <Option value="facebook">Biết qua Facebook/Tiktok</Option>
@@ -644,6 +650,7 @@ const LandingPage = () => {
                                             <Form.Item>
                                                 <Button
                                                     type="primary"
+                                                    htmlType="submit"
                                                     block
                                                     style={{
                                                         background: '#2D4F36',

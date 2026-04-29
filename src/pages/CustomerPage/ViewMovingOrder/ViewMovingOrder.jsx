@@ -34,7 +34,7 @@ import {
 } from "@ant-design/icons";
 import AppHeader from "../../../components/header/header";
 import AppFooter from "../../../components/footer/footer";
-import useUser from "../../../contexts/UserContext";
+import { useSelector } from "react-redux";
 import api from "../../../services/api";
 import orderService from "../../../services/orderService";
 import ReportIncidentModal from "../../../components/MovingOrder/ReportIncidentModal";
@@ -187,6 +187,7 @@ const OrderCard = ({
   const [dispatchDetails, setDispatchDetails] = useState(null);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const [hasFetchedDetails, setHasFetchedDetails] = useState(false);
+
   const navigate = useNavigate();
 
   const fetchAdditionalDetails = async () => {
@@ -805,20 +806,20 @@ const OrderCard = ({
     </div>
   );
 };
+
 /* ─── main page ───────────────────────────────────────────── */
 const ViewMovingOrder = () => {
   const location = useLocation();
-  const { user, isAuthenticated } = useUser();
+  const { user, isAuthenticated } = useSelector((state) => state.auth);
 
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState("ALL");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(5);
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [activeFilter]);
+  // Unified Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(5);
+
   const [isSurveyModalVisible, setIsSurveyModalVisible] = useState(false);
   const [selectedSurvey, setSelectedSurvey] = useState(null);
   const [selectedTicket, setSelectedTicket] = useState(null);
@@ -838,12 +839,22 @@ const ViewMovingOrder = () => {
   const [isRescheduleModalVisible, setIsRescheduleModalVisible] = useState(false);
   const [actionTicket, setActionTicket] = useState(null);
 
+  // Reset page when filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeFilter]);
+
   // [TOUR] State & Refs
   const refStatus = useRef(null);
   const refRoute = useRef(null);
   const refMeta = useRef(null);
   const refPricing = useRef(null);
   const refActions = useRef(null);
+  const refModalSurvey = useRef(null);
+  const refModalResources = useRef(null);
+  const refModalPricing = useRef(null);
+
+  const [tourOpen, setTourOpen] = useState(false);
 
   const handleRemainingPayment = (ticket) => {
     confirm({
@@ -873,13 +884,6 @@ const ViewMovingOrder = () => {
       },
     });
   };
-
-  // Modal Refs
-  const refModalSurvey = useRef(null);
-  const refModalResources = useRef(null);
-  const refModalPricing = useRef(null);
-
-  const [tourOpen, setTourOpen] = useState(false);
 
   useEffect(() => {
     if (!localStorage.getItem('hasSeenViewOrderTour')) {
@@ -1264,8 +1268,15 @@ const ViewMovingOrder = () => {
   const filtered = tickets.filter((t) => matchFilter(t, activeFilter));
   const countFor = (key) => tickets.filter((t) => matchFilter(t, key)).length;
 
-  const allDisplayTickets = tourOpen && tickets.length === 0 ? [mockTicketForTour] : (tourOpen ? [mockTicketForTour, ...filtered] : filtered);
-  const displayTickets = allDisplayTickets.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  // Logic to handle Mock data for Tour + Pagination
+  const allDisplayTickets = (tourOpen && tickets.length === 0)
+    ? [mockTicketForTour]
+    : (tourOpen ? [mockTicketForTour, ...filtered] : filtered);
+
+  const paginatedTickets = allDisplayTickets.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
 
   return (
     <Layout className="view-order-page">
@@ -1292,7 +1303,6 @@ const ViewMovingOrder = () => {
             <h2>Lịch Chuyển Nhà Của Tôi</h2>
           </div>
 
-          {/* filter tabs */}
           <div className="mo-filters">
             {FILTERS.map((f) => {
               const cnt = countFor(f.key);
@@ -1309,48 +1319,56 @@ const ViewMovingOrder = () => {
             })}
           </div>
 
-          {/* cards */}
           {loading ? (
             <div className="mo-loading"><Spin size="large" /></div>
-          ) : displayTickets.length === 0 ? (
+          ) : allDisplayTickets.length === 0 ? (
             <div className="mo-empty"><p>Không có đơn hàng nào.</p></div>
           ) : (
-            <div className="mo-card-list">
-              {displayTickets.map((ticket, idx) => (
-                <OrderCard
-                  key={ticket._id}
-                  ticket={ticket}
-                  tourRefs={idx === 0 && tourOpen ? { refStatus, refRoute, refMeta, refPricing, refActions } : null}
-                  onViewSurvey={ticket.isMock ? () => message.info('Đây là dữ liệu mẫu.') : handleViewSurvey}
-                  onReportIncident={ticket.isMock ? () => message.info('Đây là dữ liệu mẫu.') : handleReportIncident}
-                  onViewIncident={ticket.isMock ? () => message.info('Đây là dữ liệu mẫu.') : handleViewIncident}
-                  onDepositPayment={ticket.isMock ? () => message.info('Đây là dữ liệu mẫu.') : handleDepositPayment}
-                  onPayRemaining={ticket.isMock ? () => message.info('Đây là dữ liệu mẫu.') : handleRemainingPayment}
-                  onCancelQuote={ticket.isMock ? () => message.info('Đây là dữ liệu mẫu.') : handleCancelQuote}
-                  onRateService={ticket.isMock ? () => message.info('Đây là dữ liệu mẫu.') : handleRateService}
-                  onCancelTicketRequest={ticket.isMock ? () => message.info('Đây là dữ liệu mẫu.') : handleCancelTicketRequest}
-                  onRescheduleSurveyRequest={ticket.isMock ? () => message.info('Đây là dữ liệu mẫu.') : handleRescheduleSurveyRequest}
-                  onConfirmReschedule={ticket.isMock ? () => message.info('Đây là dữ liệu mẫu.') : handleConfirmReschedule}
-                />
-              ))}
-            </div>
-          )}
+            <>
+              <div className="mo-card-list">
+                {paginatedTickets.map((ticket, idx) => (
+                  <OrderCard
+                    key={ticket._id || idx}
+                    ticket={ticket}
+                    tourRefs={idx === 0 && tourOpen ? { refStatus, refRoute, refMeta, refPricing, refActions } : null}
+                    onViewSurvey={ticket.isMock ? () => message.info('Đây là dữ liệu mẫu.') : handleViewSurvey}
+                    onReportIncident={ticket.isMock ? () => message.info('Đây là dữ liệu mẫu.') : handleReportIncident}
+                    onViewIncident={ticket.isMock ? () => message.info('Đây là dữ liệu mẫu.') : handleViewIncident}
+                    onDepositPayment={ticket.isMock ? () => message.info('Đây là dữ liệu mẫu.') : handleDepositPayment}
+                    onPayRemaining={ticket.isMock ? () => message.info('Đây là dữ liệu mẫu.') : handleRemainingPayment}
+                    onCancelQuote={ticket.isMock ? () => message.info('Đây là dữ liệu mẫu.') : handleCancelQuote}
+                    onRateService={ticket.isMock ? () => message.info('Đây là dữ liệu mẫu.') : handleRateService}
+                    onCancelTicketRequest={ticket.isMock ? () => message.info('Đây là dữ liệu mẫu.') : handleCancelTicketRequest}
+                    onRescheduleSurveyRequest={ticket.isMock ? () => message.info('Đây là dữ liệu mẫu.') : handleRescheduleSurveyRequest}
+                    onConfirmReschedule={ticket.isMock ? () => message.info('Đây là dữ liệu mẫu.') : handleConfirmReschedule}
+                    onConfirmUnderstaffed={ticket.isMock ? () => message.info('Đây là dữ liệu mẫu.') : handleConfirmUnderstaffed}
+                  />
+                ))}
+              </div>
 
-          {allDisplayTickets.length > pageSize && (
-            <div style={{ display: 'flex', justifyContent: 'center', marginTop: 32, marginBottom: 40 }}>
-              <Pagination
-                current={currentPage}
-                pageSize={pageSize}
-                total={allDisplayTickets.length}
-                onChange={(page) => setCurrentPage(page)}
-                showSizeChanger={false}
-              />
-            </div>
+              {allDisplayTickets.length > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'center', marginTop: 32, marginBottom: 40 }}>
+                  <Pagination
+                    current={currentPage}
+                    pageSize={pageSize}
+                    total={allDisplayTickets.length}
+                    onChange={(page, size) => {
+                      setCurrentPage(page);
+                      setPageSize(size);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    showSizeChanger
+                    pageSizeOptions={['3', '5', '10', '20']}
+                    locale={{ items_per_page: '/ trang' }}
+                  />
+                </div>
+              )}
+            </>
           )}
         </section>
 
         {/* Tour Component */}
-        <ConfigProvider locale={viVN}>
+        < ConfigProvider locale={viVN} >
           <Tour
             open={tourOpen}
             onChange={handleTourChange}
@@ -1358,10 +1376,10 @@ const ViewMovingOrder = () => {
             steps={tourSteps}
             mask={{ color: 'rgba(0, 0, 0, 0.4)' }}
           />
-        </ConfigProvider>
+        </ConfigProvider >
 
         {/* ── Modals ── */}
-        <SurveyPricingModal
+        < SurveyPricingModal
           visible={isSurveyModalVisible}
           onClose={() => setIsSurveyModalVisible(false)}
           ticket={selectedTicket}
@@ -1374,7 +1392,7 @@ const ViewMovingOrder = () => {
           }}
           tourRefs={{ refModalSurvey, refModalResources, refModalPricing }}
         />
-        <SurveyTimeModal
+        < SurveyTimeModal
           visible={isSurveyTimeModalVisible}
           onClose={() => setIsSurveyTimeModalVisible(false)}
           ticket={selectedTicketForTime}
@@ -1385,22 +1403,24 @@ const ViewMovingOrder = () => {
             );
           }}
         />
-        {selectedTicket && (
-          <ReportIncidentModal
-            visible={isReportModalVisible}
-            onClose={handleCloseReportModal}
-            ticket={selectedTicket}
-            onSuccess={(incident) => {
-              setTickets((prev) =>
-                prev.map((t) =>
-                  t._id === selectedTicket._id
-                    ? { ...t, invoice: { ...t.invoice, incident } }
-                    : t
-                )
-              );
-            }}
-          />
-        )}
+        {
+          selectedTicket && (
+            <ReportIncidentModal
+              visible={isReportModalVisible}
+              onClose={handleCloseReportModal}
+              ticket={selectedTicket}
+              onSuccess={(incident) => {
+                setTickets((prev) =>
+                  prev.map((t) =>
+                    t._id === selectedTicket._id
+                      ? { ...t, invoice: { ...t.invoice, incident } }
+                      : t
+                  )
+                );
+              }}
+            />
+          )
+        }
         <ViewIncidentModal
           visible={isIncidentModalVisible}
           onClose={() => setIsIncidentModalVisible(false)}
@@ -1408,14 +1428,16 @@ const ViewMovingOrder = () => {
         />
 
         {/* [RATING] Modal đánh giá dịch vụ */}
-        {ticketToRate && (
-          <RateServiceModal
-            visible={isRateModalVisible}
-            onClose={() => setIsRateModalVisible(false)}
-            ticket={ticketToRate}
-            onSuccess={handleRateSuccess}
-          />
-        )}
+        {
+          ticketToRate && (
+            <RateServiceModal
+              visible={isRateModalVisible}
+              onClose={() => setIsRateModalVisible(false)}
+              ticket={ticketToRate}
+              onSuccess={handleRateSuccess}
+            />
+          )
+        }
 
         <CancelTicketModal
           visible={isCancelModalVisible}
@@ -1430,10 +1452,10 @@ const ViewMovingOrder = () => {
           ticket={actionTicket}
           onSuccess={handleActionSuccess}
         />
-      </Content>
+      </Content >
 
       <AppFooter />
-    </Layout>
+    </Layout >
   );
 };
 

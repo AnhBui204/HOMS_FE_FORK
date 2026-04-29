@@ -3,16 +3,18 @@ import {  Layout, Row, Col, Button, Input, Drawer, Menu, Avatar, Dropdown, Badge
 import { MenuOutlined, SearchOutlined, RightOutlined, BellOutlined, MenuUnfoldOutlined, MenuFoldOutlined } from "@ant-design/icons";
 import "./header.css";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import useUser from "../../contexts/UserContext";
 import useNotificationSocket from "../../hooks/useNotificationSocket";
 import { getNotifications,markNotificationRead } from "../../services/notificationService";
+import { useSelector, useDispatch } from "react-redux";
+import { logoutUserThunk } from "../../store/authSlice";
 const { Header } = Layout;
 const { Text } = Typography;
 const AppHeader = ({ collapsed, onToggleSidebar }) => {
 
   const [mobileMenuVisible, setMobileMenuVisible] = useState(false);
   const [activeMenu, setActiveMenu] = useState("dashboard"); // State để track menu đang active
-  const { user, logout, loading } = useUser();
+const dispatch = useDispatch();
+const { user, loading } = useSelector((state) => state.auth);
   const navigate = useNavigate();
   const location = useLocation();
   const isDispatcherMode = location.pathname.startsWith("/dispatcher");
@@ -125,9 +127,21 @@ useEffect(() => {
   };
 
   if (loading) return null;
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
+const handleLogout = () => {
+  navigate("/login"); 
+
+  dispatch(logoutUserThunk()); 
+};
+
+  const handleContactClick = () => {
+    if (location.pathname === '/' || location.pathname === '/landing') {
+      document.getElementById('contact-section')?.scrollIntoView({ behavior: 'smooth' });
+    } else {
+      navigate('/');
+      setTimeout(() => {
+        document.getElementById('contact-section')?.scrollIntoView({ behavior: 'smooth' });
+      }, 500);
+    }
   };
 
   return (
@@ -186,7 +200,7 @@ useEffect(() => {
                         }
                       }}
                     />
-                    <Button type="primary" className="contact-btn-top" iconPosition="end">
+                    <Button type="primary" className="contact-btn-top" iconPosition="end" onClick={handleContactClick}>
                       Liên Hệ Ngay <RightOutlined style={{ fontSize: "10px" }} />
                     </Button>
                   </>
