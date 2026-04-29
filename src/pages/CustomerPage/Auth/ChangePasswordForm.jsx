@@ -41,7 +41,7 @@ const ChangePasswordForm = () => {
 
       // Chuyển về trang profile
       setTimeout(() => {
-        navigate("/profile");
+        navigate("/customer/profile");
       }, 1000);
     } catch (err) {
       message.error(err.response?.data?.message || "Thao tác thất bại. Vui lòng thử lại.");
