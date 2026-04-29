@@ -414,7 +414,9 @@ const ItemMovingAnalysis = () => {
             if (calcVol > 5 || calcWgt > 500) suggestedStaffCount += 1;
             // Floor/elevator not known here, so leave at base calculation
 
-            setAiContext({ suggestedVehicle, suggestedStaffCount });
+            let suggestedVehicles = [{ vehicleType: suggestedVehicle, count: 1 }];
+
+            setAiContext({ suggestedVehicle, suggestedVehicles, suggestedStaffCount });
             setMode('ai-result');
             recalculate();
             message.success({ content: 'Phân tích hoàn tất!', key: 'ai', duration: 3 });
@@ -476,6 +478,7 @@ const ItemMovingAnalysis = () => {
             // Pass AI logistics estimate as aiEstimate so dispatcher review form is pre-filled
             const aiEstimate = aiContext ? {
                 suggestedVehicle:    aiContext.suggestedVehicle || null,
+                suggestedVehicles:   aiContext.suggestedVehicles || null,
                 suggestedStaffCount: aiContext.suggestedStaffCount || 2,
                 totalActualVolume:   totalVolume,
                 totalActualWeight:   totalWeight,
@@ -597,7 +600,7 @@ const ItemMovingAnalysis = () => {
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                                     <CheckCircleOutlined style={{ color: '#52c41a', fontSize: 18 }} />
                                     <Text strong style={{ color: '#44624a', fontSize: 15 }}>AI đã phân tích xong</Text>
-                                    {aiContext && <Tag color="blue">{aiContext.suggestedVehicle} · {aiContext.suggestedStaffCount} nhân sự</Tag>}
+                                    {aiContext && <Tag color="blue">{aiContext.suggestedVehicles?.map(v => `${v.count}x${v.vehicleType}`).join(' + ') || aiContext.suggestedVehicle} · {aiContext.suggestedStaffCount} nhân sự</Tag>}
                                 </div>
                                 <Space>
                                     <Button icon={<ReloadOutlined />} size="small" onClick={() => { setMode('upload'); setFileList([]); setMediaThumbs([]); form.setFieldsValue({ items: [] }); setSecondaryItems([]); setAiContext(null); }}>
@@ -627,7 +630,7 @@ const ItemMovingAnalysis = () => {
                                         <div className="ima-ai-suggestion">
                                             <Text style={{ fontSize: 11, color: '#8ba888', display: 'block', marginBottom: 4 }}>Gợi ý từ AI</Text>
                                             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                                                <div className="ima-suggestion-chip">Xe đề xuất: <strong>{aiContext.suggestedVehicle}</strong></div>
+                                                <div className="ima-suggestion-chip">Xe đề xuất: <strong>{aiContext.suggestedVehicles?.map(v => `${v.count}x${v.vehicleType}`).join(' + ') || aiContext.suggestedVehicle}</strong></div>
                                                 <div className="ima-suggestion-chip">Nhân sự: <strong>{aiContext.suggestedStaffCount} người</strong></div>
                                             </div>
                                         </div>

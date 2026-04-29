@@ -432,7 +432,9 @@ const SurveyInput = () => {
             needsPacking: surveyData.needsPacking || false,
             insuranceRequired: surveyData.insuranceRequired || false,
             declaredValue: surveyData.declaredValue || 0,
-            suggestedVehicle: surveyData.suggestedVehicle,
+            suggestedVehicles: surveyData.suggestedVehicles?.length > 0
+              ? surveyData.suggestedVehicles
+              : [{ vehicleType: surveyData.suggestedVehicle || '1TON', count: 1 }],
             suggestedStaffCount: staffCount,
             estimatedHours: surveyData.estimatedHours || computeEstimatedHours({ distanceKm: estimatedKm, floors, suggestedStaffCount: staffCount }),
             notes: surveyData.notes,
@@ -586,7 +588,7 @@ const SurveyInput = () => {
       // Chuẩn hóa Payload khớp 100% với Schema SurveyData của Backend
       const payload = {
         // Các trường bắt buộc theo Controller
-        suggestedVehicle: values.suggestedVehicle,
+        suggestedVehicles: values.suggestedVehicles,
         suggestedStaffCount: values.suggestedStaffCount,
         distanceKm: values.distanceKm,
 
@@ -649,7 +651,7 @@ const SurveyInput = () => {
       };
 
       const payload = {
-        suggestedVehicle: values.suggestedVehicle,
+        suggestedVehicles: values.suggestedVehicles,
         suggestedStaffCount: values.suggestedStaffCount,
         distanceKm: values.distanceKm,
         estimatedHours: values.estimatedHours || computeEstimatedHours({
@@ -726,7 +728,7 @@ const SurveyInput = () => {
       const res = await surveyService.estimateResources(payload);
       if (res?.data) {
         form.setFieldsValue({
-          suggestedVehicle: res.data.suggestedVehicle,
+          suggestedVehicles: res.data.suggestedVehicles || [{ vehicleType: res.data.suggestedVehicle || '1TON', count: 1 }],
           suggestedStaffCount: res.data.suggestedStaffCount
         });
         if (res.data.routeWarnings && res.data.routeWarnings.length > 0) {
@@ -1018,18 +1020,50 @@ const SurveyInput = () => {
                 extra={!isReadOnly && !isTruckRental && <Button type="dashed" size="small" style={{ color: '#1890ff', borderColor: '#1890ff' }} onClick={handleEstimate}>Tự động tính</Button>}
                 style={{ marginTop: 16, background: '#f6ffed' }}
               >
-                <Form.Item
-                  name="suggestedVehicle"
-                  label="Loại xe tải đề xuất"
-                  rules={[{ required: true, message: 'Vui lòng chọn xe' }]}
-                >
-                  <Select placeholder="Chọn loại xe">
-                    <Option value="500KG">Xe 500 KG</Option>
-                    <Option value="1TON">Xe 1 Tấn</Option>
-                    <Option value="1.5TON">Xe 1.5 Tấn</Option>
-                    <Option value="2TON">Xe 2 Tấn</Option>
-                  </Select>
-                </Form.Item>
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ marginBottom: 8, fontWeight: 500 }}>
+                    <span style={{ color: '#ff4d4f', marginRight: 4 }}>*</span>Đội xe tải đề xuất
+                  </div>
+                  <Form.List name="suggestedVehicles" initialValue={[{ vehicleType: '1TON', count: 1 }]}>
+                    {(fields, { add, remove }) => (
+                      <>
+                        {fields.map(({ key, name, ...restField }) => (
+                          <Space key={key} style={{ display: 'flex', marginBottom: 8 }} align="baseline">
+                            <Form.Item
+                              {...restField}
+                              name={[name, 'vehicleType']}
+                              rules={[{ required: true, message: 'Chọn xe' }]}
+                              style={{ margin: 0, width: 140 }}
+                            >
+                              <Select placeholder="Loại xe">
+                                <Option value="500KG">Xe 500 KG</Option>
+                                <Option value="1TON">Xe 1 Tấn</Option>
+                                <Option value="1.5TON">Xe 1.5 Tấn</Option>
+                                <Option value="2TON">Xe 2 Tấn</Option>
+                              </Select>
+                            </Form.Item>
+                            <Form.Item
+                              {...restField}
+                              name={[name, 'count']}
+                              rules={[{ required: true, message: 'Nhập SL' }]}
+                              style={{ margin: 0, width: 100 }}
+                            >
+                              <InputNumber min={1} max={10} prefix="SL:" style={{ width: '100%' }} />
+                            </Form.Item>
+                            {fields.length > 1 && !isReadOnly ? (
+                              <DeleteOutlined onClick={() => remove(name)} style={{ color: '#ff4d4f', marginLeft: 8 }} />
+                            ) : null}
+                          </Space>
+                        ))}
+                        {!isReadOnly && (
+                          <Button type="dashed" onClick={() => add({ vehicleType: '1TON', count: 1 })} block icon={<PlusOutlined />}>
+                            Thêm dòng xe
+                          </Button>
+                        )}
+                      </>
+                    )}
+                  </Form.List>
+                </div>
                 <Form.Item
                   name="suggestedStaffCount"
                   label="Số lượng nhân viên"
@@ -1435,7 +1469,7 @@ const SurveyInput = () => {
         open={isAIVisionModalOpen}
         onCancel={() => setIsAIVisionModalOpen(false)}
         onAnalyzeComplete={handleAIAnalyzeComplete}
-        currentVehicle={form.getFieldValue('suggestedVehicle')}
+        currentVehicle={form.getFieldValue('suggestedVehicles')}
         currentStaffCount={form.getFieldValue('suggestedStaffCount')}
         primaryCatalog={PRIMARY_CATALOG}
       />
@@ -1525,7 +1559,7 @@ const SurveyInput = () => {
           <div style={{ padding: '10px 0' }}>
             <div style={{ background: '#f9f9f9', padding: 16, borderRadius: 8, marginBottom: 20 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
-                <Text>Phí thuê xe ({previewPricingData.breakdown?.suggestedVehicle || '—'}):</Text>
+                <Text>Phí thuê xe ({previewPricingData.breakdown?.suggestedVehicles?.map(v => `${v.count}x${v.vehicleType}`).join(' + ') || previewPricingData.breakdown?.suggestedVehicle || '—'}):</Text>
                 <Text strong>{(previewPricingData.breakdown?.vehicleFee || 0).toLocaleString()} ₫</Text>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>

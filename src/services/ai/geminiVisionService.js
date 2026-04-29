@@ -242,11 +242,21 @@ export const analyzeMedia = async (file) => {
       totalActualWeight: { type: "NUMBER" },
       totalActualVolume: { type: "NUMBER" },
       totalActualItems: { type: "INTEGER" },
-      suggestedVehicle: { type: "STRING" },
+      suggestedVehicles: {
+        type: "ARRAY",
+        items: {
+          type: "OBJECT",
+          properties: {
+            vehicleType: { type: "STRING", enum: ["500KG", "1TON", "1.5TON", "2TON"] },
+            count: { type: "INTEGER" }
+          },
+          required: ["vehicleType", "count"]
+        }
+      },
       suggestedStaffCount: { type: "INTEGER" },
       notes: { type: "STRING" }
     },
-    required: ["_reasoning", "items", "totalActualWeight", "totalActualVolume", "totalActualItems", "suggestedVehicle", "suggestedStaffCount"]
+    required: ["_reasoning", "items", "totalActualWeight", "totalActualVolume", "totalActualItems", "suggestedVehicles", "suggestedStaffCount"]
   };
 
   const prompt = `You are a Vietnamese moving logistics expert.
@@ -266,7 +276,7 @@ Examples of realistic estimations:
 Rules:
 - category: "primary" for large/heavy items (bed, sofa, fridge, TV, wardrobe, washing machine, motorbike); "secondary" for small items (books, clothes, bowls, lamps, fans, plants, mirrors, curtains, toys, shoes, boxes, toiletries, small appliances).
 - Realistic non-zero numbers for weight (kg), volume (m³), dimensions (cm). Look for reference objects to estimate scale.
-- suggestedVehicle: "500KG" ≤400kg/1.5m³ | "1TON" ≤800kg/3m³ | "1.5TON" ≤1200kg/5m³ | "2TON" heavier.
+- suggestedVehicles: Recommend an array of optimal vehicles (e.g. [{"vehicleType": "1TON", "count": 1}]). Allowed types: "500KG" ≤400kg/1.5m³ | "1TON" ≤800kg/3m³ | "1.5TON" ≤1200kg/5m³ | "2TON" heavier. Feel free to mix types (e.g. 1 500KG + 1 2TON) to optimally handle the volume.
 - suggestedStaffCount: min 2, +1 per ~300 kg or bulky item (piano, side-by-side fridge, large sofa set), max 6.
 - boundingBoxes: centerX/Y/width/height normalized 0–1. Always include for image items.`;
 

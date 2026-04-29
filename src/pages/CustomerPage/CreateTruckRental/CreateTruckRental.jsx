@@ -386,7 +386,7 @@ const CreateTruckRental = () => {
               <div className="price-modal-content">
                 <div style={{ marginBottom: 15, borderBottom: '1px solid #f0f0f0', paddingBottom: 10 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                    <span style={{ color: '#595959' }}><CarOutlined /> Phí thuê xe ({priceEstimate.breakdown?.suggestedVehicle})</span>
+                    <span style={{ color: '#595959' }}><CarOutlined /> Phí thuê xe ({priceEstimate.breakdown?.suggestedVehicles?.map(v => `${v.count}x${v.vehicleType}`).join(' + ') || priceEstimate.breakdown?.suggestedVehicle})</span>
                     <span style={{ fontWeight: 600 }}>{(priceEstimate.breakdown?.vehicleFee || 0).toLocaleString()} ₫</span>
                   </div>
 

@@ -6,11 +6,17 @@ import { uploadSurveyMedia } from '../../services/uploadService';
 import { buildPreviewItems } from '../../services/ai/catalogMappingService';
 import './AIVisionAnalyzer.css';
 
+
 const VEHICLE_LABELS = {
   '500KG': 'Xe 500 KG',
   '1TON': 'Xe 1 Tấn',
   '1.5TON': 'Xe 1.5 Tấn',
   '2TON': 'Xe 2 Tấn',
+};
+
+const getVehiclesString = (vehicles) => {
+  if (!vehicles || vehicles.length === 0) return 'Không rõ';
+  return vehicles.map(v => `${v.count} x ${VEHICLE_LABELS[v.vehicleType] || v.vehicleType}`).join(' + ');
 };
 
 // ─── Vietnamese translation dictionaries ─────────────────────────────────────
@@ -363,6 +369,29 @@ const AIVisionAnalyzer = ({ open, onCancel, onAnalyzeComplete, currentVehicle, c
               </Col>
             </Row>
 
+            {/* AI Estimation Insights */}
+            {((result.reasons && result.reasons.length > 0) || result.estimatedMinutes || result.trips > 1) && (
+              <div style={{ marginTop: 16, marginBottom: 16, padding: '12px', background: '#e6f4ff', border: '1px solid #91caff', borderRadius: 8 }}>
+                <Typography.Text strong style={{ color: '#0050b3', display: 'block', marginBottom: 8 }}>
+                  <InfoCircleOutlined style={{ marginRight: 6 }} />
+                  Phân tích ước tính (Độ tin cậy: {result.confidenceLevel || 'Không rõ'})
+                </Typography.Text>
+                <ul style={{ margin: 0, paddingLeft: 20, color: '#0958d9' }}>
+                  {result.reasons?.map((r, idx) => (
+                    <li key={idx} style={{ marginBottom: 4 }}>
+                      {r.message} {r.impact === 'HIGH' && <Tag color="red" style={{ marginLeft: 6, lineHeight: '14px', fontSize: 10 }}>Cao</Tag>}
+                    </li>
+                  ))}
+                  {result.estimatedMinutes && (
+                    <li style={{ marginBottom: 4 }}>Dự kiến thời gian chuyển: <strong>{result.estimatedMinutes} phút</strong></li>
+                  )}
+                  {result.trips && result.trips > 1 && (
+                    <li style={{ marginBottom: 4 }}>Số chuyến xe cần thiết: <strong>{result.trips} chuyến</strong></li>
+                  )}
+                </ul>
+              </div>
+            )}
+
             {/* Logistics comparison panel */}
             <div className="logistics-compare-panel">
               <div className="logistics-compare-header">
@@ -378,11 +407,11 @@ const AIVisionAnalyzer = ({ open, onCancel, onAnalyzeComplete, currentVehicle, c
                 <div className="compare-field-label">Loại xe</div>
                 <div className="compare-values">
                   <Tag color="green" className="compare-tag current-tag">
-                    ✅ Hiện tại: {VEHICLE_LABELS[currentVehicle] || currentVehicle || 'Chưa chọn'}
+                    ✅ Hiện tại: {Array.isArray(currentVehicle) ? getVehiclesString(currentVehicle) : (VEHICLE_LABELS[currentVehicle] || currentVehicle || 'Chưa chọn')}
                   </Tag>
                   <SwapOutlined style={{ color: '#d9d9d9', margin: '0 8px' }} />
                   <Tag color={overrideVehicle ? 'orange' : 'default'} className="compare-tag ai-tag">
-                    🤖 AI: {VEHICLE_LABELS[result.suggestedVehicle] || result.suggestedVehicle || 'Không rõ'}
+                    🤖 AI: {result.suggestedVehicles ? getVehiclesString(result.suggestedVehicles) : (VEHICLE_LABELS[result.suggestedVehicle] || result.suggestedVehicle || 'Không rõ')}
                   </Tag>
                 </div>
                 <div className="compare-override">
@@ -390,7 +419,7 @@ const AIVisionAnalyzer = ({ open, onCancel, onAnalyzeComplete, currentVehicle, c
                     size="small"
                     checked={overrideVehicle}
                     onChange={setOverrideVehicle}
-                    disabled={!result.suggestedVehicle || result.suggestedVehicle === currentVehicle}
+                    disabled={(!result.suggestedVehicles && !result.suggestedVehicle) || result.suggestedVehicles === currentVehicle}
                     checkedChildren="Dùng AI"
                     unCheckedChildren="Giữ nguyên"
                   />

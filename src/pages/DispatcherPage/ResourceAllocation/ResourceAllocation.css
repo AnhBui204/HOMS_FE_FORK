@@ -1,0 +1,155 @@
+/* =============================================
+   ResourceAllocation – Shared Styles
+   ============================================= */
+
+.ra-page {
+    padding: 24px;
+    background: #fff;
+    border-radius: 8px;
+}
+
+.ra-page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+/* ── Order Summary Card ── */
+.ra-customer-banner {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+    background: #e6f7ff;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #91d5ff;
+}
+
+.ra-customer-info { flex: 1; }
+
+.ra-customer-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: #003a8c;
+    line-height: 1.2;
+}
+
+.ra-customer-phone {
+    font-size: 13px;
+    color: #0050b3;
+    margin-top: 4px;
+}
+
+.ra-route-timeline {
+    position: relative;
+    padding-left: 16px;
+    border-left: 2px dashed #d9d9d9;
+    margin-left: 8px;
+}
+
+.ra-route-stop {
+    position: relative;
+    margin-bottom: 16px;
+}
+
+.ra-route-stop:last-child { margin-bottom: 0; }
+
+.ra-route-dot-wrapper {
+    position: absolute;
+    left: -23px;
+    top: 2px;
+    background: #fff;
+    border-radius: 50%;
+    padding: 2px;
+}
+
+.ra-route-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.ra-route-label {
+    font-size: 12px;
+    display: block;
+    margin-bottom: 2px;
+}
+
+.ra-schedule-banner {
+    margin-top: 20px;
+    background: #fafafa;
+    padding: 10px 14px;
+    border-radius: 6px;
+    border: 1px solid #c0cfb2;
+    display: flex;
+    align-items: center;
+}
+
+/* ── Survey Suggestion Box ── */
+.ra-survey-box {
+    background: #fafafa;
+    border: 1px solid #c0cfb2;
+    padding: 16px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+}
+
+.ra-survey-box-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.ra-survey-stat-card {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #ffffff;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid #c0cfb2;
+    height: 100%;
+}
+
+.ra-survey-stat-icon {
+    background: #f5f5f5;
+    padding: 6px;
+    border-radius: 50%;
+    display: flex;
+}
+
+/* ── Dispatch Plan Card (right panel bottom) ── */
+.ra-vehicle-scroll {
+    max-height: 120px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+/* ── Action Footer ── */
+.ra-action-footer {
+    margin-top: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+/* ── Map container ── */
+.ra-map-container {
+    height: calc(100vh - 445px);
+    min-height: 390px;
+    background: #f0f2f5;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #d9d9d9;
+    position: relative;
+}
+
+.ra-map-loading {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import {
   Table, Button, Tag, Modal, Form, Select, message, Space, Card, Typography, DatePicker, Divider,
-  Row, Col, InputNumber, Checkbox, Alert, Input,Image
+  Row, Col, InputNumber, Checkbox, Alert, Input, Image
 } from "antd";
 import {
   CheckCircleOutlined, CloseCircleOutlined, RobotOutlined, UserSwitchOutlined, CalendarOutlined, ClockCircleOutlined
@@ -143,7 +143,7 @@ const SurveySchedulingPage = () => {
   const [formReject] = Form.useForm();
   const [formManual] = Form.useForm();
   const [formTruckRental] = Form.useForm();
- const [isAiReviewModalVisible, setIsAiReviewModalVisible] = useState(false);
+  const [isAiReviewModalVisible, setIsAiReviewModalVisible] = useState(false);
   const [currentAiSurveyData, setCurrentAiSurveyData] = useState(null);
   const [formAiReview] = Form.useForm();
   // ── Data Fetching ───────────────────────────────────────────────────────────
@@ -182,7 +182,7 @@ const SurveySchedulingPage = () => {
   }, [tickets, activeFilter]);
 
   // ── Action Handlers ─────────────────────────────────────────────────────────
- const openAiReviewModal = async (ticket) => {
+  const openAiReviewModal = async (ticket) => {
     setSelectedTicket(ticket);
     setLoading(true);
     try {
@@ -216,15 +216,11 @@ const SurveySchedulingPage = () => {
     try {
       const values = await formAiReview.validateFields();
       setIsCalculatingPreview(true);
-      
-      const payload = {
-        ...currentAiSurveyData,
-        ...values,
-      };
-      
+
+      const payload = { ...currentAiSurveyData, ...values };
       const res = await surveyService.previewPricing(selectedTicket._id, payload);
       const apiData = res.data?.data || res.data;
-      
+
       if (apiData.breakdown) {
         apiData.breakdown.suggestedVehicle = apiData.breakdown.suggestedVehicle || values.suggestedVehicle;
         apiData.breakdown.suggestedStaffCount = apiData.breakdown.suggestedStaffCount || values.suggestedStaffCount;
@@ -296,11 +292,12 @@ const SurveySchedulingPage = () => {
       setIsCalculatingPreview(true);
       const payload = {
         ...values,
+        suggestedVehicles: [{ vehicleType: values.suggestedVehicle, count: 1 }],
         estimatedHours: values.rentalDurationHours,
         items: [] // Truck rental usually doesn't need detailed items for pricing
       };
       const res = await surveyService.previewPricing(selectedTicket._id, payload);
-       const apiData = res.data?.data || res.data;
+      const apiData = res.data?.data || res.data;
 
       if (apiData.breakdown) {
         apiData.breakdown.suggestedVehicle = apiData.breakdown.suggestedVehicle || values.suggestedVehicle;
@@ -321,6 +318,7 @@ const SurveySchedulingPage = () => {
       const values = await formTruckRental.validateFields();
       const payload = {
         ...values,
+        suggestedVehicles: [{ vehicleType: values.suggestedVehicle, count: 1 }],
         estimatedHours: values.rentalDurationHours,
         items: [],
         status: 'COMPLETED'
@@ -340,7 +338,6 @@ const SurveySchedulingPage = () => {
       message.error(error.response?.data?.message || "Lỗi khi báo giá!");
     }
   };
-
 
   // "Từ chối" → propose new time
   const handleCancelTicket = (ticket) => {
@@ -535,7 +532,7 @@ const SurveySchedulingPage = () => {
         return <Tag color={config.color} style={{ minWidth: 100, textAlign: 'center' }}>{config.label}</Tag>;
       },
     },
- {
+    {
       title: "Hành động",
       render: (_, record) => {
         const isAi = isAiGeneratedTicket(record.notes);
@@ -569,38 +566,35 @@ const SurveySchedulingPage = () => {
                 </Button>
               </>
             )}
-
-            {/* --- ĐỐI VỚI TRẠNG THÁI WAITING_REVIEW --- */}
-         {record.status === "WAITING_REVIEW" && (
-  <>
-    {record.moveType === 'TRUCK_RENTAL' ? (
-      <Button
-        type="primary"
-        style={{ background: "#44624a", borderColor: "#44624a" }}
-        icon={<DollarCircleOutlined />}
-        onClick={() => openTruckRentalQuoteModal(record)}
-      >
-        Xem xét & Báo giá
-      </Button>
-    ) : (
-      /* NẾU KHÔNG PHẢI THUÊ XE -> CHẮC CHẮN MỞ MODAL XEM XÉT */
-      /* Phân biệt giao diện Nút dựa trên isAi */
-      <Button
-        type="primary"
-        style={{ 
-          background: isAi ? "#722ed1" : "#1890ff", 
-          borderColor: isAi ? "#722ed1" : "#1890ff" 
-        }}
-        icon={isAi ? <RobotOutlined /> : <EyeOutlined />}
-        onClick={() => openAiReviewModal(record)}
-      >
-        {isAi ? "Xem DL AI & Báo giá" : "Xem xét & Báo giá (Thủ công)"}
-      </Button>
-    )}
-  </>
+            {/* --- STATE: WAITING_REVIEW --- */}
+            {record.status === "WAITING_REVIEW" && (
+              <>
+                {record.moveType === 'TRUCK_RENTAL' ? (
+                  <Button
+                    type="primary"
+                    style={{ background: "#44624a", borderColor: "#44624a" }}
+                    icon={<DollarCircleOutlined />}
+                    onClick={() => openTruckRentalQuoteModal(record)}
+                  >
+                    Xem xét & Báo giá
+                  </Button>
+                ) : (
+                  <Button
+                    type="primary"
+                    style={{
+                      background: isAi ? "#722ed1" : "#1890ff",
+                      borderColor: isAi ? "#722ed1" : "#1890ff"
+                    }}
+                    icon={isAi ? <RobotOutlined /> : <EyeOutlined />}
+                    onClick={() => openAiReviewModal(record)}
+                  >
+                    {isAi ? "Xem DL AI & Báo giá" : "Xem xét & Báo giá"}
+                  </Button>
+                )}
+              </>
             )}
 
-            {/* --- ĐỐI VỚI TRẠNG THÁI WAITING_SURVEY --- */}
+            {/* --- STATE: WAITING_SURVEY --- */}
             {record.status === "WAITING_SURVEY" && record.proposedSurveyTimes?.length > 0 && (
               <Button
                 type="primary"
@@ -612,7 +606,7 @@ const SurveySchedulingPage = () => {
               </Button>
             )}
 
-            {/* --- ĐỐI VỚI LỖI PHÂN CÔNG --- */}
+            {/* --- STATE: ASSIGNMENT_FAILED --- */}
             {record.status === "ASSIGNMENT_FAILED" && (
               <Button type="primary" danger icon={<UserSwitchOutlined />} onClick={() => openManualAssignModal(record)}>
                 Phân công thủ công
@@ -875,7 +869,7 @@ const SurveySchedulingPage = () => {
       </Modal>
 
       {/* ── Modal: Chi tiết tính giá (Preview) ── */}
-     <Modal
+      <Modal
         title={<Title level={4} style={{ margin: 0, color: '#44624A' }}>Chi tiết tính giá đơn hàng</Title>}
         open={isPreviewPricingModalVisible}
         onCancel={() => setIsPreviewPricingModalVisible(false)}
@@ -902,7 +896,7 @@ const SurveySchedulingPage = () => {
           <div style={{ padding: '10px 0' }}>
             <div style={{ background: '#f9f9f9', padding: 16, borderRadius: 8, marginBottom: 20 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
-                <Text>Phí thuê xe ({previewPricingData.breakdown?.suggestedVehicle || '—'}):</Text>
+                <Text>Phí thuê xe ({previewPricingData.breakdown?.suggestedVehicles?.map(v => `${v.count}x${v.vehicleType}`).join(' + ') || previewPricingData.breakdown?.suggestedVehicle || '—'}):</Text>
                 <Text strong>{(previewPricingData.breakdown?.vehicleFee || 0).toLocaleString()} ₫</Text>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
@@ -934,7 +928,7 @@ const SurveySchedulingPage = () => {
           </div>
         )}
       </Modal>
-       <Modal
+      <Modal
         title={
           <span style={{ color: '#722ed1', display: 'flex', alignItems: 'center', gap: 8 }}>
             <RobotOutlined /> DUYỆT DỮ LIỆU AI & BÁO GIÁ — #{selectedTicket?.code}
@@ -964,7 +958,7 @@ const SurveySchedulingPage = () => {
           showIcon
           style={{ marginBottom: 16 }}
         />
-<Typography.Title level={5}>🖼️ Ảnh chụp đồ đạc từ khách hàng:</Typography.Title>
+        <Typography.Title level={5}>🖼️ Ảnh chụp đồ đạc từ khách hàng:</Typography.Title>
         <div style={{ marginBottom: 20 }}>
           {currentAiSurveyData?.images?.length > 0 ? (
             <Image.PreviewGroup>

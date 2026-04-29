@@ -506,7 +506,7 @@ const Dashboard = () => {
                                         <div className="metric-icon"><CarOutlined /></div>
                                         <div className="metric-content">
                                             <div className="metric-label">Phương tiện</div>
-                                            <div className="metric-value">{translateTruckType(surveyData.suggestedVehicle) || 'Đang tính toán'}</div>
+                                            <div className="metric-value">{surveyData.suggestedVehicles?.length > 0 ? surveyData.suggestedVehicles.map(v => `${v.count} x ${translateTruckType(v.vehicleType)}`).join(' + ') : (translateTruckType(surveyData.suggestedVehicle) || 'Đang tính toán')}</div>
                                         </div>
                                     </div>
                                     {activeTicket.moveType !== 'TRUCK_RENTAL' && (
