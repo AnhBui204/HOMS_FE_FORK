@@ -249,12 +249,12 @@ const OrderCard = ({
   // Cần thanh toán cọc: ACCEPTED + đã ký + invoice UNPAID
   const needsDepositPayment = ticket.status === 'ACCEPTED'
     && isContractSigned
-    && ticket.invoice?.paymentStatus === 'UNPAID';
+    && (ticket.invoice?.paymentStatus === 'UNPAID' || !ticket.invoice);
 
   const isReschedulePending = ticket.invoice?.rescheduleStatus === 'PENDING_APPROVAL';
   const feasibility = ticket.invoice?.dispatchAssignmentId?.feasibility || {};
-  const isUnderstaffedApprovalPending = (feasibility.decision === 'REQUIRE_CUSTOMER' || feasibility.decision === 'CONFIRM') 
-                                        && !ticket.invoice?.understaffedApproval;
+  const isUnderstaffedApprovalPending = (feasibility.decision === 'REQUIRE_CUSTOMER' || feasibility.decision === 'CONFIRM')
+    && !ticket.invoice?.understaffedApproval;
 
   return (
     <div className={`mo-card ${isQuoted ? 'mo-card--highlight' : ''}`}>
@@ -392,14 +392,14 @@ const OrderCard = ({
 
           {/* Đề xuất dời lịch vận chuyển */}
           {isReschedulePending && (
-             <>
-               <button className="mo-btn mo-btn--accept" onClick={() => onConfirmReschedule(ticket, 'ACCEPT')}>
-                 <CheckCircleOutlined /> Đồng ý đổi lịch
-               </button>
-               <button className="mo-btn mo-btn--reject" onClick={() => onConfirmReschedule(ticket, 'REJECT')}>
-                 <CloseCircleOutlined /> Từ chối
-               </button>
-             </>
+            <>
+              <button className="mo-btn mo-btn--accept" onClick={() => onConfirmReschedule(ticket, 'ACCEPT')}>
+                <CheckCircleOutlined /> Đồng ý đổi lịch
+              </button>
+              <button className="mo-btn mo-btn--reject" onClick={() => onConfirmReschedule(ticket, 'REJECT')}>
+                <CloseCircleOutlined /> Từ chối
+              </button>
+            </>
           )}
 
           {/* Hủy yêu cầu */}
@@ -460,14 +460,14 @@ const OrderCard = ({
 
           {/* Chấp nhận thiếu nhân sự */}
           {isUnderstaffedApprovalPending && (
-             <>
-               <button className="mo-btn mo-btn--accept" onClick={() => onConfirmUnderstaffed(ticket, 'ACCEPT')}>
-                 <CheckCircleOutlined /> Chấp nhận rủi ro
-               </button>
-               <button className="mo-btn mo-btn--reject" onClick={() => onConfirmUnderstaffed(ticket, 'REJECT')}>
-                 <CalendarOutlined /> Yêu cầu dời lịch
-               </button>
-             </>
+            <>
+              <button className="mo-btn mo-btn--accept" onClick={() => onConfirmUnderstaffed(ticket, 'ACCEPT')}>
+                <CheckCircleOutlined /> Chấp nhận rủi ro
+              </button>
+              <button className="mo-btn mo-btn--reject" onClick={() => onConfirmUnderstaffed(ticket, 'REJECT')}>
+                <CalendarOutlined /> Yêu cầu dời lịch
+              </button>
+            </>
           )}
 
           {/* Đánh giá */}
