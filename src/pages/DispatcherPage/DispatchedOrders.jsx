@@ -4,7 +4,6 @@ import { EyeOutlined } from '@ant-design/icons';
 import api from '../../services/api';
 import OrderTrackingMap from '../../components/OrderTrackingMap/OrderTrackingMap';
 import { CompassOutlined } from '@ant-design/icons';
-
 const { Title, Text } = Typography;
 
 const DispatchedOrders = () => {
@@ -217,13 +216,13 @@ const DispatchedOrders = () => {
                             <Text strong>Khách hàng: </Text> <Text>{selectedInvoice.customerId?.fullName} - {selectedInvoice.customerId?.phone}</Text>
                         </div>
                         <div>
-                            <Text strong>Trạng thái đơn: </Text> 
+                            <Text strong>Trạng thái đơn: </Text>
                             <Tag color={getStatusColor(selectedInvoice.status)}>
                                 {selectedInvoice.status === 'ASSIGNED' ? 'Đã phân công' :
-                                 selectedInvoice.status === 'ACCEPTED' ? 'Tài xế đã nhận' :
-                                 selectedInvoice.status === 'IN_PROGRESS' ? 'Đang thực hiện' :
-                                 selectedInvoice.status === 'COMPLETED' ? 'Đã hoàn tất' :
-                                 selectedInvoice.status === 'CANCELLED' ? 'Đã hủy' : selectedInvoice.status}
+                                    selectedInvoice.status === 'ACCEPTED' ? 'Tài xế đã nhận' :
+                                        selectedInvoice.status === 'IN_PROGRESS' ? 'Đang thực hiện' :
+                                            selectedInvoice.status === 'COMPLETED' ? 'Đã hoàn tất' :
+                                                selectedInvoice.status === 'CANCELLED' ? 'Đã hủy' : selectedInvoice.status}
                             </Tag>
                         </div>
 
