@@ -4,7 +4,6 @@ import {
   Row, Col, Space, message, Card, InputNumber,
   Select, Tag, Divider, Tooltip, Badge, Alert
 } from 'antd';
-import './SurveyInput.css';
 import {
   EditOutlined, PlusOutlined, DeleteOutlined, SaveOutlined,
   WarningOutlined, LockOutlined, ExclamationCircleFilled, RobotOutlined,
@@ -27,10 +26,12 @@ import {
 } from 'react-icons/md';
 import { TbFridge, TbArmchair, TbShoe } from 'react-icons/tb';
 import { PiScrollDuotone } from 'react-icons/pi';
+import './SurveyInput.css';
+
 import dayjs from 'dayjs';
-import { requestTicketService, surveyService } from '../../services/surveysService';
-import AIVisionAnalyzer from '../../components/AIVisionAnalyzer/AIVisionAnalyzer';
-import { normalizeAIItems, SECONDARY_KEY_RULES, matchSecondaryKey, normalizeCondition } from '../../services/ai/catalogMappingService';
+import { requestTicketService, surveyService } from '../../../services/surveysService';
+import AIVisionAnalyzer from '../../../components/AIVisionAnalyzer/AIVisionAnalyzer';
+import { normalizeAIItems, SECONDARY_KEY_RULES, matchSecondaryKey, normalizeCondition } from '../../../services/ai/catalogMappingService';
 
 // ─── Icon badge helper ────────────────────────────────────────────────────────
 const CatIcon = ({ icon: Icon, color = '#44624A', size = 18 }) => (
@@ -621,6 +622,11 @@ const SurveyInput = () => {
         images: aiImages || []
       };
 
+      // console.log('\n--- DEBUG FE [handleSaveSurvey] ---');
+      // console.log('payload.suggestedStaffCount:', payload.suggestedStaffCount, 'type:', typeof payload.suggestedStaffCount);
+      // console.log('payload to send:', payload);
+      // console.log('------------------------------------\n');
+
       // Gọi PUT /api/surveys/:ticketId/complete
       await surveyService.completeSurvey(selectedTicket._id, payload);
 
@@ -691,6 +697,12 @@ const SurveyInput = () => {
           })))
         ]
       };
+
+      // console.log('\n--- DEBUG FE [handlePreviewPricing] ---');
+      // console.log('payload.suggestedStaffCount:', payload.suggestedStaffCount, 'type:', typeof payload.suggestedStaffCount);
+      // console.log('values:', values);
+      // console.log('payload to send:', payload);
+      // console.log('---------------------------------------\n');
 
       setIsCalculatingPreview(true);
       const res = await surveyService.previewPricing(selectedTicket._id, payload);
@@ -820,20 +832,32 @@ const SurveyInput = () => {
     },
     {
       title: 'Thao tác',
+      width: 100,
       render: (_, record) => {
         const isReadOnly = ['QUOTED', 'ACCEPTED', 'CONVERTED'].includes(record.status);
         const isReview = record.status === 'WAITING_REVIEW';
+        
+        let icon = <EditOutlined />;
+        let title = 'Nhập Khảo Sát';
+        
+        if (isReadOnly) {
+          icon = <EyeOutlined />;
+          title = 'Xem Kết Quả';
+        } else if (isReview) {
+          icon = <DollarCircleOutlined />;
+          title = 'Xem xét & Báo giá';
+        }
+
         return (
-          <Button
-            type={isReadOnly ? 'default' : 'primary'}
-            style={isReadOnly ? {} : { background: '#44624A', borderColor: '#44624A' }}
-            icon={<EditOutlined />}
-            onClick={() => openSurveyModal(record)}
-          >
-            {isReadOnly ? 'Xem Kết Quả'
-              : isReview ? 'Xem xét & Báo giá'
-                : 'Nhập Khảo Sát'}
-          </Button>
+          <Tooltip title={title}>
+            <Button
+              type={isReadOnly ? 'default' : 'primary'}
+              shape="circle"
+              style={isReadOnly ? {} : { background: '#44624A', borderColor: '#44624A' }}
+              icon={icon}
+              onClick={() => openSurveyModal(record)}
+            />
+          </Tooltip>
         );
       }
     }
@@ -1594,6 +1618,26 @@ const SurveyInput = () => {
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
                   <Text>Phí bảo hiểm:</Text>
                   <Text strong>{previewPricingData.breakdown.insuranceFee.toLocaleString()} ₫</Text>
+                </div>
+              )}
+              {previewPricingData.minimumChargeApplied && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
+                  <Text style={{ color: '#d4b106' }}>Phụ phí dịch vụ tối thiểu:</Text>
+                  <Text strong style={{ color: '#d4b106' }}>
+                    {((previewPricingData.subtotal || 0) - (
+                       (previewPricingData.breakdown?.baseTransportFee || 0) +
+                       (previewPricingData.breakdown?.vehicleFee || 0) +
+                       (previewPricingData.breakdown?.laborFee || 0) +
+                       (previewPricingData.breakdown?.itemServiceFee || 0) +
+                       (previewPricingData.breakdown?.carryFee || 0) +
+                       (previewPricingData.breakdown?.floorFee || 0) +
+                       (previewPricingData.breakdown?.distanceFee || 0) +
+                       (previewPricingData.breakdown?.assemblingFee || 0) +
+                       (previewPricingData.breakdown?.packingFee || 0) +
+                       (previewPricingData.breakdown?.insuranceFee || 0) +
+                       (previewPricingData.breakdown?.managementFee || 0)
+                    )).toLocaleString()} ₫
+                  </Text>
                 </div>
               )}
               <Divider style={{ margin: '12px 0' }} />
