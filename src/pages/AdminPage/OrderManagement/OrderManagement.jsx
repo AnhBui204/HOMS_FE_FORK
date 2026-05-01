@@ -5,6 +5,7 @@ import { ShopOutlined, FacebookOutlined, FilterOutlined, SearchOutlined, Shoppin
 import dayjs from 'dayjs';
 import adminOrderService from '../../../services/admin/adminOrderService';
 import { Card as AntCard } from 'antd';
+import OrderDetailModal from './OrderDetailModal';
 
 const { TabPane } = Tabs;
 const { RangePicker } = DatePicker;
@@ -26,6 +27,8 @@ const OrderManagement = () => {
   const [total, setTotal] = useState(0);
   const [metrics, setMetrics] = useState(null);
   const [charts, setCharts] = useState(null);
+  const [detailOrder, setDetailOrder] = useState(null);
+  const [detailVisible, setDetailVisible] = useState(false);
 
   // derive source filter from active tab
   const sourceFilter = activeTab === 'web' ? 'WEB' : 'FACEBOOK';
@@ -152,13 +155,8 @@ const OrderManagement = () => {
     if (!active || !payload || !payload.length) return null;
     const data = payload[0].payload; // our data contains name, value, notes
     return (
-      <div style={{ background: '#fff', padding: 12, border: '1px solid #eee', borderRadius: 6, boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
-        <div style={{ fontWeight: 700, marginBottom: 8 }}>{data.name} — {data.value}</div>
-        {data.notes && data.notes.length ? (
-          <div style={{ fontSize: 12, color: '#444' }}>
-            {data.notes.map((n, i) => <div key={i} style={{ marginBottom: 6 }}>• {n}</div>)}
-          </div>
-        ) : <div style={{ fontSize: 12, color: '#888' }}>Không có ghi chú mẫu</div>}
+      <div style={{ background: '#fff', padding: 10, border: '1px solid #eee', borderRadius: 6, boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+        <div style={{ fontWeight: 700 }}>{`${data.name} - ${data.value}`}</div>
       </div>
     );
   };
@@ -176,7 +174,7 @@ const OrderManagement = () => {
     { title: 'Tổng tiền', dataIndex: 'totalPrice', key: 'totalPrice', render: v => <span style={{ fontWeight: 700 }}>{currency(v)}</span> },
     { title: 'Hành động', key: 'action', render: (_, record) => (
       <Space>
-        <Button size="small">Xem</Button>
+        <Button size="small" onClick={() => { setDetailOrder(record); setDetailVisible(true); }}>Xem</Button>
       </Space>
     ) }
   ];
@@ -449,6 +447,7 @@ const OrderManagement = () => {
           </TabPane>
         </Tabs>
       </Card>
+      <OrderDetailModal visible={detailVisible} onClose={() => setDetailVisible(false)} order={detailOrder} />
     </div>
   );
 };
