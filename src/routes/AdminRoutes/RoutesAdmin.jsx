@@ -11,6 +11,7 @@ import ContractManagement from '../../pages/AdminPage/Contract/ContractManagemen
 import RatingManagement from '../../pages/AdminPage/Rating/RatingManagement';
 import InvoiceManagement from '../../pages/AdminPage/Invoice/InvoiceManagement';
 import RouteManagement from '../../pages/AdminPage/RouteManagement/RouteManagement';
+import OrderManagement from '../../pages/AdminPage/OrderManagement/OrderManagement';
 import ProtectedRoute from "../../components/ProtectRoute/ProtectedRoute";
 import PromotionManagement from '../../pages/AdminPage/Promotion/PromotionManagement';
 import MaintenanceManagement from '../../pages/AdminPage/Maintenance/MaintenanceManagement';
@@ -26,6 +27,7 @@ const RoutesAdmin = () => {
           <Route path="vehicles" element={<VehicleManagement />} />
           <Route path="pricing" element={<PricingManagement />} />
           <Route path="invoices" element={<InvoiceManagement />} />
+          <Route path="orders" element={<OrderManagement />} />
           <Route path="ratings" element={<RatingManagement />} />
           <Route path="reports" element={<ReportManagement />} />
           <Route path="contracts" element={<ContractManagement />} />

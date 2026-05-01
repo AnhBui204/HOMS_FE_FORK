@@ -46,6 +46,11 @@ const AdminSidebar = ({ collapsed, onCollapse }) => {
             icon: <StarOutlined />,
             label: 'Đánh giá & Phản hồi',
         },
+         {
+            key: '/admin/orders',
+            icon: <FileDoneOutlined />,
+            label: 'Quản lý đơn hàng',
+        },
         {
             key: '/admin/invoices',
             icon: <FileTextOutlined />,
