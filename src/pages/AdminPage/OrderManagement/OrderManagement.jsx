@@ -72,20 +72,31 @@ const OrderManagement = () => {
       // include source so backend can filter if implemented server-side
       params.source = sourceFilter;
 
+      // fetch paginated items
       const resp = await adminOrderService.fetchAdminOrders(params);
       if (resp && resp.items) {
         setOrdersData(resp.items);
         setTotal(resp.total || 0);
         setPage(resp.page || params.page || 1);
         setLimit(resp.limit || params.limit || limit);
-        if (resp.metrics) setMetrics(resp.metrics);
-        if (resp.charts) setCharts(resp.charts);
       } else {
         // fallback: empty
         setOrdersData([]);
         setTotal(0);
-        setMetrics(null);
-        setCharts(null);
+      }
+
+      // fetch summary (metrics + charts) independently so charts are not page-limited
+      try {
+        const summaryParams = { ...params, summary: true, page: 1, limit: 1 };
+        const summaryResp = await adminOrderService.fetchAdminOrders(summaryParams);
+        if (summaryResp) {
+          if (summaryResp.metrics) setMetrics(summaryResp.metrics);
+          if (summaryResp.charts) setCharts(summaryResp.charts);
+        }
+      } catch (e) {
+        // ignore summary errors
+        // eslint-disable-next-line no-console
+        console.warn('summary fetch failed', e);
       }
     } catch (err) {
       // eslint-disable-next-line no-console
