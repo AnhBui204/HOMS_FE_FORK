@@ -13,5 +13,12 @@ export const fetchAdminOrders = async ({ page = 1, limit = 5, status, from, to, 
   return res.data;
 };
 
-const adminOrderService = { fetchAdminOrders };
+export const fetchAdminOrderById = async (id) => {
+  if (!id) return null;
+  const res = await api.get(`/admin/orders/${id}`);
+  if (res?.data?.success) return res.data.data;
+  return res.data;
+};
+
+const adminOrderService = { fetchAdminOrders, fetchAdminOrderById };
 export default adminOrderService;
