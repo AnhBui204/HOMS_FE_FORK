@@ -23,6 +23,7 @@ const OrderManagement = () => {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(5);
   const [total, setTotal] = useState(0);
+  const [metrics, setMetrics] = useState(null);
 
   // derive source filter from active tab
   const sourceFilter = activeTab === 'web' ? 'WEB' : 'FACEBOOK';
@@ -72,10 +73,12 @@ const OrderManagement = () => {
         setTotal(resp.total || 0);
         setPage(resp.page || params.page || 1);
         setLimit(resp.limit || params.limit || limit);
+        if (resp.metrics) setMetrics(resp.metrics);
       } else {
         // fallback: empty
         setOrdersData([]);
         setTotal(0);
+        setMetrics(null);
       }
     } catch (err) {
       // eslint-disable-next-line no-console
@@ -100,13 +103,21 @@ const OrderManagement = () => {
   }, [page, limit]);
 
   const kpi = useMemo(() => {
+    if (metrics) {
+      return {
+        totalOrders: metrics.totalOrders || 0,
+        totalValue: metrics.totalValue || 0,
+        avg: metrics.avg || 0,
+        conversionRate: metrics.conversionRate || 0
+      };
+    }
     const totalOrders = filtered.length;
     const totalValue = filtered.reduce((s, it) => s + (it.totalPrice || 0), 0);
     const avg = totalOrders ? Math.round(totalValue / totalOrders) : 0;
     const converted = filtered.filter(f => f.status === 'CONVERTED').length;
     const conversionRate = totalOrders ? Math.round((converted / totalOrders) * 100) : 0;
     return { totalOrders, totalValue, avg, conversionRate };
-  }, [filtered]);
+  }, [filtered, metrics]);
 
   const timeseries = useMemo(() => {
     // group by day
