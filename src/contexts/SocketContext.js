@@ -162,26 +162,26 @@ export const SocketProvider = ({ children }) => {
   }, [user?._id, loading]);
 
   // === DEV STATUS BADGE ===
-  const SocketStatusBadge =
-    process.env.NODE_ENV === "development" ? (
-      <div
-        style={{
-          position: "fixed",
-          bottom: 10,
-          right: 10,
-          background: isConnected ? "#22c55e" : "#ef4444",
-          color: "white",
-          padding: "6px 12px",
-          borderRadius: "6px",
-          fontSize: "12px",
-          fontWeight: "600",
-          zIndex: 9999,
-          boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-        }}
-      >
-        Socket: {isConnected ? "🟢 Connected" : "🔴 Disconnected"}
-      </div>
-    ) : null;
+  // const SocketStatusBadge =
+  //   process.env.NODE_ENV === "development" ? (
+  //     <div
+  //       style={{
+  //         position: "fixed",
+  //         bottom: 10,
+  //         right: 10,
+  //         background: isConnected ? "#22c55e" : "#ef4444",
+  //         color: "white",
+  //         padding: "6px 12px",
+  //         borderRadius: "6px",
+  //         fontSize: "12px",
+  //         fontWeight: "600",
+  //         zIndex: 9999,
+  //         boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+  //       }}
+  //     >
+  //       Socket: {isConnected ? "🟢 Connected" : "🔴 Disconnected"}
+  //     </div>
+  //   ) : null;
 
   // === PROVIDER RETURN ===
   return (
@@ -193,7 +193,7 @@ export const SocketProvider = ({ children }) => {
       }}
     >
       {children}
-      {SocketStatusBadge}
+      {/* {SocketStatusBadge} */}
     </SocketContext.Provider>
   );
 };

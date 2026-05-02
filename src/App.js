@@ -24,6 +24,7 @@ import NotFound from "./pages/CommonPage/NotFound/NotFound";
 import { initCsrfToken } from './services/api';
 import ScrollToTop from "./components/common/ScrollToTop";
 import MagicLogin from "./pages/CustomerPage/Auth/MagicLogin";
+import { SocketProvider } from "./contexts/SocketContext";
 injectStore(store);
 function App() {
    const [csrfReady, setCsrfReady] = useState(false);
@@ -36,9 +37,12 @@ function App() {
   const googleClientId = process.env.REACT_APP_GOOGLE_CLIENT_ID;
   return (
     <GoogleOAuthProvider clientId={googleClientId}>
+         <Provider store={store}>
+       <SocketProvider>
       <BrowserRouter>
         <ScrollToTop />
-         <Provider store={store}>
+      
+           
         <AuthWrapper>
           <Routes>
             <Route path="/" element={<HomeRedirect />} />
@@ -60,8 +64,10 @@ function App() {
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthWrapper>
-        </Provider>
+    
       </BrowserRouter>
+      </SocketProvider>
+          </Provider>
     </GoogleOAuthProvider>
   );
 }
