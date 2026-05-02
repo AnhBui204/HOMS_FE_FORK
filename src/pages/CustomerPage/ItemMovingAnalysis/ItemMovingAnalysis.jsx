@@ -486,6 +486,15 @@ const ItemMovingAnalysis = () => {
             } : undefined;
 
             await createOrder({ ...orderData, itemsRich, images: uploadedImages, aiEstimate });
+
+            // Clear cached form data from MovingInformationPage
+            sessionStorage.removeItem('homs_activeLocation');
+            sessionStorage.removeItem('homs_pickupDescription');
+            sessionStorage.removeItem('homs_dropoffDescription');
+            sessionStorage.removeItem('homs_pickupLocation');
+            sessionStorage.removeItem('homs_dropoffLocation');
+            sessionStorage.removeItem('homs_movingDate');
+
             message.success({ content: 'Tạo yêu cầu thành công!', key: 'submit', duration: 2 });
             navigate('/customer/order');
         } catch (err) {
