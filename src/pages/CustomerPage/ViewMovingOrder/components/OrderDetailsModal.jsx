@@ -41,6 +41,13 @@ const OrderDetailsModal = ({
 }) => {
   if (!ticket) return null;
 
+  // Determine effective pricing: prefer server-backed ticket.pricing when it contains
+  // a promotion or discount (this survives refresh/server restarts). Otherwise use
+  // the pricing prop passed from parent.
+  const effectivePricing = (ticket.pricing && (ticket.pricing.promotion || ticket.pricing.discountAmount || ticket.pricing.totalAfterPromotion))
+    ? ticket.pricing
+    : (pricing || ticket.pricing || {});
+
   return (
     <Modal
       title={
@@ -306,7 +313,7 @@ const OrderDetailsModal = ({
           )}
 
           {/* PRICING BREAKDOWN */}
-          {pricing && (
+          {effectivePricing && (
             <div ref={tourRefs?.refModalPricing} style={{ background: '#fff', border: '1px solid #e8e8e8', borderRadius: 10, padding: '14px 18px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
                 <div style={{ background: '#44624A', borderRadius: 6, padding: '4px 10px', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
@@ -315,8 +322,8 @@ const OrderDetailsModal = ({
                 </div>
               </div>
               {(() => {
-                const bd = pricing.breakdown || {};
-                const appliedDiscount = (pricing?.discountAmount || pricing?.promotion?.discountAmount || 0);
+                const bd = effectivePricing.breakdown || {};
+                const appliedDiscount = (effectivePricing?.discountAmount || effectivePricing?.promotion?.discountAmount || 0);
                 const lines = [
                   { icon: <ArrowRightOutlined />, label: 'Phí vận chuyển cơ bản', value: bd.baseTransportFee, always: false },
                   { icon: <CarOutlined />, label: 'Phí xe tải (theo km)', value: bd.vehicleFee, always: false },
@@ -362,7 +369,7 @@ const OrderDetailsModal = ({
                     )}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', marginTop: 8, background: 'linear-gradient(135deg, #f6ffed, #d9f7be)', borderRadius: 8, border: '1.5px solid #73d13d' }}>
                       <span style={{ fontSize: 16, fontWeight: 700, color: '#237804', display: 'flex', alignItems: 'center', gap: 8 }}><DollarOutlined /> TỔNG CỘNG</span>
-                      <span style={{ fontSize: 24, fontWeight: 800, color: '#237804' }}>{getFinalPrice(pricing || ticket.pricing).toLocaleString()} ₫</span>
+                      <span style={{ fontSize: 24, fontWeight: 800, color: '#237804' }}>{getFinalPrice(effectivePricing).toLocaleString()} ₫</span>
                     </div>
                   </>
                 );
