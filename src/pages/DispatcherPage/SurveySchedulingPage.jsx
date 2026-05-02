@@ -148,7 +148,7 @@ const SurveySchedulingPage = () => {
   const [formAiReview] = Form.useForm();
   
   const user = useSelector((state) => state.auth.user);
-  console.log(" [DEBUG] Current User Object:", user);
+  // console.log(" [DEBUG] Current User Object:", user);
   const isHeadDispatcher = 
       user?.dispatcherProfile?.isGeneral === true || 
       user?.dispatcherProfile?.isGeneral === "true";
