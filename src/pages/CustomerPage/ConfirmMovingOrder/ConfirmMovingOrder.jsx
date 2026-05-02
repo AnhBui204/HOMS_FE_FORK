@@ -211,6 +211,14 @@ const ConfirmMovingOrder = () => {
             }
 
             console.log('✅ Temporary order created successfully with ID:', ticketId);
+            
+            // Clear cached form data from MovingInformationPage
+            sessionStorage.removeItem('homs_activeLocation');
+            sessionStorage.removeItem('homs_pickupDescription');
+            sessionStorage.removeItem('homs_dropoffDescription');
+            sessionStorage.removeItem('homs_pickupLocation');
+            sessionStorage.removeItem('homs_dropoffLocation');
+            sessionStorage.removeItem('homs_movingDate');
 
             message.success('Đã tạo thành công yêu cầu sơ bộ! Vui lòng xác nhận thỏa thuận để tiếp tục.');
 

@@ -94,6 +94,9 @@ const OrderCard = ({
     const incidentSt = incident ? INCIDENT_STATUS[incident.status] : null;
 
     const isQuoted = ticket.status === 'QUOTED';
+    const isCreated = ticket.status === 'CREATED';
+    const isConfirmed = ticket.status === 'WAITING_REVIEW' || ticket.status === 'WAITING_SURVEY';
+
     const hasPricing = ticket.pricing?.totalPrice > 0;
     const canReport = ['COMPLETED', 'IN_PROGRESS'].includes(ticket.invoice?.status) && !incident;
     const shortCode = `#${(ticket.code || '').slice(-14).toUpperCase() || 'N/A'}`;
@@ -118,8 +121,14 @@ const OrderCard = ({
         && !ticket.invoice?.understaffedApproval;
 
     return (
-        <div className={`mo-card ${isQuoted ? 'mo-card--highlight' : ''}`}>
+        <div className={`mo-card ${isQuoted ? 'mo-card--highlight' : ''} ${isCreated ? 'mo-card--new' : ''}`}>
             {/* Notifications */}
+            {isCreated && (
+                <div className="mo-new-notice">
+                    <FileTextOutlined className="mo-quoted-notice-icon mo-shake-animation" style={{ color: '#1890ff' }} />
+                    <span>Đơn hàng đang chờ xử lý — Đội ngũ HOMS sẽ sớm liên hệ với bạn để xác nhận và khảo sát.</span>
+                </div>
+            )}
             {isQuoted && (
                 <div className="mo-quoted-notice">
                     <NotificationOutlined className="mo-quoted-notice-icon mo-shake-animation" />

@@ -13,6 +13,7 @@ const SurveyInput = lazy(() => import("../../pages/DispatcherPage/SurveyInput/Su
 const ResourceAllocation = lazy(() => import("../../pages/DispatcherPage/ResourceAllocation"));
 const DispatchedOrders = lazy(() => import("../../pages/DispatcherPage/DispatchedOrders"));
 const VideoChat = lazy(() => import("../../pages/VideoChat/VideoChat"));
+const NotificationPage = lazy(() => import("../../pages/CommonPage/Notifications/NotificationPage"));
 
 const RouteGuard = ({ children, generalOnly, regionalOnly }) => {
   const { user } = useSelector((state) => state.auth);
@@ -32,13 +33,7 @@ const RoutesDispatcher = () => {
     <Suspense fallback={<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}><Spin size="large" tip="Đang tải trang..."><div></div></Spin></div>}>
       <Routes>
 
-        <Route
-          element={
-            <ProtectedRoute allowedRoles={["dispatcher"]}>
-              <DispatcherLayout />
-            </ProtectedRoute>
-          }
-        >
+        <Route element={<ProtectedRoute allowedRoles={["dispatcher"]}><DispatcherLayout /></ProtectedRoute>}>
 
           <Route path="/" element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<RouteGuard generalOnly><DispatcherDashboard /></RouteGuard>} />
@@ -48,6 +43,7 @@ const RoutesDispatcher = () => {
           <Route path="allocation" element={<RouteGuard generalOnly><ResourceAllocation /></RouteGuard>} />
           <Route path="assigned-orders" element={<RouteGuard generalOnly><DispatchedOrders /></RouteGuard>} />
           <Route path="video-chat" element={<VideoChat />} />
+          <Route path="notifications" element={<NotificationPage />} />
 
         </Route>
       </Routes>

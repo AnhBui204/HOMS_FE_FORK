@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import io from 'socket.io-client';
 import { useSearchParams, useLocation } from 'react-router-dom';
-import { Layout, Badge } from 'antd';
+import { Layout, Badge, Image, Progress, Dropdown, Menu } from 'antd';
 import {
   VideoCameraOutlined,
   CloseOutlined,
@@ -16,7 +16,12 @@ import {
   PaperClipOutlined,
   FileImageOutlined,
   EyeOutlined,
-  DownloadOutlined
+  DownloadOutlined,
+  MoreOutlined,
+  DeleteOutlined,
+  InfoCircleOutlined,
+  FileTextOutlined,
+  FileDoneOutlined
 } from '@ant-design/icons';
 import AppHeader from '../../components/header/header';
 import AppFooter from '../../components/footer/footer';
@@ -107,7 +112,9 @@ function VideoChat() {
   const fileInputRef = useRef(null);
 
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [isCalling, setIsCalling] = useState(false);
+  const [previewVideo, setPreviewVideo] = useState(null);
 
   // Setup Socket connection with authentication
   useEffect(() => {
@@ -136,6 +143,29 @@ function VideoChat() {
       }
     };
 
+    const fetchMessages = async () => {
+      if (!roomId) return;
+      try {
+        const { default: api } = await import('../../services/api');
+        const res = await api.get(`/messages/ticket/${roomId}?page=1&limit=50`);
+        if (res.data?.success) {
+          const formatted = res.data.data.map(msg => ({
+            _id: msg._id,
+            message: msg.content,
+            type: msg.type,
+            attachments: msg.attachments,
+            senderName: msg.senderName,
+            senderId: msg.senderId,
+            time: new Date(msg.timestamp).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+          }));
+          setMessages(formatted);
+        }
+      } catch (err) {
+        console.error('[VideoChat] Error fetching message history via API:', err);
+      }
+    };
+
+    fetchMessages();
     initializeSocket();
     return () => { if (newSocket) newSocket.disconnect(); };
   }, [roomId]);
@@ -166,17 +196,6 @@ function VideoChat() {
   // Listen for socket events
   useEffect(() => {
     if (!socket) return;
-
-    const handleChatHistory = (history) => {
-      const formattedHistory = history.map(msg => ({
-        message: msg.content,
-        type: msg.type,
-        attachments: msg.attachments,
-        sender: msg.senderName,
-        time: new Date(msg.timestamp).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
-      }));
-      setMessages(formattedHistory);
-    };
 
     const handleReceiveMessage = (data) => setMessages((prev) => [...prev, data]);
     const handleUserJoined = ({ userId }) => console.log('Người dùng tham gia phòng:', userId);
@@ -221,7 +240,6 @@ function VideoChat() {
     };
     const handleCallEnded = () => endCall();
 
-    socket.on('chat_history', handleChatHistory);
     socket.on('receive_message', handleReceiveMessage);
     socket.on('user_joined', handleUserJoined);
     socket.on('offer', handleOffer);
@@ -231,7 +249,6 @@ function VideoChat() {
     socket.on('call_ended', handleCallEnded);
 
     return () => {
-      socket.off('chat_history', handleChatHistory);
       socket.off('receive_message', handleReceiveMessage);
       socket.off('user_joined', handleUserJoined);
       socket.off('offer', handleOffer);
@@ -394,12 +411,18 @@ function VideoChat() {
     if (!files.length || !socket) return;
 
     setIsUploading(true);
+    setUploadProgress(10);
+
     const formData = new FormData();
     files.forEach(file => formData.append('files', file));
 
     try {
       const res = await api.post('/uploads/chat-media', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+        headers: { 'Content-Type': 'multipart/form-data' },
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          setUploadProgress(percentCompleted);
+        }
       });
 
       if (res.data?.success) {
@@ -426,6 +449,16 @@ function VideoChat() {
       setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
+  };
+
+  // Helper for downloading media
+  const downloadMedia = (url, fileName) => {
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName || 'HOMS-Media';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const toggleVideo = () => {
@@ -475,6 +508,22 @@ function VideoChat() {
 
     return (
       <div className="vc-app-container">
+
+        {/* Video Preview Modal */}
+        {previewVideo && (
+          <div className="vc-video-preview-overlay" onClick={() => setPreviewVideo(null)}>
+            <div className="vc-video-preview-modal" onClick={e => e.stopPropagation()}>
+              <button className="vc-video-preview-close" onClick={() => setPreviewVideo(null)}>×</button>
+              <video 
+                src={previewVideo} 
+                className="vc-video-preview-player" 
+                controls 
+                autoPlay
+                playsInline
+              />
+            </div>
+          </div>
+        )}
 
         {/* Incoming Call Modal */}
         {incomingCallFrom && !isInCall && (
@@ -533,37 +582,152 @@ function VideoChat() {
                 </div>
               )}
               {messages.map((msg, idx) => {
-                const isMine = msg.sender === userName;
+                // if (msg.type === 'System') {
+                //   return (
+                //     <div key={msg._id || idx} className="vc-system-message-wrapper">
+                //       <div className="vc-system-bubble">
+                //         <span className="vc-system-text">{msg.message}</span>
+                //         <span className="vc-system-time">{msg.time}</span>
+                //       </div>
+                //     </div>
+                //   );
+                // }
+
+                const myUserId = user?.id || user?.userId || user?._id;
+                const isMine = msg.senderId ? String(msg.senderId) === String(myUserId) : msg.sender === userName;
+                const isMediaOnly = msg.type === 'Media' && !msg.message;
+
                 return (
-                  <div key={idx} className={`vc-message ${isMine ? 'vc-message--mine' : 'vc-message--other'}`}>
-                    {!isMine && <div className="vc-message-sender">{msg.sender}</div>}
+                  <div 
+                    key={msg._id || idx}
+                    className={`vc-message ${isMine ? 'vc-message--mine' : 'vc-message--other'} ${isMediaOnly ? 'vc-message--media-only' : ''}`}
+                  >
+                    {!isMine && <div className="vc-message-sender">{msg.senderName || msg.sender}</div>}
                     <div className="vc-message-bubble">
-                      {msg.type === 'Media' && msg.attachments && msg.attachments.length > 0 && (
-                        <div className="vc-message-attachments">
-                          {msg.attachments.map((att, attIdx) => (
-                            <div key={attIdx} className="vc-attachment-item">
-                              {att.type === 'Image' ? (
-                                <div className="vc-image-container">
-                                  <img src={att.url} alt="attachment" className="vc-chat-image" onClick={() => window.open(att.url, '_blank')} />
-                                  <div className="vc-image-overlay">
-                                    <EyeOutlined onClick={() => window.open(att.url, '_blank')} />
+                      {msg.type === 'Media' && msg.attachments && (() => {
+                        const images = msg.attachments.filter(a => a.type === 'Image');
+                        const videos = msg.attachments.filter(a => a.type === 'Video');
+                        const files = msg.attachments.filter(a => a.type === 'File' || (!['Image', 'Video'].includes(a.type)));
+
+                        const renderSectionBurger = (items, label) => (
+                          <div className="vc-attachment-section-header">
+                            <span className="vc-attachment-section-title">{label} ({items.length})</span>
+                            <Dropdown
+                              overlay={
+                                <Menu>
+                                  <Menu.Item 
+                                    key="download-all" 
+                                    icon={<DownloadOutlined />} 
+                                    onClick={() => items.forEach((att, idx) => setTimeout(() => downloadMedia(att.url), idx * 300))}
+                                  >
+                                    Tải xuống tất cả
+                                  </Menu.Item>
+                                  <Menu.Item 
+                                    key="details" 
+                                    icon={<InfoCircleOutlined />}
+                                    onClick={() => alert(`Thông tin: Section này chứa ${items.length} ${label.toLowerCase()}.`)}
+                                  >
+                                    Xem chi tiết
+                                  </Menu.Item>
+                                </Menu>
+                              }
+                              trigger={['click']}
+                              placement="bottomRight"
+                            >
+                              <div className="vc-section-burger">
+                                <MoreOutlined />
+                              </div>
+                            </Dropdown>
+                          </div>
+                        );
+
+                        return (
+                          <div className="vc-attachments-container">
+                            {images.length > 0 && (
+                              <div className="vc-attachment-group">
+                                {renderSectionBurger(images, "Hình ảnh")}
+                                <Image.PreviewGroup>
+                                  <div className={`vc-message-attachments ${images.length >= 3 ? 'vc-message-attachments--grid' : ''}`}>
+                                    {images.map((att, attIdx) => (
+                                      <div key={attIdx} className="vc-attachment-item">
+                                        <div className="vc-media-options">
+                                          <Dropdown
+                                            overlay={
+                                              <Menu>
+                                                <Menu.Item icon={<DownloadOutlined />} onClick={() => downloadMedia(att.url)}>Tải xuống</Menu.Item>
+                                              </Menu>
+                                            }
+                                            trigger={['click']}
+                                          >
+                                            <div className="vc-media-burger"><MoreOutlined /></div>
+                                          </Dropdown>
+                                        </div>
+                                        <Image 
+                                          src={att.url} 
+                                          className="vc-chat-image"
+                                          placeholder={<div className="vc-image-placeholder"><LoadingOutlined /></div>}
+                                        />
+                                      </div>
+                                    ))}
                                   </div>
+                                </Image.PreviewGroup>
+                              </div>
+                            )}
+                            
+                            {videos.length > 0 && (
+                              <div className="vc-attachment-group">
+                                {renderSectionBurger(videos, "Video")}
+                                <div className={`vc-message-attachments ${videos.length >= 3 ? 'vc-message-attachments--grid' : ''}`}>
+                                  {videos.map((att, attIdx) => (
+                                    <div key={attIdx} className="vc-attachment-item">
+                                      <div className="vc-media-options">
+                                        <Dropdown
+                                          overlay={
+                                            <Menu>
+                                              <Menu.Item icon={<DownloadOutlined />} onClick={() => downloadMedia(att.url)}>Tải xuống</Menu.Item>
+                                              <Menu.Item icon={<EyeOutlined />} onClick={() => setPreviewVideo(att.url)}>Xem chi tiết</Menu.Item>
+                                            </Menu>
+                                          }
+                                          trigger={['click']}
+                                        >
+                                          <div className="vc-media-burger"><MoreOutlined /></div>
+                                        </Dropdown>
+                                      </div>
+                                      <div className="vc-video-container" onClick={() => setPreviewVideo(att.url)} style={{ cursor: 'pointer' }}>
+                                        <video 
+                                          src={att.url} 
+                                          className="vc-chat-video" 
+                                          playsInline
+                                        />
+                                      </div>
+                                    </div>
+                                  ))}
                                 </div>
-                              ) : att.type === 'Video' ? (
-                                <div className="vc-video-container">
-                                  <video src={att.url} controls className="vc-chat-video" />
+                              </div>
+                            )}
+
+                            {files.length > 0 && (
+                              <div className="vc-attachment-group">
+                                {renderSectionBurger(files, "Tài liệu")}
+                                <div className="vc-message-attachments vc-message-attachments--files">
+                                  {files.map((att, attIdx) => (
+                                    <div key={attIdx} className="vc-file-attachment-item" onClick={() => downloadMedia(att.url)}>
+                                      <div className="vc-file-icon">
+                                        <FileTextOutlined />
+                                      </div>
+                                      <div className="vc-file-info">
+                                        <div className="vc-file-name">{att.url.split('/').pop().split('?')[0] || 'Document'}</div>
+                                        <div className="vc-file-size">Nhấn để tải xuống</div>
+                                      </div>
+                                      <DownloadOutlined className="vc-file-download-icon" />
+                                    </div>
+                                  ))}
                                 </div>
-                              ) : (
-                                <div className="vc-file-container" onClick={() => window.open(att.url, '_blank')}>
-                                  <PaperClipOutlined />
-                                  <span className="vc-file-name">Tệp đính kèm</span>
-                                  <DownloadOutlined />
-                                </div>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
                       {msg.message && <div className="vc-message-text">{msg.message}</div>}
                     </div>
                     <div className="vc-message-time">{msg.time}</div>
@@ -572,6 +736,16 @@ function VideoChat() {
               })}
               <div ref={messagesEndRef} />
             </div>
+
+            {isUploading && (
+              <div className="vc-upload-progress-container">
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                  <span style={{ fontSize: 12, color: '#64748b' }}>Đang tải lên tài liệu khảo sát...</span>
+                  <span style={{ fontSize: 12, fontWeight: 600 }}>{uploadProgress}%</span>
+                </div>
+                <Progress percent={uploadProgress} size="small" showInfo={false} strokeColor="#44624a" />
+              </div>
+            )}
 
             <form className="vc-chat-input" onSubmit={handleSendMessage}>
               <input

@@ -625,6 +625,229 @@
   font-weight: 600;
 }
 
+/* -- Media Grid & Bubble-less Styling -- */
+.vc-message--media-only .vc-message-bubble {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  padding: 0 !important;
+}
+
+.vc-attachments-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 4px;
+}
+
+.vc-attachment-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.vc-attachment-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 8px;
+  margin-bottom: 2px;
+}
+
+.vc-message--mine .vc-attachment-section-header {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.vc-attachment-section-title {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  opacity: 0.7;
+}
+
+.vc-message--mine .vc-attachment-section-title {
+  color: #fff;
+}
+
+.vc-section-burger {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s;
+  opacity: 0.8;
+}
+
+.vc-section-burger:hover {
+  background: rgba(0, 0, 0, 0.08);
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.vc-message--mine .vc-section-burger:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.vc-message-attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 6px;
+  width: 100%;
+}
+
+.vc-message-attachments--grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(80px, 1fr));
+  max-width: 350px;
+  min-width: fit-content;
+}
+
+.vc-attachment-item {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.vc-message-attachments--grid .vc-attachment-item {
+  aspect-ratio: 1 / 1;
+}
+
+.vc-attachment-item:hover {
+  transform: scale(1.05);
+  z-index: 2;
+}
+
+/* -- File Attachment Styling -- */
+.vc-message-attachments--files {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.vc-file-attachment-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  max-width: 280px;
+  text-decoration: none;
+}
+
+.vc-message--mine .vc-file-attachment-item {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+.vc-file-attachment-item:hover {
+  border-color: #44624a;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+}
+
+.vc-message--mine .vc-file-attachment-item:hover {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.vc-file-icon {
+  width: 36px;
+  height: 36px;
+  background: #f1f5f9;
+  color: #44624a;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.vc-message--mine .vc-file-icon {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+.vc-file-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.vc-file-name {
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: inherit;
+}
+
+.vc-file-size {
+  font-size: 11px;
+  opacity: 0.6;
+}
+
+.vc-file-download-icon {
+  font-size: 16px;
+  color: #94a3b8;
+}
+
+.vc-message--mine .vc-file-download-icon {
+  color: #fff;
+  opacity: 0.8;
+}
+
+/* -- Improved Media Input & Progress -- */
+.vc-upload-progress-container {
+  padding: 8px 16px;
+  background: #fff;
+  border-top: 1px solid #f1f5f9;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* -- Burger Menu Overlay (Individual) -- */
+.vc-media-options {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  z-index: 10;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.vc-attachment-item:hover .vc-media-options {
+  opacity: 1;
+}
+
+.vc-media-burger {
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
 /* ── Call Controls ───────────────────────────────────────────── */
 .vc-controls {
   display: flex;
@@ -963,4 +1186,118 @@
   font-size: 14px;
   color: #94a3b8;
   margin: 0;
+}
+
+/* -- Video Preview Modal ------------------------------------ */
+.vc-video-preview-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3000;
+  padding: 16px;
+}
+
+.vc-video-preview-modal {
+  position: relative;
+  width: 100%;
+  max-width: 900px;
+  max-height: 80vh;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+}
+
+.vc-video-preview-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  font-size: 24px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  transition: background 0.2s;
+}
+
+.vc-video-preview-close:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.vc-video-preview-player {
+  width: 100%;
+  height: 100%;
+  max-height: 80vh;
+  display: block;
+}
+
+/* -- System Messages ------------------------------------------ */
+.vc-system-message-wrapper {
+  display: flex;
+  justify-content: center;
+  margin: 16px 0;
+  width: 100%;
+}
+
+.vc-system-bubble {
+  background-color: #f3f4f6;
+  color: #6b7280;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.vc-system-text {
+  text-align: center;
+  line-height: 1.4;
+}
+
+.vc-system-time {
+  font-size: 0.7rem;
+  margin-top: 4px;
+  opacity: 0.7;
+}
+
+/* -- System Messages ------------------------------------------ */
+.vc-system-message-wrapper {
+  display: flex;
+  justify-content: center;
+  margin: 16px 0; width: 100%;
+}
+
+.vc-system-bubble {
+  background-color: #f3f4f6;
+  color: #6b7280;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.vc-system-text {
+  text-align: center;
+  line-height: 1.4;
+}
+
+.vc-system-time {
+  font-size: 0.7rem;
+  margin-top: 4px;
+  opacity: 0.7;
 }

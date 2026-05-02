@@ -10,6 +10,7 @@ import {
   ShareAltOutlined,
   FileTextOutlined,
   MessageOutlined,
+  BellOutlined,
 } from '@ant-design/icons';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import AppHeader from './header/header';
@@ -72,6 +73,11 @@ const DispatcherLayout = () => {
       key: '/dispatcher/video-chat',
       icon: <MessageOutlined />,
       label: 'Nhắn tin & Video call',
+    },
+    {
+      key: '/dispatcher/notifications',
+      icon: <BellOutlined />,
+      label: 'Thông báo',
     },
   ];
 

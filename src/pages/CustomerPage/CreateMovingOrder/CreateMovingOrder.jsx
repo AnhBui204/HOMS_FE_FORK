@@ -386,6 +386,7 @@ const MovingInformationPage = () => {
                                         <div style={{ flex: 1 }}>
                                             <DatePicker
                                                 placeholder="Chọn thời gian"
+                                                value={movingDate}
                                                 onChange={(date) => { setMovingDate(date); setErrors(prev => ({...prev, movingDate: null})); }}
                                                 showTime
                                                 status={errors.movingDate ? 'error' : ''}
