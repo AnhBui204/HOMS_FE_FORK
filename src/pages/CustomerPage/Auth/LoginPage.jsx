@@ -8,7 +8,7 @@ const LoginPage = () => {
       <AuthFormWrapper
         title="Đăng nhập"
         subtitle="Chưa có tài khoản?"
-        linkText="Đăng kí ngay"
+        linkText="Đăng ký ngay"
         linkTo="/register"
       >
         <LoginForm />

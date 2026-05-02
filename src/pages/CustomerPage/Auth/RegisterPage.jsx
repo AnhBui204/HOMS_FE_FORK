@@ -6,7 +6,7 @@ const RegisterPage = () => {
   return (
     <AuthLayout>
       <AuthFormWrapper
-        title="Đăng Kí"
+        title="Đăng Ký"
         subtitle="Đã có tài khoản?"
         linkText="Đăng nhập"
         linkTo="/login"
