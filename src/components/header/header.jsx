@@ -74,8 +74,17 @@ useEffect(() => {
     setNotifications(updatedNotifications);
     setUnreadCount(updatedNotifications.filter(n => !n.isRead).length);
 
+    const isDispatcher = user?.role === "dispatcher";
+    const isStaff = user?.role === "staff";
+    
     if (notification.ticketId) {
-      navigate(`/customer/order/`);
+      if (isDispatcher) {
+        navigate(`/dispatcher/surveys?ticketCode=${notification.ticketCode || ''}`);
+      } else if (isStaff) {
+        navigate(`/staff/tasks`);
+      } else {
+        navigate(`/customer/order/`);
+      }
     }
 
   } catch (err) {
@@ -115,7 +124,10 @@ useEffect(() => {
         )}
       />
       <div style={{ textAlign: "center", marginTop: "8px", borderTop: "1px solid #f0f0f0", paddingTop: "8px", paddingBottom: "4px" }}>
-        <Link to="/customer/notifications" style={{ color: "#2D4F36", fontWeight: 600 }} onClick={() => setUnreadCount(prev => prev)}>
+        <Link 
+          to={user?.role === "dispatcher" ? "/dispatcher/notifications" : "/customer/notifications"} 
+          style={{ color: "#2D4F36", fontWeight: 600 }}
+        >
           Xem toàn bộ thông báo
         </Link>
       </div>
@@ -238,14 +250,19 @@ const handleLogout = () => {
                         {
                           key: "profile",
                           label: "Trang cá nhân",
-                          onClick: () => navigate("/customer/profile")
+                          onClick: () => {
+                            const role = user?.role;
+                            if (role === "admin") navigate("/admin/users");
+                            else if (role === "dispatcher") navigate("/dispatcher/dashboard");
+                            else navigate("/customer/profile");
+                          }
                         },
-                        {
+                        user?.role === "customer" && {
                           key: "contracts",
                           label: "Hợp đồng của tôi",
                           onClick: () => navigate("/customer/contracts") 
                         },
-                        {
+                        user?.role === "customer" && {
                           key: "invoices",
                           label: "Hóa đơn của tôi",
                           onClick: () => navigate("/customer/invoices")
@@ -259,7 +276,7 @@ const handleLogout = () => {
                           danger: true,
                           onClick: handleLogout,
                         },
-                      ],
+                      ].filter(Boolean),
                     }}
                   >
                     <Button
