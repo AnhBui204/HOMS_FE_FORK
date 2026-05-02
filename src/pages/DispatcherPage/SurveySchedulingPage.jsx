@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
+import { useSelector } from 'react-redux';
 import {
   Table, Button, Tag, Modal, Form, Select, message, Space, Card, Typography, DatePicker, Divider,
   Row, Col, InputNumber, Checkbox, Alert, Input, Image, Tooltip
 } from "antd";
 import {
-  CheckCircleOutlined, CloseCircleOutlined, RobotOutlined, UserSwitchOutlined, CalendarOutlined, ClockCircleOutlined
+  CheckCircleOutlined, CloseCircleOutlined, RobotOutlined, UserSwitchOutlined, CalendarOutlined, ClockCircleOutlined, DollarCircleOutlined, EyeOutlined
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import {
@@ -12,7 +13,6 @@ import {
   surveyService,
   userService
 } from "../../services/surveysService";
-import { DollarCircleOutlined, EyeOutlined } from "@ant-design/icons";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -146,13 +146,29 @@ const SurveySchedulingPage = () => {
   const [isAiReviewModalVisible, setIsAiReviewModalVisible] = useState(false);
   const [currentAiSurveyData, setCurrentAiSurveyData] = useState(null);
   const [formAiReview] = Form.useForm();
-  // ── Data Fetching ───────────────────────────────────────────────────────────
+  
+  const user = useSelector((state) => state.auth.user);
+  console.log(" [DEBUG] Current User Object:", user);
+  const isHeadDispatcher = 
+      user?.dispatcherProfile?.isGeneral === true || 
+      user?.dispatcherProfile?.isGeneral === "true";
+  
+    // ── Data Fetching ───────────────────────────────────────────────────────────
   const fetchData = async () => {
     setLoading(true);
     try {
+      /* 
+      Filter statuses conditionally based on the role: 
+       - Head Dispatcher sees CREATED to perform approve/reject actions.
+       - District Dispatcher only sees tickets that have already been approved (status != CREATED).
+      */
+      const queryStatuses = isHeadDispatcher
+        ? "CREATED,WAITING_SURVEY,WAITING_REVIEW,ASSIGNMENT_FAILED"
+        : "WAITING_SURVEY,WAITING_REVIEW,ASSIGNMENT_FAILED";
+
       const [resTickets, resDispatchers] = await Promise.all([
         requestTicketService.getTickets({
-          status: "CREATED,WAITING_SURVEY,WAITING_REVIEW,ASSIGNMENT_FAILED"
+          status: queryStatuses
         }),
         userService.getDispatchers()
       ]);
@@ -566,11 +582,11 @@ const SurveySchedulingPage = () => {
                   </Tooltip>
                 )}
                 <Tooltip title="Từ chối">
-                  <Button 
-                    danger 
+                  <Button
+                    danger
                     shape="circle"
-                    icon={<CloseCircleOutlined />} 
-                    onClick={() => handleCancelTicket(record)} 
+                    icon={<CloseCircleOutlined />}
+                    onClick={() => handleCancelTicket(record)}
                   />
                 </Tooltip>
               </>
@@ -621,12 +637,12 @@ const SurveySchedulingPage = () => {
             {/* --- STATE: ASSIGNMENT_FAILED --- */}
             {record.status === "ASSIGNMENT_FAILED" && (
               <Tooltip title="Phân công thủ công">
-                <Button 
-                  type="primary" 
-                  danger 
+                <Button
+                  type="primary"
+                  danger
                   shape="circle"
-                  icon={<UserSwitchOutlined />} 
-                  onClick={() => openManualAssignModal(record)} 
+                  icon={<UserSwitchOutlined />}
+                  onClick={() => openManualAssignModal(record)}
                 />
               </Tooltip>
             )}
