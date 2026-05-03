@@ -65,8 +65,18 @@ const Dashboard = () => {
         { title: 'Thời gian', dataIndex: 'time', key: 'time' },
         { title: 'Địa điểm', dataIndex: 'location', key: 'location' },
         { title: 'Trạng thái', dataIndex: 'status', key: 'status', render: (s) => {
-            const color = s === 'Completed' ? 'green' : s === 'Canceled' ? 'red' : 'gold';
-            return <Tag color={color}>{s}</Tag>;
+            const raw = (s || '').toString();
+            const lower = raw.toLowerCase();
+            // map common English statuses to Vietnamese
+            const map = {
+                completed: 'Hoàn thành',
+                canceled: 'Đã hủy',
+                'in progress': 'Đang xử lý',
+                partial: 'Thanh toán một phần'
+            };
+            const label = map[lower] || raw;
+            const color = lower === 'completed' ? 'green' : lower === 'canceled' ? 'red' : 'gold';
+            return <Tag color={color}>{label}</Tag>;
         } },
     ];
     const localLastOrdersMock = [
