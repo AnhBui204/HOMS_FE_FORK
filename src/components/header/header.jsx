@@ -232,7 +232,7 @@ const handleLogout = () => {
                     </Link>
                     <Link to="/register">
                       <Button type="primary" className="signup">
-                        Đăng Kí
+                        Đăng Ký
                       </Button>
                     </Link>
                   </>
@@ -379,7 +379,7 @@ const handleLogout = () => {
                   </Link>
                   <Link to="/register" onClick={() => setMobileMenuVisible(false)}>
                     <Button type="primary" block size="large" style={{ borderRadius: '8px', background: '#2D4F36' }}>
-                      Đăng Kí
+                      Đăng Ký
                     </Button>
                   </Link>
                 </div>

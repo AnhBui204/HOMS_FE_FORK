@@ -420,8 +420,14 @@ const UserManagement = () => {
                     <Tooltip title="Xem chi tiết">
                         <Button type="text" icon={<EyeOutlined />} size="small" onClick={() => navigate(`/admin/users/${record._id}`)} />
                     </Tooltip>
-                    <Tooltip title="Chỉnh sửa">
-                        <Button type="text" icon={<EditOutlined />} size="small" onClick={() => openEditModal(record)} />
+                    <Tooltip title={(record.role || '').toString().toLowerCase() === 'customer' ? 'Không có quyền chỉnh sửa thông tin khách hàng' : 'Chỉnh sửa'}>
+                        <Button
+                            type="text"
+                            icon={<EditOutlined />}
+                            size="small"
+                            onClick={() => openEditModal(record)}
+                            disabled={(record.role || '').toString().toLowerCase() === 'customer'}
+                        />
                     </Tooltip>
                     {record.role !== 'admin' && (
                         <>
