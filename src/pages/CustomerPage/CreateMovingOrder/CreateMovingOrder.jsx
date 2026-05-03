@@ -7,7 +7,7 @@ import dayjs from 'dayjs';
 
 import AppHeader from "../../../components/header/header";
 import AppFooter from "../../../components/footer/footer";
-import LocationPicker from "../../../components/LocationPicker/LocationPicker";
+import LocationPicker from "../../../components/LocationPicker/LocationPicker-VN";
 import api from "../../../services/api";
 
 import "./style.css";
@@ -95,14 +95,14 @@ const MovingInformationPage = () => {
     const [isRecommending, setIsRecommending] = useState(false);
     const [recommendError, setRecommendError] = useState(null);
     const [experimentGroup, setExperimentGroup] = useState(null);
-    
+
     // High-value and Insurance state
     const [isHighValue, setIsHighValue] = useState(false);
     const [declaredValue, setDeclaredValue] = useState(0);
     const [highValueDesc, setHighValueDesc] = useState('');
     const [insurancePkg, setInsurancePkg] = useState('BASIC');
     const [insurancePackages, setInsurancePackages] = useState([]);
-    
+
     // Fetch insurance packages
     React.useEffect(() => {
         const fetchPackages = async () => {
@@ -387,7 +387,7 @@ const MovingInformationPage = () => {
                                             <DatePicker
                                                 placeholder="Chọn thời gian"
                                                 value={movingDate}
-                                                onChange={(date) => { setMovingDate(date); setErrors(prev => ({...prev, movingDate: null})); }}
+                                                onChange={(date) => { setMovingDate(date); setErrors(prev => ({ ...prev, movingDate: null })); }}
                                                 showTime
                                                 status={errors.movingDate ? 'error' : ''}
                                                 format="DD/MM/YYYY HH:mm"
@@ -424,7 +424,7 @@ const MovingInformationPage = () => {
                                         {/* AI Floating Suggestion Badge & Popover */}
                                         {movingDate && (() => {
                                             const getAiLabelConfig = (label) => {
-                                                switch(label) {
+                                                switch (label) {
                                                     case 'BEST': return { color: '#44624a', bgText: '#6a8d71', text: 'TỐI ƯU', bg: '#f1f5f2', border: '#baccbe' };
                                                     case 'GOOD': return { color: '#096dd9', bgText: '#1890ff', text: 'KHÁ TỐT', bg: '#e6f7ff', border: '#91d5ff' };
                                                     case 'BAD': return { color: '#cf1322', bgText: '#ff4d4f', text: 'RỦI RO', bg: '#fff1f0', border: '#ffa39e' };
@@ -456,7 +456,7 @@ const MovingInformationPage = () => {
                                                                         </div>
                                                                     </div>
                                                                 </div>
-                                                                
+
                                                                 {bestSlot.reasons && bestSlot.reasons.length > 0 && (
                                                                     <div style={{ background: slotConfig.bg, padding: '8px 12px', borderRadius: 4, marginBottom: 4 }}>
                                                                         <ul style={{ margin: '0 0 0 14px', padding: 0, fontSize: 13, color: '#333' }}>
@@ -487,11 +487,11 @@ const MovingInformationPage = () => {
                                                                                         setMovingDate(slotMoment);
                                                                                         setErrors(prev => ({ ...prev, movingDate: null }));
                                                                                     }}
-                                                                                    style={{ 
+                                                                                    style={{
                                                                                         flex: '1 1 auto',
                                                                                         height: 'auto',
                                                                                         padding: '6px',
-                                                                                        borderRadius: 6, 
+                                                                                        borderRadius: 6,
                                                                                         borderColor: isSelected ? altConfig.color : altConfig.border,
                                                                                         background: isSelected ? altConfig.color : '#fff',
                                                                                         color: isSelected ? '#fff' : altConfig.color,
@@ -520,10 +520,10 @@ const MovingInformationPage = () => {
                                                     trigger="click"
                                                     placement="rightTop"
                                                 >
-                                                    <div style={{ 
-                                                        cursor: 'pointer', 
-                                                        padding: '6px 12px', 
-                                                        background: slotConfig.bg, 
+                                                    <div style={{
+                                                        cursor: 'pointer',
+                                                        padding: '6px 12px',
+                                                        background: slotConfig.bg,
                                                         border: `1px solid ${slotConfig.border}`,
                                                         borderRadius: '6px',
                                                         display: 'flex',
