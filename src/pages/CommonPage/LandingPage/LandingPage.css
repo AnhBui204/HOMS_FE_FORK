@@ -431,84 +431,108 @@ body {
 }
 
 /* ====================================================
-   WHY CHOOSE US SECTION
+   WHY CHOOSE US SECTION (FOLD CARDS)
    ==================================================== */
 .why-choose-us-section {
   background: #fff;
   padding: 90px 40px;
 }
 
-.why-card {
-  border-radius: 18px !important;
-  border: 1.5px solid #E8EDEA !important;
-  background: #F7F8F6 !important;
-  text-align: center !important;
-  display: block !important;
-  transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease !important;
-  overflow: hidden;
+.fold-card {
   position: relative;
-  height: 100%;
-}
-
-.why-card .ant-card-body {
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-  justify-content: center !important;
-}
-
-.why-card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, transparent 60%, rgba(139, 168, 136, 0.12) 100%);
-  pointer-events: none;
-}
-
-.why-card:hover {
-  transform: translateY(-8px) !important;
-  box-shadow: 0 16px 40px rgba(45, 79, 54, 0.12) !important;
-  background: linear-gradient(135deg, #edf4ee 0%, #deeadf 100%) !important;
-}
-
-.why-icon-wrapper {
-  width: 68px;
-  height: 68px;
-  border-radius: 16px;
-  background: linear-gradient(135deg, #C0CFB2 0%, rgba(139, 168, 136, 0.5) 100%);
+  width: 100%;
+  height: 250px;
+  background-color: #F7F8F6;
+  border-radius: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 18px;
-  font-size: 30px;
+  overflow: hidden;
+  perspective: 1000px;
+  box-shadow: 0 4px 12px rgba(45, 79, 54, 0.05);
+  transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  border: 1px solid #E8EDEA;
+  cursor: pointer;
+}
+
+.fold-card__icon-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.fold-card__icon-wrapper .anticon {
+  font-size: 40px;
   color: #2D4F36;
-  transition: transform 0.3s ease, background 0.3s ease;
+  background: linear-gradient(135deg, #C0CFB2 0%, #8BA888 100%);
+  padding: 18px;
+  border-radius: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 12px rgba(139, 168, 136, 0.3);
 }
 
-.why-card:hover .why-icon-wrapper {
-  transform: scale(1.12);
-  background: linear-gradient(135deg, #2D4F36 0%, #44624A 100%);
-  color: #fff;
+.fold-card__title-front {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #2D4F36;
+    margin: 0;
 }
 
-.why-card h3 {
-  color: #2D4F36 !important;
-  font-size: 1rem !important;
-  font-weight: 700 !important;
-  margin-bottom: 8px !important;
-  text-align: center !important;
+.fold-card:hover {
+  transform: scale(1.05);
+  box-shadow: 0 15px 35px rgba(45, 79, 54, 0.15);
+  border-color: #8BA888;
 }
 
-.why-card p {
-  color: #666 !important;
-  font-size: 0.88rem !important;
-  margin: 0 !important;
-  line-height: 1.6 !important;
-  text-align: center !important;
+.fold-card__content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  padding: 24px;
+  box-sizing: border-box;
+  background-color: #F7F8F6;
+  transform: rotateX(-90deg);
+  transform-origin: bottom;
+  transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  border-radius: 20px;
+}
+
+.fold-card:hover .fold-card__content {
+  transform: rotateX(0deg);
+  background: linear-gradient(135deg, #F7F8F6 0%, #E8EDEA 100%);
+}
+
+.fold-card__title {
+  margin: 0 0 12px;
+  font-size: 1.1rem;
+  color: #2D4F36;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.fold-card:hover .fold-card__icon-wrapper {
+  scale: 0;
+  opacity: 0;
+}
+
+.fold-card__description {
+  margin: 0;
+  font-size: 0.92rem;
+  color: #555;
+  line-height: 1.6;
 }
 
 /* ====================================================
-   PROCESS SECTION (MODERN)
+   PROCESS SECTION (FLIP CARDS)
    ==================================================== */
 .process-section {
   background: #F7F8F6;
@@ -519,9 +543,9 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  max-width: 1100px;
+  max-width: 1200px;
   margin: 0 auto;
-  gap: 20px;
+  gap: 30px;
   position: relative;
 }
 
@@ -532,107 +556,183 @@ body {
   position: relative;
 }
 
-.process-card-modern {
-  background: #fff;
-  border-radius: 20px;
-  padding: 30px 24px;
-  text-align: center;
-  width: 100%;
-  box-shadow: 0 10px 30px rgba(45, 79, 54, 0.08);
-  border: 1px solid rgba(224, 235, 226, 0.8);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  z-index: 2;
-  position: relative;
+/* Flip Card Core */
+.flip-card {
+    background-color: transparent;
+    width: 100%;
+    height: 22rem;
+    perspective: 100rem;
+    margin-bottom: 1rem;
+    cursor: pointer;
 }
 
-.process-card-modern:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 20px 40px rgba(45, 79, 54, 0.15);
+.flip-card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-style: preserve-3d;
+    box-shadow: 0 10px 30px rgba(45, 79, 54, 0.08);
+    border-radius: 20px;
+    border: 1px solid #8BA888;
 }
 
-.process-icon-badge {
-  width: 50px;
-  height: 50px;
-  background: linear-gradient(135deg, #2D4F36 0%, #44624A 100%);
-  color: #fff;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  font-weight: 800;
-  margin: 0 auto 20px;
-  box-shadow: 0 4px 12px rgba(45, 79, 54, 0.3);
+.flip-card:hover .flip-card-inner {
+    transform: rotateY(180deg);
 }
 
-.process-text-content h3 {
-  color: #2D4F36;
-  font-size: 1.1rem;
-  font-weight: 700;
-  margin-bottom: 8px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+.flip-card-front, .flip-card-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    border-radius: 20px;
+    padding: 30px 24px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 }
 
-.process-text-content p {
-  color: #666;
-  font-size: 0.9rem;
-  line-height: 1.5;
-  margin: 0;
+.flip-card-front {
+    background-color: #fff;
+    color: #333;
 }
 
-/* Horizontal Connector Line */
+.flip-number {
+    font-size: 3.5rem;
+    font-weight: 800;
+    background-image: linear-gradient(135deg, #2D4F36, #8BA888);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 10px;
+    line-height: 1;
+}
+
+.flip-title {
+    font-size: 1.3rem;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    background-image: linear-gradient(135deg, #2D4F36, #8BA888);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 800;
+}
+
+.flip-description {
+    font-size: 0.95rem;
+    color: #666;
+    margin-bottom: 20px;
+    line-height: 1.5;
+}
+
+.flip-cta {
+    font-size: 0.9rem;
+    color: #8BA888;
+    font-weight: 600;
+    margin-top: auto;
+    transition: color 0.3s;
+}
+
+.flip-card:hover .flip-cta {
+    color: #2D4F36;
+}
+
+.flip-card-back {
+    background: linear-gradient(135deg, #8BA888, #2D4F36);
+    color: white;
+    transform: rotateY(180deg);
+    box-shadow: 0 10px 30px rgba(45, 79, 54, 0.3);
+}
+
+.flip-title-back {
+    font-size: 1.3rem;
+    font-weight: 800;
+    margin-bottom: 15px;
+    color: #fff;
+    text-transform: uppercase;
+    border-bottom: 1px solid rgba(255,255,255,0.3);
+    padding-bottom: 8px;
+    width: 80%;
+}
+
+.flip-details {
+    color: rgba(255, 255, 255, 0.95);
+    margin: 0;
+    font-size: 0.95rem;
+    text-align: center;
+    line-height: 1.6;
+}
+
+/* Connector Line */
 .process-connector {
   position: absolute;
-  top: 55px;
-  /* Alignment with badges */
-  right: -10px;
-  width: 20px;
+  top: 50%;
+  right: -20px;
+  width: 25px;
   height: 2px;
   background: #C0CFB2;
   z-index: 1;
+  transform: translateY(-50%);
 }
 
 .process-connector::after {
   content: '';
   position: absolute;
-  right: 0;
+  right: -5px;
   top: 50%;
   transform: translateY(-50%);
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
   background: #8BA888;
   border-radius: 50%;
+  box-shadow: 0 0 8px rgba(139, 168, 136, 0.6);
 }
 
-@media (max-width: 992px) {
-  .process-steps-container {
-    flex-direction: column;
-    gap: 40px;
-  }
-
-  .process-step-item {
-    width: 100%;
-    max-width: 400px;
-  }
-
-  .process-connector {
-    right: auto;
-    left: 50%;
-    top: auto;
-    bottom: -30px;
-    width: 2px;
-    height: 30px;
-    transform: translateX(-50%);
-  }
-
-  .process-connector::after {
-    top: auto;
-    bottom: 0;
-    right: auto;
-    left: 50%;
-    transform: translateX(-50%);
-  }
+/* Mobile Responsive Flip Cards */
+@media only screen and (max-width: 549px) {
+    .process-steps-container {
+        flex-direction: column;
+        gap: 30px;
+    }
+    .process-step-item {
+        width: 100%;
+        max-width: 400px;
+    }
+    .flip-card {
+        height: auto !important;
+        perspective: none !important;
+        margin-bottom: 0;
+    }
+    .flip-card-front{
+        display: none;
+    }
+    .flip-card-inner {
+        transform: none !important;
+        transition: none !important;
+        transform-style: flat !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .flip-card-back {
+        position: relative !important;
+        width: 100% !important;
+        height: auto !important;
+        transform: none !important;
+        backface-visibility: visible !important;
+        border-radius: 20px !important;
+        padding: 30px 24px !important;
+    }
+    .flip-details {
+        font-size: 1rem;
+    }
+    .flip-card:hover .flip-card-inner {
+        transform: none !important;
+    }
+    .process-connector {
+        display: none;
+    }
 }
 
 /* ====================================================

@@ -277,52 +277,56 @@ const LandingPage = () => {
             id: 1,
             icon: <SafetyOutlined />,
             title: 'Bảo hiểm đồ đạc',
-            description: 'Toàn bộ hàng hoá được bảo hiểm 100%'
+            description: 'Toàn bộ tài sản được bảo hiểm 100% trong suốt quá trình vận chuyển. Chúng tôi cam kết đền bù thỏa đáng nếu xảy ra hư hỏng hoặc thất thoát.'
         },
         {
             id: 2,
             icon: <CheckCircleOutlined />,
             title: 'Giá đảm bảo',
-            description: 'Giá cố định, không phí ẩn'
+            description: 'Hệ thống báo giá minh bạch, cố định ngay từ đầu. Tuyệt đối không phát sinh chi phí ẩn hay phụ phí ngoài hợp đồng, giúp bạn an tâm về ngân sách.'
         },
         {
             id: 3,
             icon: <ClockCircleOutlined />,
             title: 'Đúng giờ',
-            description: 'Cam kết hoàn thành đúng thời hạn'
+            description: 'Chúng tôi trân trọng thời gian của khách hàng. Đội ngũ luôn có mặt đúng giờ hẹn và hoàn thành vận chuyển theo đúng tiến độ đã cam kết.'
         },
         {
             id: 4,
             icon: <TeamOutlined />,
             title: 'Đội ngũ chuyên nghiệp',
-            description: 'Nhân viên được đào tạo chuyên sâu'
+            description: 'Nhân viên được đào tạo bài bản về kỹ thuật đóng gói, bốc xếp và thái độ phục vụ tận tâm, lịch sự, đảm bảo trải nghiệm tốt nhất.'
         },
     ];
 
     const processData = [
         {
             id: 1,
-            number: '1',
+            number: '01',
             title: 'Tiếp nhận',
-            description: 'Gọi hoặc đặt lịch trực tuyến'
+            description: 'Gọi hoặc đặt lịch trực tuyến',
+            details: 'Hệ thống ghi nhận yêu cầu qua Hotline hoặc Website 24/7. Chuyên viên sẽ liên hệ lại ngay để xác nhận thông tin cơ bản và tư vấn sơ bộ về dịch vụ.'
         },
         {
             id: 2,
-            number: '2',
+            number: '02',
             title: 'Khảo sát',
-            description: 'Đánh giá khối lượng và khoảng cách'
+            description: 'Đánh giá khối lượng và khoảng cách',
+            details: 'Khảo sát trực tiếp hoặc qua Video Call để đo đạc khối lượng đồ đạc, quãng đường di chuyển và các yếu tố địa hình, từ đó đưa ra báo giá chính xác nhất.'
         },
         {
             id: 3,
-            number: '3',
+            number: '03',
             title: 'Nghiệm thu',
-            description: 'Kiểm tra tài sản trước chuyển'
+            description: 'Kiểm tra tài sản trước chuyển',
+            details: 'Tiến hành phân loại, đóng gói đồ đạc bằng vật liệu chuyên dụng và lập danh mục kiểm kê. Khách hàng kiểm tra tình trạng tài sản trước khi niêm phong vận chuyển.'
         },
         {
             id: 4,
-            number: '4',
+            number: '04',
             title: 'Triển khai',
-            description: 'Chuyển an toàn đến địa điểm mới'
+            description: 'Chuyển an toàn đến địa điểm mới',
+            details: 'Đội ngũ kỹ thuật bốc xếp lên xe tải chuyên dụng, vận chuyển đến nơi mới, lắp đặt và sắp xếp lại đồ đạc theo yêu cầu của gia chủ.'
         },
     ];
 
@@ -517,17 +521,16 @@ const LandingPage = () => {
                         <Row gutter={[24, 24]}>
                             {whyChooseUsData.map((item) => (
                                 <Col key={item.id} xs={24} sm={12} md={6}>
-                                    <Card
-                                        className="why-card"
-                                        hoverable
-                                        bodyStyle={{ padding: '32px 24px', textAlign: 'center' }}
-                                    >
-                                        <div className="why-icon-wrapper">
+                                    <div className="fold-card">
+                                        <div className="fold-card__icon-wrapper">
                                             {item.icon}
+                                            <h3 className="fold-card__title-front">{item.title}</h3>
                                         </div>
-                                        <h3>{item.title}</h3>
-                                        <p>{item.description}</p>
-                                    </Card>
+                                        <div className="fold-card__content">
+                                            <p className="fold-card__title">{item.title}</p>
+                                            <p className="fold-card__description">{item.description}</p>
+                                        </div>
+                                    </div>
                                 </Col>
                             ))}
                         </Row>
@@ -547,13 +550,18 @@ const LandingPage = () => {
                         <div className="process-steps-container">
                             {processData.map((step, index) => (
                                 <div key={step.id} className="process-step-item">
-                                    <div className="process-card-modern">
-                                        <div className="process-icon-badge">
-                                            {step.number}
-                                        </div>
-                                        <div className="process-text-content">
-                                            <h3>{step.title}</h3>
-                                            <p>{step.description}</p>
+                                    <div className="flip-card">
+                                        <div className="flip-card-inner">
+                                            <div className="flip-card-front">
+                                                <div className="flip-number">{step.number}</div>
+                                                <h3 className="flip-title">{step.title}</h3>
+                                                <p className="flip-description">{step.description}</p>
+                                                <span className="flip-cta">Xem chi tiết →</span>
+                                            </div>
+                                            <div className="flip-card-back">
+                                                <h3 className="flip-title-back">{step.title}</h3>
+                                                <p className="flip-details">{step.details}</p>
+                                            </div>
                                         </div>
                                     </div>
                                     {index < processData.length - 1 && <div className="process-connector"></div>}
