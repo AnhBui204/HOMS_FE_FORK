@@ -362,6 +362,34 @@ const SurveySchedulingPage = () => {
     setIsRejectModalVisible(true);
   };
 
+  // Confirmation dialogs before performing approve/reject actions
+  const showApproveConfirm = (ticket) => {
+    Modal.confirm({
+      title: 'Xác nhận duyệt đơn',
+      content: `Bạn có chắc muốn duyệt đơn #${ticket?.code || ''}?`,
+      okText: 'Duyệt',
+      cancelText: 'Hủy',
+      onOk: async () => {
+        // call existing approve handler
+        await handleDirectApprove(ticket);
+      }
+    });
+  };
+
+  const showRejectConfirm = (ticket) => {
+    Modal.confirm({
+      title: 'Xác nhận từ chối đơn',
+      content: `Bạn có chắc muốn từ chối đơn #${ticket?.code || ''}? Sau khi xác nhận, bạn có thể gửi đề xuất lịch mới cho khách.`,
+      okText: 'Từ chối',
+      okButtonProps: { danger: true },
+      cancelText: 'Hủy',
+      onOk: () => {
+        // open the reject modal flow
+        handleCancelTicket(ticket);
+      }
+    });
+  };
+
   const handleRejectSubmit = async (values) => {
     try {
       if (!values.proposedTimes || values.proposedTimes.length === 0) {
@@ -577,7 +605,7 @@ const SurveySchedulingPage = () => {
                       shape="circle"
                       style={{ background: "#44624a", borderColor: "#44624a" }}
                       icon={<CheckCircleOutlined />}
-                      onClick={() => handleDirectApprove(record)}
+                      onClick={() => showApproveConfirm(record)}
                     />
                   </Tooltip>
                 )}
@@ -586,7 +614,7 @@ const SurveySchedulingPage = () => {
                     danger
                     shape="circle"
                     icon={<CloseCircleOutlined />}
-                    onClick={() => handleCancelTicket(record)}
+                    onClick={() => showRejectConfirm(record)}
                   />
                 </Tooltip>
               </>

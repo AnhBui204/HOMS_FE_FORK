@@ -13,6 +13,14 @@ const primaryColor = '#44624A';
 
 // Orders are fetched from the server and stored in `ordersData`.
 
+const STATUS_LABELS = {
+  CREATED: 'Chờ xử lý',
+  QUOTED: 'Đã báo giá',
+  ACCEPTED: 'Đã nhận',
+  CONVERTED: 'Đã hoàn thành',
+  CANCELLED: 'Đã huỷ'
+};
+
 const currency = (v) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(v || 0));
 
 const OrderManagement = () => {
@@ -154,11 +162,11 @@ const OrderManagement = () => {
 
   const statusDistribution = useMemo(() => {
     if (charts && Array.isArray(charts.statusDistribution)) {
-      return charts.statusDistribution.map(s => ({ name: s.name, value: s.value, notes: s.notes || [] }));
+      return charts.statusDistribution.map(s => ({ name: STATUS_LABELS[s.name] || s.name, value: s.value }));
     }
     const map = {};
     filtered.forEach(o => { map[o.status] = (map[o.status] || 0) + 1; });
-    return Object.keys(map).map(k => ({ name: k, value: map[k] }));
+    return Object.keys(map).map(k => ({ name: STATUS_LABELS[k] || k, value: map[k] }));
   }, [filtered, charts]);
 
   // Custom tooltip for pie status chart
@@ -180,7 +188,15 @@ const OrderManagement = () => {
     {
       title: 'Trạng thái', dataIndex: 'status', key: 'status', render: s => {
         const color = s === 'CONVERTED' ? 'green' : s === 'CANCELLED' ? 'red' : 'gold';
-        return <Tag color={color}>{s}</Tag>;
+        const labelMap = {
+          CREATED: 'Chờ xử lý',
+          QUOTED: 'Đã báo giá',
+          ACCEPTED: 'Đã nhận',
+          CONVERTED: 'Đã hoàn thành',
+          CANCELLED: 'Đã huỷ'
+        };
+        const label = labelMap[s] || s;
+        return <Tag color={color}>{label}</Tag>;
       }
     },
     { title: 'Tổng tiền', dataIndex: 'totalPrice', key: 'totalPrice', render: v => <span style={{ fontWeight: 700 }}>{currency(v)}</span> },
