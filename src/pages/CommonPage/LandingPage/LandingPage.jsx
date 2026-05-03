@@ -613,8 +613,8 @@ const LandingPage = () => {
                         <div className="contact-box-wrapper">
                             <Row gutter={0} style={{ display: 'flex', flexWrap: 'wrap' }}>
 
-                                {/* --- CỘT TRÁI (FORM): Sửa thành 12 (50%) --- */}
-                                <Col xs={24} md={12} lg={12} className="contact-left">
+                                {/* --- CỘT TRÁI (FORM): Sửa thành 14 (58.33%) --- */}
+                                <Col xs={24} md={14} lg={14} className="contact-left">
                                     <div className="contact-form-content">
                                         {/* ... Nội dung Form giữ nguyên ... */}
                                         <h2 style={{ color: '#2D4F36', marginBottom: '10px', fontSize: '28px', fontWeight: 'bold' }}>
@@ -694,8 +694,8 @@ const LandingPage = () => {
                                     </div>
                                 </Col>
 
-                                {/* --- CỘT PHẢI (MAP): Sửa thành 12 (50%) --- */}
-                                <Col xs={24} md={12} lg={12} className="contact-right">
+                                {/* --- CỘT PHẢI (MAP): Sửa thành 10 (41.67%) --- */}
+                                <Col xs={24} md={10} lg={10} className="contact-right">
                                     <div className="map-container">
                                         <iframe
                                             src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3835.6!2d108.2598!3d15.9751!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31420edf9f123abc%3A0xabcdef1234567890!2sFPT%20University%20Da%20Nang!5e0!3m2!1svi!2s!4v1700000000001!5m2!1svi!2s"

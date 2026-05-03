@@ -1,0 +1,65 @@
+.floating-label-group {
+  position: relative;
+  display: block;
+}
+
+/* Base input styles */
+.floating-input, .floating-input-wrapper {
+  background: transparent !important;
+  font-size: 15px !important;
+  transition: border 150ms cubic-bezier(0.4, 0, 0.2, 1) !important;
+  height: 56px !important;
+  border-radius: 8px !important;
+}
+
+.floating-input {
+  padding: 1rem !important;
+}
+
+/* Password wrapper styles */
+.floating-input-wrapper {
+  padding: 0 1rem !important;
+  align-items: center !important;
+}
+
+.floating-input-wrapper input {
+  padding: 1rem 0 !important;
+  font-size: 15px !important;
+  height: 100% !important;
+  background: transparent !important;
+}
+
+/* Label styles */
+.floating-label {
+  position: absolute;
+  top: 50%;
+  left: 15px;
+  transform: translateY(-50%);
+  color: #888;
+  font-size: 15px;
+  pointer-events: none;
+  transition: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 10;
+  margin: 0;
+}
+
+/* Focus state for input borders */
+.floating-input:focus, 
+.floating-input-wrapper:focus-within {
+  outline: none;
+  border-color: #44624A !important;
+  box-shadow: 0 0 0 1px #44624A !important;
+}
+
+/* Floating effect */
+.floating-input:focus ~ .floating-label,
+.floating-input:valid ~ .floating-label,
+.floating-input-wrapper:focus-within ~ .floating-label,
+.floating-input-wrapper:has(input:valid) ~ .floating-label {
+  top: 0;
+  transform: translateY(-50%) scale(0.8);
+  transform-origin: left center;
+  background-color: #fff;
+  padding: 0 0.2em;
+  color: #44624A;
+}

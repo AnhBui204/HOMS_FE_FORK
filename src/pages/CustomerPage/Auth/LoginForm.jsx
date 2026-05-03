@@ -13,6 +13,7 @@ import {
 import { GoogleLogin } from "@react-oauth/google";
 import FacebookLogin from "@greatsumini/react-facebook-login";
 import api, { resetCsrfToken } from "../../../services/api";
+import "./LoginForm.css";
 
 const PRIMARY_COLOR = "#44624A";
 
@@ -162,7 +163,24 @@ const LoginForm = () => {
     }
   };
 
-  return (
+const FloatingInput = ({ label, isPassword, ...props }) => (
+  <div className="floating-label-group">
+    {isPassword ? (
+      <Input.Password
+        size="large"
+        required
+        className="floating-input-wrapper"
+        iconRender={(v) => (v ? <EyeTwoTone /> : <EyeInvisibleOutlined />)}
+        {...props}
+      />
+    ) : (
+      <Input size="large" required className="floating-input" {...props} />
+    )}
+    <label className="floating-label">{label}</label>
+  </div>
+);
+
+    return (
     <Form
       form={form}
       layout="vertical"
@@ -170,25 +188,20 @@ const LoginForm = () => {
       requiredMark={false}
     >
       <Form.Item
-        label="Email"
         name="email"
         rules={[
           { required: true, message: "Vui lòng nhập email" },
           { type: "email", message: "Email không hợp lệ" },
         ]}
       >
-        <Input size="large" />
+        <FloatingInput label="Email" autoComplete="username" />
       </Form.Item>
 
       <Form.Item
-        label="Mật khẩu"
         name="password"
         rules={[{ required: true, message: "Vui lòng nhập mật khẩu" }]}
       >
-        <Input.Password
-          size="large"
-          iconRender={(v) => (v ? <EyeTwoTone /> : <EyeInvisibleOutlined />)}
-        />
+        <FloatingInput label="Mật khẩu" isPassword autoComplete="current-password" />
       </Form.Item>
       <Form.Item>
         <div style={{ textAlign: "right" }}>
