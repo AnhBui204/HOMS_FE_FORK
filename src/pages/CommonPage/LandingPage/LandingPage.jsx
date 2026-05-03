@@ -74,9 +74,15 @@ const LandingPage = () => {
         document.getElementById('hero-form').scrollIntoView({ behavior: 'smooth' });
     };
 
-    const handleContactSubmit = (values) => {
-        message.success('Cảm ơn bạn đã để lại thông tin. Đội ngũ HOMS sẽ liên hệ với bạn trong thời gian sớm nhất!');
-        contactForm.resetFields();
+    const handleContactSubmit = async (values) => {
+        try {
+            await api.post('/public/contact', values);
+            message.success('Cảm ơn bạn đã để lại thông tin. Đội ngũ HOMS sẽ liên hệ với bạn trong thời gian sớm nhất!');
+            contactForm.resetFields();
+        } catch (error) {
+            console.error(error);
+            message.error('Có lỗi xảy ra khi gửi thông tin. Vui lòng thử lại sau.');
+        }
     };
 
     const [dbTestimonials, setDbTestimonials] = useState([]);
@@ -677,7 +683,7 @@ const LandingPage = () => {
                                                 </div>
                                                 <div className="info-item">
                                                     <MailOutlined style={{ color: '#2D4F36', fontSize: '18px', marginRight: '10px' }} />
-                                                    <span style={{ color: '#555', fontWeight: '500' }}>Email: contact@homs.vn</span>
+                                                    <span style={{ color: '#555', fontWeight: '500' }}>Email: homsmovinghouse@gmail.com</span>
                                                 </div>
                                                 <div className="info-item">
                                                     <EnvironmentOutlined style={{ color: '#2D4F36', fontSize: '18px', marginRight: '10px' }} />
