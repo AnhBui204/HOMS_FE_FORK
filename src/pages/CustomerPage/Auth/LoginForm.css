@@ -54,12 +54,27 @@
 /* Floating effect */
 .floating-input:focus ~ .floating-label,
 .floating-input:valid ~ .floating-label,
+.floating-input:-webkit-autofill ~ .floating-label,
 .floating-input-wrapper:focus-within ~ .floating-label,
-.floating-input-wrapper:has(input:valid) ~ .floating-label {
+.floating-input-wrapper:has(input:valid) ~ .floating-label,
+.floating-input-wrapper:has(input:-webkit-autofill) ~ .floating-label {
   top: 0;
   transform: translateY(-50%) scale(0.8);
   transform-origin: left center;
   background-color: #fff;
   padding: 0 0.2em;
   color: #44624A;
+}
+
+/* Neutralize browser autofill background color (yellow/blue tint) */
+.floating-input:-webkit-autofill,
+.floating-input:-webkit-autofill:hover,
+.floating-input:-webkit-autofill:focus,
+.floating-input-wrapper input:-webkit-autofill,
+.floating-input-wrapper input:-webkit-autofill:hover,
+.floating-input-wrapper input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0px 1000px #ffffff inset !important;
+  box-shadow: 0 0 0px 1000px #ffffff inset !important;
+  transition: background-color 5000s ease-in-out 0s;
+  -webkit-text-fill-color: #1a1a1a !important;
 }
