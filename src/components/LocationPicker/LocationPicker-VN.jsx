@@ -44,6 +44,25 @@ const currentLocationIcon = new L.Icon({
     shadowSize: [41, 41]
 });
 
+// Helper to calculate distance between two coordinates in meters (Haversine formula)
+/*
+* If the API snapped the location more than 75 meters away, we immediately reject it
+* This mathematically prevents people from clicking the middle of a river and getting the address of a house on the shore
+*/
+const getDistanceMeters = (lat1, lon1, lat2, lon2) => {
+    const R = 6371e3; // Earth radius in meters
+    const φ1 = lat1 * Math.PI / 180;
+    const φ2 = lat2 * Math.PI / 180;
+    const Δφ = (lat2 - lat1) * Math.PI / 180;
+    const Δλ = (lon2 - lon1) * Math.PI / 180;
+
+    const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+        Math.cos(φ1) * Math.cos(φ2) *
+        Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+};
+
 // Component to handle map clicks
 function LocationMarker({ position, setPosition, icon, detailedAddress, locationType = 'pickup' }) {
     useMapEvents({
@@ -112,7 +131,7 @@ const LocationPicker = ({ onLocationChange, initialPosition, locationType = 'pic
     const hasLocationIqKey = Boolean(LOCATIONIQ_API_KEY);
     const hasMapboxKey = Boolean(MAPBOX_API_KEY);
 
-    const fetchJsonWithTimeout = async (url, timeoutMs = 3200) => {
+    const fetchJsonWithTimeout = useCallback(async (url, timeoutMs = 3200) => {
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -125,7 +144,7 @@ const LocationPicker = ({ onLocationChange, initialPosition, locationType = 'pic
         } finally {
             clearTimeout(timeout);
         }
-    };
+    }, []);
 
     const normalizeDiacritics = (value = '') => value
         .normalize('NFD')
@@ -263,11 +282,6 @@ const LocationPicker = ({ onLocationChange, initialPosition, locationType = 'pic
         const lon = parseFloat(result.lon);
         let addr = result.address || {};
 
-        // Standardize between Geoapify/Nominatim format and Goong/OpenCage format
-        if (result.__provider === 'goong' && result.__originalAddressContext) {
-            addr = { ...addr, ...result.__originalAddressContext };
-        }
-
         return {
             houseNumber: addr?.house_number || '',
             road: addr?.road || addr?.street || '',
@@ -315,14 +329,49 @@ const LocationPicker = ({ onLocationChange, initialPosition, locationType = 'pic
     const mapGoongFeatureToCandidate = (result, variantIndex = 0) => {
         if (!result?.geometry?.location) return null;
         const { lat, lng } = result.geometry.location;
+        // Properly map Goong/Google-style address components
+        const addressObj = {};
+
+        console.log('🔴 DEBUG [3] - Raw Goong address_components:', result.address_components);
+
+        // 1. Try formal type matching (in case Goong adds them back or changes endpoints)
+        if (Array.isArray(result.address_components)) {
+            result.address_components.forEach(comp => {
+                const types = comp.types || [];
+                const val = comp.long_name || comp.short_name || '';
+
+                if (types.includes('street_number')) addressObj.house_number = val;
+                if (types.includes('route')) addressObj.road = val;
+                if (types.includes('sublocality') || types.includes('sublocality_level_1') || types.includes('ward')) addressObj.suburb = val;
+                if (types.includes('administrative_area_level_2') || types.includes('locality') || types.includes('district')) addressObj.district = val;
+                if (types.includes('administrative_area_level_1') || types.includes('city') || types.includes('province')) addressObj.city = val;
+            });
+        }
+
+        // 2. FALLBACK: If types were missing/empty, parse the formatted_address string manually
+        if (Object.keys(addressObj).length === 0 && result.formatted_address) {
+            // Example: "177 Lương Nhữ Hộc, Khuê Trung, Cẩm Lệ, Đà Nẵng"
+            const parts = result.formatted_address.split(',').map(p => p.trim());
+
+            // Typical Vietnamese address order is from specific to general
+            if (parts.length >= 1) addressObj.city = parts[parts.length - 1];       // "Đà Nẵng"
+            if (parts.length >= 2) addressObj.district = parts[parts.length - 2];   // "Cẩm Lệ"
+            if (parts.length >= 3) addressObj.suburb = parts[parts.length - 3];     // "Khuê Trung"
+            if (parts.length >= 4) {
+                // Join anything left over as the street/house info
+                addressObj.road = parts.slice(0, parts.length - 3).join(', ');      // "177 Lương Nhữ Hộc"
+            }
+        }
+
+        console.log('🔴 DEBUG [3] - Final Parsed addressObj:', addressObj);
+
         return {
             lat: String(lat),
             lon: String(lng),
             display_name: result.formatted_address || '',
-            address: {},
+            address: addressObj,
             __variantIndex: variantIndex,
-            __provider: 'goong',
-            __originalAddressContext: result.address_components
+            __provider: 'goong'
         };
     };
 
@@ -512,7 +561,7 @@ const LocationPicker = ({ onLocationChange, initialPosition, locationType = 'pic
         const data = await fetchJsonWithTimeout(requestUrl, 2800);
         const firstFeature = Array.isArray(data?.features) ? data.features[0] : null;
         return firstFeature ? mapGeoapifyFeatureToCandidate(firstFeature, 0) : null;
-    }, [hasGeoapifyKey, GEOAPIFY_API_KEY]);
+    }, [hasGeoapifyKey, GEOAPIFY_API_KEY, fetchJsonWithTimeout]);
 
     const fetchGoongReverse = useCallback(async (lat, lng) => {
         if (!hasGoongKey) return null;
@@ -522,7 +571,7 @@ const LocationPicker = ({ onLocationChange, initialPosition, locationType = 'pic
             const result = data?.results?.[0];
             return result ? mapGoongFeatureToCandidate(result, 0) : null;
         } catch (e) { return null; }
-    }, [hasGoongKey, GOONG_API_KEY]);
+    }, [hasGoongKey, GOONG_API_KEY, fetchJsonWithTimeout]);
 
     const fetchOpenCageReverse = useCallback(async (lat, lng) => {
         if (!hasOpenCageKey) return null;
@@ -530,7 +579,7 @@ const LocationPicker = ({ onLocationChange, initialPosition, locationType = 'pic
             const data = await fetchJsonWithTimeout(`https://api.opencagedata.com/geocode/v1/json?q=${lat}+${lng}&key=${OPENCAGE_API_KEY}&limit=1`, 2800);
             return data?.results?.[0] ? mapOpenCageFeatureToCandidate(data.results[0], 0) : null;
         } catch (e) { return null; }
-    }, [hasOpenCageKey, OPENCAGE_API_KEY]);
+    }, [hasOpenCageKey, OPENCAGE_API_KEY, fetchJsonWithTimeout]);
 
     const fetchLocationIqReverse = useCallback(async (lat, lng) => {
         if (!hasLocationIqKey) return null;
@@ -538,7 +587,7 @@ const LocationPicker = ({ onLocationChange, initialPosition, locationType = 'pic
             const data = await fetchJsonWithTimeout(`https://us1.locationiq.com/v1/reverse.php?key=${LOCATIONIQ_API_KEY}&lat=${lat}&lon=${lng}&format=json`, 2800);
             return data ? mapLocationIqFeatureToCandidate(data, 0) : null;
         } catch (e) { return null; }
-    }, [hasLocationIqKey, LOCATIONIQ_API_KEY]);
+    }, [hasLocationIqKey, LOCATIONIQ_API_KEY, fetchJsonWithTimeout]);
 
     const fetchMapboxReverse = useCallback(async (lat, lng) => {
         if (!hasMapboxKey) return null;
@@ -546,7 +595,7 @@ const LocationPicker = ({ onLocationChange, initialPosition, locationType = 'pic
             const data = await fetchJsonWithTimeout(`https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${MAPBOX_API_KEY}&limit=1`, 2800);
             return data?.features?.[0] ? mapMapboxFeatureToCandidate(data.features[0], 0) : null;
         } catch (e) { return null; }
-    }, [hasMapboxKey, MAPBOX_API_KEY]);
+    }, [hasMapboxKey, MAPBOX_API_KEY, fetchJsonWithTimeout]);
 
     const fetchNominatimReverse = useCallback(async (lat, lng) => {
         const data = await fetchJsonWithTimeout(
@@ -560,9 +609,11 @@ const LocationPicker = ({ onLocationChange, initialPosition, locationType = 'pic
             lon: String(lng),
             display_name: data.display_name,
             address: data.address || {},
+            class: data.class || '',
+            type: data.type || '',
             __provider: 'nominatim'
         };
-    }, []);
+    }, [fetchJsonWithTimeout]);
 
     const applySearchCandidate = (result) => {
         if (!result) return;
@@ -592,9 +643,108 @@ const LocationPicker = ({ onLocationChange, initialPosition, locationType = 'pic
         }
     };
 
+    // inhabitant location validation
+    const isValidHabitableLocation = (candidate, details, clickedLat, clickedLng) => {
+        if (!candidate || !details) return false;
+
+        const lowerClass = (candidate.class || '').toLowerCase();
+        const lowerType = (candidate.type || '').toLowerCase();
+        const lowerName = (candidate.display_name || '').toLowerCase();
+
+        // 0. ANTI-SNAPPING DISTANCE CHECK (The Ultimate Failsafe)
+        // If the API snapped the click to an address more than 75 meters away,
+        // it means the user likely clicked in the water, a large park, or off a cliff.
+        const candLat = parseFloat(candidate.lat);
+        const candLng = parseFloat(candidate.lon);
+        if (!isNaN(candLat) && !isNaN(candLng) && clickedLat && clickedLng) {
+            const distance = getDistanceMeters(clickedLat, clickedLng, candLat, candLng);
+            if (distance > 50) {
+                console.log(`🔴 DEBUG [1] - FAILED: Snapped too far (${distance.toFixed(1)}m). Likley water/empty area.`);
+                return false;
+            }
+        }
+
+        // 1. Check strict API classifications
+        if (
+            lowerClass === 'water' || lowerClass === 'sea' || lowerClass === 'ocean' ||
+            lowerClass === 'natural' || lowerClass === 'waterway' || lowerClass === 'forest' ||
+            lowerType === 'water' || lowerType === 'sea' || lowerType === 'ocean' ||
+            lowerType === 'river' || lowerType === 'forest' || lowerType === 'park'
+        ) {
+            return false;
+        }
+
+        // 2. Semantic Blacklist for Home Moving Services
+        const forbiddenKeywords = [
+            'đường chưa đặt tên', 'unnamed road',   // Generic/Woods
+            'sân bay', 'airport', 'ga', 'cảng',     // Airports
+            'bệnh viện', 'trạm y tế', 'hospital',   // Medical facilities
+            'nghĩa trang', 'nghĩa địa', 'cemetery', // Cemeteries
+            'đảo nổi', 'đầm', 'sông', 'cầu',        // Islands/Rivers
+            'rừng', 'forest', 'đèo',                // Deep nature
+            'biển đông', 'gulf of tonkin', 'south china sea', 'vịnh bắc bộ', 'ocean', 'biển'
+        ];
+
+        // Check if the display name contains any forbidden keywords
+        if (forbiddenKeywords.some(keyword => lowerName.includes(keyword))) {
+            return false;
+        }
+
+        // 3. Catch generic bodies of water (Lakes/Rivers/Streams)
+        // Uses regex to block "Hồ Tây", "Sông Hàn" but allows "Hồ Chí Minh"
+        if (/(^|,\s*)(hồ|sông|suối)\s+(?!chí minh)/.test(lowerName)) {
+            return false;
+        }
+
+        // 4. Strict Address Specificity Check
+        // To dispatch a truck, you need MORE than just a City or District.
+        const hasRoad = Boolean(details.road);
+        const hasSuburb = Boolean(details.suburb);   // Phường/Xã
+        const hasDistrict = Boolean(details.district); // Quận/Huyện
+
+        // Rule: Must have a specific road OR at least a specific Ward + District combination
+        const isSpecificEnough = hasRoad || (hasSuburb && hasDistrict);
+
+        return isSpecificEnough;
+    };
+
+    // Strict Geometric Terrain Check (Bypasses Nearest-Neighbor Snapping)
+    const checkCoordinateTerrain = useCallback(async (lat, lng) => {
+        try {
+            // zoom=18 forces specific polygon/street level checking
+            const data = await fetchJsonWithTimeout(
+                `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
+                2500
+            );
+
+            if (!data) return { isValid: true }; // Failsafe allow if API is down
+
+            const lowerClass = (data.class || '').toLowerCase();
+            const lowerType = (data.type || '').toLowerCase();
+
+            console.log(`🔴 DEBUG [TERRAIN] - Class: "${lowerClass}", Type: "${lowerType}"`);
+
+            if (
+                lowerClass === 'water' || lowerClass === 'waterway' || lowerClass === 'sea' || lowerClass === 'ocean' ||
+                lowerType === 'water' || lowerType === 'lake' || lowerType === 'river' || lowerType === 'sea' ||
+                lowerType === 'ocean' || lowerType === 'reservoir' || lowerType === 'canal' ||
+                (lowerClass === 'natural' && (lowerType === 'water' || lowerType === 'wood' || lowerType === 'forest' || lowerType === 'sand' || lowerType === 'beach')) ||
+                lowerType === 'administrative' // Often returned when clicking deep ocean miles offshore
+            ) {
+                return { isValid: false, reason: 'Vị trí bạn chọn nằm trên mặt nước hoặc khu vực đồi núi, bãi biển.' };
+            }
+
+            return { isValid: true };
+        } catch (error) {
+            console.warn('Terrain check failed, allowing fallback validation:', error);
+            return { isValid: true };
+        }
+    }, [fetchJsonWithTimeout]);
+
     const getAddressFromCoordinates = useCallback(async (lat, lng) => {
         const cacheKey = `${Number(lat).toFixed(6)},${Number(lng).toFixed(6)}`;
         const cachedCandidate = reverseGeocodeCacheRef.current.get(cacheKey);
+
         if (cachedCandidate) {
             setAddress(cachedCandidate.display_name);
             setSelectedCandidateKey(undefined);
@@ -609,25 +759,65 @@ const LocationPicker = ({ onLocationChange, initialPosition, locationType = 'pic
 
         setLoading(true);
         try {
-            let reverseCandidate = null;
+            // 1. Run Terrain Check and Address Fetch in parallel for speed
+            const terrainCheckPromise = checkCoordinateTerrain(lat, lng);
 
-            // Sequential generic fallback loop for reverse geocoding
-            reverseCandidate = await fetchGoongReverse(lat, lng);
-            if (!reverseCandidate) reverseCandidate = await fetchGeoapifyReverse(lat, lng);
-            if (!reverseCandidate) reverseCandidate = await fetchOpenCageReverse(lat, lng);
-            if (!reverseCandidate) reverseCandidate = await fetchMapboxReverse(lat, lng);
-            if (!reverseCandidate) reverseCandidate = await fetchLocationIqReverse(lat, lng);
-            if (!reverseCandidate) reverseCandidate = await fetchNominatimReverse(lat, lng);
+            const addressFetchPromise = async () => {
+                let candidate = await fetchGoongReverse(lat, lng);
+                if (!candidate) candidate = await fetchGeoapifyReverse(lat, lng);
+                if (!candidate) candidate = await fetchOpenCageReverse(lat, lng);
+                if (!candidate) candidate = await fetchMapboxReverse(lat, lng);
+                if (!candidate) candidate = await fetchLocationIqReverse(lat, lng);
+                if (!candidate) candidate = await fetchNominatimReverse(lat, lng);
+                return candidate;
+            };
 
-            if (!reverseCandidate) return;
+            const [terrainStatus, reverseCandidate] = await Promise.all([
+                terrainCheckPromise,
+                addressFetchPromise()
+            ]);
+
+            // 2. Evaluate Strict Geometric Terrain
+            if (!terrainStatus.isValid) {
+                message.error(terrainStatus.reason);
+                setAddress('');
+                setDetailedAddress(null);
+                if (onLocationChange) onLocationChange({ lat, lng, address: '', addressDetails: null });
+                return;
+            }
+
+            // 3. Fallback to existing logic if no candidate found
+            if (!reverseCandidate) {
+                message.error('Không thể xác định địa chỉ tại vị trí này.');
+                setAddress('');
+                setDetailedAddress(null);
+                if (onLocationChange) onLocationChange({ lat, lng, address: '', addressDetails: null });
+                return;
+            }
+
+            const addressDetails = mapCandidateAddressDetails(reverseCandidate);
+
+            console.log('🔴 DEBUG [2] - Winning Geocode Provider:', reverseCandidate.__provider);
+            console.log('🔴 DEBUG [2] - Raw Candidate Object:', reverseCandidate);
+            console.log('🔴 DEBUG [2] - Mapped Address Details:', addressDetails);
+
+            // 4. Semantic check (still necessary to catch "Airports", "Hospitals" snapped by Goong)
+            if (!isValidHabitableLocation(reverseCandidate, addressDetails)) {
+                message.error('Vị trí không hợp lệ. Vui lòng chọn lại trên bản đồ.');
+                setAddress('');
+                setDetailedAddress(null);
+                if (onLocationChange) {
+                    // Setting address to empty string forces the parent to block submission
+                    onLocationChange({ lat, lng, address: '', addressDetails: null });
+                }
+                return;
+            }
 
             reverseGeocodeCacheRef.current.set(cacheKey, reverseCandidate);
 
             setAddress(reverseCandidate.display_name);
             setSelectedCandidateKey(undefined);
             setSearchCandidates([]);
-
-            const addressDetails = mapCandidateAddressDetails(reverseCandidate);
             setDetailedAddress(addressDetails);
 
             if (onLocationChange) {
@@ -643,8 +833,16 @@ const LocationPicker = ({ onLocationChange, initialPosition, locationType = 'pic
         } finally {
             setLoading(false);
         }
-    }, [onLocationChange, fetchGeoapifyReverse, fetchNominatimReverse]);
-
+    }, [
+        onLocationChange,
+        fetchGeoapifyReverse,
+        fetchNominatimReverse,
+        checkCoordinateTerrain,
+        fetchGoongReverse,
+        fetchLocationIqReverse,
+        fetchMapboxReverse,
+        fetchOpenCageReverse
+    ]);
     // Update position and address when initialPosition changes
     useEffect(() => {
         if (initialPosition) {
@@ -702,7 +900,8 @@ const LocationPicker = ({ onLocationChange, initialPosition, locationType = 'pic
                 { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
             );
         }
-    }, []); // Run ONLY once on mount, regardless of initialPosition changing
+    }, [initialPosition]);
+
     // Forward geocoding: Search address and get coordinates
     const searchAddress = async () => {
         if (!searchQuery.trim()) return;
