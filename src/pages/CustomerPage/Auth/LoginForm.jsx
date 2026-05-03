@@ -229,7 +229,7 @@ const FloatingInput = ({ label, isPassword, ...props }) => (
       <Divider>Hoặc</Divider>
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         {/* GOOGLE */}
-        <div style={{ width: "100%" }}>
+        <div style={{ width: "100%", display: "flex", justifyContent: "center" }}>
           <GoogleLogin
             width="100%"
             logo_alignment="center"

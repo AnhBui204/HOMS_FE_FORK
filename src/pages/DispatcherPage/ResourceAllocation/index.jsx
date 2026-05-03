@@ -33,6 +33,32 @@ const ResourceAllocation = () => {
         setIsResolutionModalVisible,
     } = useResourceAllocation();
 
+    const mockedDrivers = React.useMemo(() => {
+        if (!drivers || drivers.length === 0 || !mapCoords?.pickup) return drivers;
+        
+        return drivers.map((driver, index) => {
+            if (driver.currentLocation?.coordinates) return driver;
+            
+            // Pseudo-random based on index to keep it stable across renders
+            const pseudoRandom1 = (Math.sin(index * 123.45) + 1) / 2; // 0 to 1
+            const pseudoRandom2 = (Math.cos(index * 678.90) + 1) / 2; // 0 to 1
+            
+            // Offset coordinates slightly (approx 1-3km around pickup point)
+            const latOffset = (pseudoRandom1 - 0.5) * 0.03; 
+            const lngOffset = (pseudoRandom2 - 0.5) * 0.03;
+            
+            return {
+                ...driver,
+                currentLocation: {
+                    type: 'Point',
+                    coordinates: [mapCoords.pickup.lng + lngOffset, mapCoords.pickup.lat + latOffset]
+                },
+                dailyOrders: driver.dailyOrders || Math.floor(pseudoRandom1 * 4),
+                assignedVehicle: driver.assignedVehicle || (index % 2 === 0 ? { plateNumber: `29H-${Math.floor(pseudoRandom2 * 90000) + 10000}` } : null)
+            };
+        });
+    }, [drivers, mapCoords?.pickup]);
+
     const columns = [
         { title: 'Mã Hóa Đơn', dataIndex: 'code', key: 'code', render: (text) => <Text strong>{text}</Text> },
         { title: 'Mã Yêu Cầu', dataIndex: ['requestTicketId', 'code'], key: 'ticketCode' },
@@ -133,6 +159,7 @@ const ResourceAllocation = () => {
                                         allRoutes={allAdminRoutes}
                                         vehicleType={vehicleType}
                                         dispatchTime={dispatchTime}
+                                        nearbyResources={{ drivers: mockedDrivers, vehicles: [] }}
                                     />
                                 ) : (
                                     <div className="ra-map-loading">
