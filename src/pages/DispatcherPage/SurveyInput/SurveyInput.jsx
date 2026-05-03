@@ -1000,7 +1000,7 @@ const SurveyInput = () => {
                     </Row>
                   </Card>
 
-                  <Card size="small" title="2. Dịch vụ & Bảo hiểm" className="dispatcher-card" style={{ marginTop: 16 }} bordered={false}>
+                  <Card size="small" title="2. Dịch vụ" className="dispatcher-card" style={{ marginTop: 16 }} bordered={false}>
                     <Row gutter={8}>
                       <Col span={12}>
                         <Form.Item name="needsAssembling" valuePropName="checked" style={{ marginBottom: 8 }}>
@@ -1013,24 +1013,6 @@ const SurveyInput = () => {
                         </Form.Item>
                       </Col>
                     </Row>
-                    <Divider style={{ margin: '10px 0' }} />
-                    <Form.Item name="insuranceRequired" valuePropName="checked" style={{ marginBottom: 10 }}>
-                      <Checkbox onChange={(e) => setIsInsuranceChecked(e.target.checked)}>Mua bảo hiểm vận chuyển</Checkbox>
-                    </Form.Item>
-
-                    {isInsuranceChecked && (
-                      <Form.Item
-                        name="declaredValue"
-                        label="Giá trị khai báo (VNĐ)"
-                        rules={[{ required: true, message: 'Nhập giá trị hàng hóa' }]}
-                      >
-                        <InputNumber
-                          style={{ width: '100%' }}
-                          formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                          parser={value => value.replace(/\$\s?|(,*)/g, '')}
-                        />
-                      </Form.Item>
-                    )}
                   </Card>
                 </>
               )}
