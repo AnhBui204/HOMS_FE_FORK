@@ -216,7 +216,7 @@ const handleLogout = () => {
                         }
                       }}
                     />
-                    <Button type="primary" className="contact-btn-top" iconPosition="end" onClick={handleContactClick}>
+                    <Button type="primary" className="contact-btn-top shimmer-btn" iconPosition="end" onClick={handleContactClick}>
                       Liên Hệ Ngay <RightOutlined style={{ fontSize: "10px" }} />
                     </Button>
                   </>

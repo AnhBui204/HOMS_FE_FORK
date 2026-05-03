@@ -446,7 +446,7 @@ const LandingPage = () => {
                                         <Col xs={24} sm={8} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                                             <Button
                                                 type="primary"
-                                                className="quote-btn-small"
+                                                className="quote-btn-small shimmer-btn"
                                                 onClick={handleQuickEstimate}
                                                 loading={estimateLoading}
                                                 style={{ width: '100%', maxWidth: '200px' }}
@@ -682,7 +682,7 @@ const LandingPage = () => {
                                             </Form.Item>
 
                                             <Form.Item>
-                                                <button type="submit" className="fly-submit-btn">
+                                                <button type="submit" className="fly-submit-btn shimmer-btn">
                                                     <div className="svg-wrapper-1">
                                                         <div className="svg-wrapper">
                                                             <svg

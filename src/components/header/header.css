@@ -98,7 +98,6 @@
 }
 
 .nav-item {
-  color: rgba(255, 255, 255, 0.8);
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -106,12 +105,37 @@
   display: flex;
   align-items: center;
   position: relative;
-  transition: color 0.3s;
   white-space: nowrap;
+  transition: color 0.3s;
+  /* Gradient text shimmer */
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.7) 0%,
+    rgba(255, 255, 255, 0.7) 30%,
+    #ffffff 45%,
+    rgba(255, 255, 255, 1) 50%,
+    rgba(255, 255, 255, 0.7) 65%,
+    rgba(255, 255, 255, 0.7) 100%
+  );
+  background-size: 250% 100%;
+  background-position: 150% center;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: nav-text-shimmer 4s linear infinite;
 }
 
 .nav-item:hover {
-  color: #ffffff;
+  animation: none;
+  background-position: 0% center;
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+@keyframes nav-text-shimmer {
+  0%   { background-position: 150% center; }
+  50%  { background-position: -50% center; }
+  100% { background-position: 150% center; }
 }
 .login{
   background-color: #44624A;
@@ -131,8 +155,12 @@ background-color: #2d4231 !important;
 }
 /* Hiệu ứng gạch chân cho Active Menu */
 .nav-item.active {
-  color: #ffffff;
   font-weight: 700;
+  animation: none;
+  background: linear-gradient(90deg, #ffffff 0%, #ffffff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .nav-item.active::after {

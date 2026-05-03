@@ -11,3 +11,35 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+/* ====================================================
+   SHIMMER LIGHT EFFECT FOR BUTTONS
+   ==================================================== */
+.shimmer-btn {
+  position: relative;
+  overflow: hidden;
+}
+
+.shimmer-btn::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -150%;
+  width: 150%;
+  height: 100%;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0) 30%,
+    rgba(255, 255, 255, 0.6) 50%,
+    rgba(255, 255, 255, 0) 70%
+  );
+  animation: shimmer-light 3s infinite;
+  pointer-events: none;
+  z-index: 10;
+}
+
+@keyframes shimmer-light {
+  0% { left: -150%; }
+  35% { left: 150%; }
+  100% { left: 150%; }
+}
