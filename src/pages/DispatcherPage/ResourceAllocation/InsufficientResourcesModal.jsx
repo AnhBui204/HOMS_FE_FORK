@@ -368,7 +368,7 @@ const InsufficientResourcesModal = ({
                                 <Alert
                                     type="error"
                                     message={<Text strong style={{ fontSize: 13 }}>Cưỡng ép bị chặn</Text>}
-                                    description={<span style={{ fontSize: 12 }}>Không thể thực hiện một ca vận chuyển không an toàn.</span>}
+                                    description={<span style={{ fontSize: 12 }}>Không thể điều phối do không đáp ứng đủ điều kiện.</span>}
                                     showIcon
                                 />
                             ) : (
