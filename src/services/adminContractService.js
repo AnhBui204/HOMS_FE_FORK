@@ -80,6 +80,26 @@ const adminContractService = {
         }
     },
 
+    activateTemplate: async (id) => {
+        try {
+            const response = await api.patch(`/admin/contracts/templates/${id}/activate`);
+            return response.data;
+        } catch (error) {
+            console.error('Error activating contract template', error);
+            throw error;
+        }
+    },
+
+    deactivateTemplate: async (id) => {
+        try {
+            const response = await api.patch(`/admin/contracts/templates/${id}/deactivate`);
+            return response.data;
+        } catch (error) {
+            console.error('Error deactivating contract template', error);
+            throw error;
+        }
+    },
+
     generateContract: async (contractData) => {
         try {
             const response = await api.post('/admin/contracts/generate', contractData);

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, Table, Typography, Tabs, Button, Select, Space, notification, Modal, Descriptions, Tag, Divider, Row, Col, Input, DatePicker, Popover, Checkbox, Tooltip, Switch } from 'antd';
-import { FileTextOutlined, EyeOutlined, CheckCircleOutlined, DownloadOutlined, SearchOutlined, FilterOutlined, ClockCircleOutlined, ProfileOutlined, ReloadOutlined, BulbOutlined } from '@ant-design/icons';
+import { FileTextOutlined, EyeOutlined, CheckCircleOutlined, DownloadOutlined, SearchOutlined, FilterOutlined, ClockCircleOutlined, ProfileOutlined, ReloadOutlined, BulbOutlined, CloseOutlined } from '@ant-design/icons';
 import adminContractService from '../../../services/adminContractService';
 import adminAiService from '../../../services/adminAiService';
 import ContractModal from './ContractModal';
@@ -288,10 +288,79 @@ const ContractManagement = () => {
                 <Space>
                     <Button className="btn-outline-primary" size="small" onClick={() => openTemplateModal(tpl, 'view')}>Xem</Button>
                     <Button className="btn-outline-primary" size="small" onClick={() => openTemplateModal(tpl, 'edit')}>Chỉnh sửa</Button>
+                    <Tooltip title={tpl.isActive ? 'Tắt kích hoạt' : 'Kích hoạt'}>
+                        <Switch
+                            className="tpl-switch"
+                            checked={!!tpl.isActive}
+                            onChange={(checked) => checked ? handleActivateTemplate(tpl) : showDeactivateConfirm(tpl)}
+                            checkedChildren={<CheckCircleOutlined />}
+                            unCheckedChildren={<CloseOutlined />}
+                        />
+                    </Tooltip>
                 </Space>
             )
         }
     ];
+
+    const handleActivateTemplate = async (tpl) => {
+        if (!tpl || !tpl._id) return;
+        try {
+            setLoading(true);
+            const res = await adminContractService.activateTemplate(tpl._id);
+            // server returns the activated template; refresh local templates list
+            if (res && res.success && res.data) {
+                // set all to inactive then put activated at top
+                setTemplates(prev => prev.map(t => ({ ...t, isActive: t._id === res.data._id })));
+                notification.success({ message: 'Mẫu hợp đồng đã được kích hoạt' });
+            } else if (res && Array.isArray(res)) {
+                // unexpected shape; refetch
+                await fetchData();
+            } else {
+                await fetchData();
+            }
+        } catch (err) {
+            console.error('Activate template failed', err);
+            notification.error({ message: 'Kích hoạt mẫu hợp đồng thất bại' });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Confirm modal state for deactivation
+    const [deactivateModalVisible, setDeactivateModalVisible] = useState(false);
+    const [pendingDeactivateTpl, setPendingDeactivateTpl] = useState(null);
+
+    const showDeactivateConfirm = (tpl) => {
+        setPendingDeactivateTpl(tpl);
+        setDeactivateModalVisible(true);
+    };
+
+    const cancelDeactivate = () => {
+        setPendingDeactivateTpl(null);
+        setDeactivateModalVisible(false);
+    };
+
+    const confirmDeactivate = async () => {
+        const tpl = pendingDeactivateTpl;
+        setDeactivateModalVisible(false);
+        setPendingDeactivateTpl(null);
+        if (!tpl || !tpl._id) return;
+        try {
+            setLoading(true);
+            const res = await adminContractService.deactivateTemplate(tpl._id);
+            if (res && res.success && res.data) {
+                setTemplates(prev => prev.map(t => t._id === res.data._id ? { ...t, isActive: false } : t));
+                notification.success({ message: 'Mẫu hợp đồng đã bị tắt kích hoạt' });
+            } else {
+                await fetchData();
+            }
+        } catch (err) {
+            console.error('Deactivate template failed', err);
+            notification.error({ message: 'Tắt kích hoạt mẫu hợp đồng thất bại' });
+        } finally {
+            setLoading(false);
+        }
+    };
 
     // Use explicit TabPane children instead of the `items` prop to avoid issues
     // with certain Ant Design versions that may process labels unexpectedly.
@@ -457,6 +526,25 @@ const ContractManagement = () => {
                 .template-content strong { font-weight: 700; }
                 .template-content img { max-width: 100%; height: auto; display: block; margin: 8px auto; }
                 .template-content .contract-title { text-align: center; font-weight: 800; font-size: 18px; margin-bottom: 8px; }
+            `}</style>
+            <style>{`
+                .tpl-toggle { border-radius: 16px; width: 36px; height: 28px; display: inline-flex; align-items: center; justify-content: center; padding: 0; }
+                .tpl-toggle .anticon { font-size: 14px; }
+                .btn-activate { background: #e6f4ea; border: 1px solid #2eb34a; color: #2eb34a; }
+                .btn-activate:hover, .btn-activate:focus { background: #2eb34a !important; color: #fff !important; }
+                .btn-deactivate { background: #fff7f7; border: 1px solid #ff7875; color: #ff4d4f; }
+                .btn-deactivate:hover, .btn-deactivate:focus { background: #ff4d4f !important; color: #fff !important; }
+                /* Switch styling to use exact requested colors and correct selectors */
+                .tpl-switch { width: 56px; height: 28px; padding: 0; }
+                /* OFF: track background #ffd8d6, accent color #ff4d4f */
+                .ant-switch.tpl-switch { background-color: #ffd8d6 !important; border: 1px solid #ff4d4f !important; }
+                .ant-switch.tpl-switch .ant-switch-inner { color: #ff4d4f; }
+                /* ON: track filled with #2D4F36, and slightly lighter shade as subtle gradient */
+                .ant-switch.tpl-switch.ant-switch-checked { background: linear-gradient(180deg, #375f4a 0%, #2D4F36 100%) !important; border-color: #2D4F36 !important; }
+                .ant-switch.tpl-switch.ant-switch-checked .ant-switch-inner { color: #ffffff !important; }
+                /* handle size and transitions */
+                .ant-switch.tpl-switch .ant-switch-handle { width: 18px; height: 18px; top: 5px; transition: left 180ms cubic-bezier(.22,.9,.36,1), background 120ms; }
+                .ant-switch.tpl-switch { transition: background-color 180ms cubic-bezier(.22,.9,.36,1), box-shadow 200ms; }
             `}</style>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                 <Title level={4} style={{ margin: 0 }}>Quản lý hợp đồng</Title>
@@ -686,6 +774,19 @@ const ContractManagement = () => {
                     value={aiPrompt}
                     onChange={e => setAiPrompt(e.target.value)}
                 />
+            </Modal>
+
+            {/* Confirm modal when deactivating a template */}
+            <Modal
+                title="Xác nhận tắt kích hoạt"
+                open={deactivateModalVisible}
+                onOk={confirmDeactivate}
+                onCancel={cancelDeactivate}
+                okText="Tắt kích hoạt"
+                cancelText="Hủy"
+                centered
+            >
+                <p>Bạn có chắc muốn tắt kích hoạt mẫu hợp đồng này? Sau khi tắt, mẫu sẽ chuyển sang trạng thái Lưu trữ.</p>
             </Modal>
 
             {/* Contract detail modal separated into its own component */}
