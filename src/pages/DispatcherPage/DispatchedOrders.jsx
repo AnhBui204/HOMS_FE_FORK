@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Table, Typography, Tag, message, Button, Modal, Space, Empty, Select, Badge, Spin } from 'antd';
 import { EyeOutlined } from '@ant-design/icons';
 import api from '../../services/api';
@@ -18,7 +18,7 @@ const DispatchedOrders = () => {
     const [isMapModalVisible, setIsMapModalVisible] = useState(false);
     const [mapData, setMapData] = useState(null);
 
-    const fetchInvoices = async (silent = false) => {
+    const fetchInvoices = useCallback(async (silent = false) => {
         if (!silent) setLoading(true);
         try {
             const response = await api.get('/invoices');
@@ -32,7 +32,7 @@ const DispatchedOrders = () => {
         } finally {
             if (!silent) setLoading(false);
         }
-    };
+    }, [statusFilter]);
 
     useEffect(() => {
         fetchInvoices();
@@ -43,7 +43,7 @@ const DispatchedOrders = () => {
         }, 10000);
 
         return () => clearInterval(intervalId);
-    }, [statusFilter]); // trigger re-fetch/filter when filter changes
+    }, [fetchInvoices]); // trigger re-fetch/filter when filter changes
 
     const showDetails = async (record) => {
         try {
@@ -280,7 +280,7 @@ const DispatchedOrders = () => {
                 ]}
                 width={1000}
                 style={{ top: 20 }}
-                destroyOnClose
+                destroyOnHidden
             >
                 {mapData ? (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -314,7 +314,9 @@ const DispatchedOrders = () => {
                         )}
                     </div>
                 ) : (
-                    <Spin tip="Đang chuẩn bị bản đồ..." />
+                    <Spin tip="Đang chuẩn bị bản đồ...">
+                        <div />
+                    </Spin>
                 )}
             </Modal>
         </div>

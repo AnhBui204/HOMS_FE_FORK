@@ -53,7 +53,7 @@ const ITEM_NAME_DICT = [
   [/\bbedside table\b/i, 'Bàn đầu giường'],
   [/\bmattress\b/i, 'Đệm'],
   // Living room
-  [/\bl\-shaped sofa\b/i, 'Sofa góc L'],
+  [/\bl-shaped sofa\b/i, 'Sofa góc L'],
   [/\bsofa\b/i, 'Sofa'],
   [/\bcouch\b/i, 'Sofa'],
   [/\barmchair\b/i, 'Ghế bắnh'],
@@ -244,7 +244,7 @@ const AIVisionAnalyzer = ({ open, onCancel, onAnalyzeComplete, currentVehicle, c
         const validFiles = fileList.filter(f => f instanceof File);
         if (validFiles.length > 0) {
           const cloudResponses = await uploadSurveyMedia(validFiles);
-          
+
           let cloudIdx = 0;
           uploadedImages = fileList.map((file, index) => {
             if (!file.type.startsWith('image/')) return null;
@@ -254,7 +254,7 @@ const AIVisionAnalyzer = ({ open, onCancel, onAnalyzeComplete, currentVehicle, c
         }
       } catch (err) {
         message.error({ content: 'Lỗi tải ảnh lên: ' + err.message, key: 'upload' });
-        return; 
+        return;
       }
       message.success({ content: 'Lưu & tải ảnh hoàn tất!', key: 'upload' });
 
@@ -298,7 +298,7 @@ const AIVisionAnalyzer = ({ open, onCancel, onAnalyzeComplete, currentVehicle, c
       width={960}
       centered
       className="ai-vision-modal"
-      destroyOnClose
+      destroyOnHidden
     >
       <div className="ai-vision-container">
         {/* State 1: Upload or Loading */}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useSelector } from 'react-redux';
 import {
   Table, Button, Tag, Modal, Form, Select, message, Space, Card, Typography, DatePicker, Divider,
@@ -146,15 +146,15 @@ const SurveySchedulingPage = () => {
   const [isAiReviewModalVisible, setIsAiReviewModalVisible] = useState(false);
   const [currentAiSurveyData, setCurrentAiSurveyData] = useState(null);
   const [formAiReview] = Form.useForm();
-  
+
   const user = useSelector((state) => state.auth.user);
   // console.log(" [DEBUG] Current User Object:", user);
-  const isHeadDispatcher = 
-      user?.dispatcherProfile?.isGeneral === true || 
-      user?.dispatcherProfile?.isGeneral === "true";
-  
-    // ── Data Fetching ───────────────────────────────────────────────────────────
-  const fetchData = async () => {
+  const isHeadDispatcher =
+    user?.dispatcherProfile?.isGeneral === true ||
+    user?.dispatcherProfile?.isGeneral === "true";
+
+  // ── Data Fetching ───────────────────────────────────────────────────────────
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       /* 
@@ -184,9 +184,9 @@ const SurveySchedulingPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [isHeadDispatcher]);
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { fetchData(); }, [fetchData]);
 
   // ── Client-side Filter ──────────────────────────────────────────────────────
   useEffect(() => {

@@ -159,7 +159,7 @@ const InsufficientResourcesModal = ({
             width={1200}
             centered
             className="feasibility-modal"
-            destroyOnClose
+            destroyOnHidden
         >
             <style>
                 {`
@@ -305,9 +305,9 @@ const InsufficientResourcesModal = ({
                             </div>
                             {data.nextAvailableSlots?.length > 0 ? (
                                 <Space wrap size={[8, 8]} style={{ paddingLeft: 24 }}>
-                                    {data.nextAvailableSlots.map((s, i) => (
+                                    {data.nextAvailableSlots.map((s) => (
                                         <Tag
-                                            key={i}
+                                            key={s}
                                             color="#f0fdf4"
                                             className="time-slot-tag"
                                             style={{ cursor: 'pointer', padding: '4px 8px', borderRadius: 6, color: '#166534', border: '1px solid #bcf0da' }}
