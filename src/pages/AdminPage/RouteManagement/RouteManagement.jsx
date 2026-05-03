@@ -593,7 +593,8 @@ const RouteManagement = () => {
             </Modal>
 
             {/* MODAL 2: THÊM LUẬT GIAO THÔNG */}
-            <Modal title={`Thêm luật giao thông: ${editingRoute?.name}`} visible={isRuleModalVisible} onCancel={() => setIsRuleModalVisible(false)} onOk={() => ruleForm.submit()}>
+            {/* Ensure this modal stacks above the workspace modal by increasing zIndex */}
+            <Modal title={`Thêm luật giao thông: ${editingRoute?.name}`} visible={isRuleModalVisible} onCancel={() => setIsRuleModalVisible(false)} onOk={() => ruleForm.submit()} zIndex={1200}>
                 <Form form={ruleForm} layout="vertical" onFinish={handleRuleSubmit}>
                     <Form.Item name="ruleType" label="Loại luật" rules={[{ required: true }]}><Select><Option value="PEAK_HOUR">Giờ cao điểm</Option><Option value="TRUCK_BAN">Cấm tải</Option><Option value="WEATHER">Thời tiết xấu</Option><Option value="HOLIDAY">Ngày lễ</Option></Select></Form.Item>
                     <Row gutter={16}>
