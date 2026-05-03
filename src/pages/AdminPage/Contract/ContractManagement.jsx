@@ -445,7 +445,7 @@ const ContractManagement = () => {
                 const newTpl = {
                     name: `Mẫu AI: ${aiPrompt.substring(0, 30)}...`,
                     version: '1.0',
-                    isActive: true,
+                    isActive: false,
                     content: resp.data
                 };
                 setSelectedTemplate(newTpl);
