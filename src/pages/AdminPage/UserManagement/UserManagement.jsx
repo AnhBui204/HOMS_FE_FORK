@@ -332,7 +332,7 @@ const UserManagement = () => {
             }
         },
         {
-            title: 'Full Name',
+            title: 'Họ và tên',
             dataIndex: 'fullName',
             key: 'fullName',
             sorter: (a, b) => a.fullName.localeCompare(b.fullName),
@@ -344,7 +344,7 @@ const UserManagement = () => {
         },
         // Gender column removed as requested
         {
-            title: 'Role',
+            title: 'Vai trò',
             dataIndex: 'role',
             key: 'role',
             render: (role) => {
@@ -355,16 +355,34 @@ const UserManagement = () => {
                     admin: 'purple',
                     staff: 'magenta'
                 };
-                return <Tag color={colors[role] || 'default'}>{role ? role.toUpperCase() : 'UNKNOWN'}</Tag>;
+                const map = {
+                    customer: 'Khách hàng',
+                    dispatcher: 'Điều phối viên',
+                    driver: 'Tài xế',
+                    admin: 'Quản trị',
+                    staff: 'Nhân viên'
+                };
+                const label = role ? (map[role] || role) : 'UNKNOWN';
+                return <Tag color={colors[role] || 'default'}>{label}</Tag>;
             }
         },
         {
-            title: 'Status',
+            title: 'Trạng thái',
             dataIndex: 'status',
             key: 'status',
             render: (status) => {
                 const s = (status || '').toString();
                 const lower = s.toLowerCase();
+
+                // map status to Vietnamese labels
+                const statusMap = {
+                    active: 'Hoạt động',
+                    inactive: 'Không hoạt động',
+                    banned: 'Bị cấm',
+                    blocked: 'Bị khóa',
+                    pending_password: 'Chờ đổi mật khẩu'
+                };
+                const label = statusMap[lower] || s;
 
                 // Custom styling for inactive: red text, light red background, red border
                 if (lower === 'inactive') {
@@ -378,7 +396,7 @@ const UserManagement = () => {
                                 fontWeight: 600,
                             }}
                         >
-                            {s}
+                            {label}
                         </Tag>
                     );
                 }
@@ -389,26 +407,26 @@ const UserManagement = () => {
                 else if (lower === 'banned' || lower === 'blocked') color = 'error';
                 return (
                     <Tag color={color}>
-                        {s}
+                        {label}
                     </Tag>
                 );
             }
         },
         {
-            title: 'Action',
+            title: 'Hành động',
             key: 'action',
             render: (_, record) => (
                 <Space size="middle">
-                    <Tooltip title="View Details">
+                    <Tooltip title="Xem chi tiết">
                         <Button type="text" icon={<EyeOutlined />} size="small" onClick={() => navigate(`/admin/users/${record._id}`)} />
                     </Tooltip>
-                    <Tooltip title="Edit">
+                    <Tooltip title="Chỉnh sửa">
                         <Button type="text" icon={<EditOutlined />} size="small" onClick={() => openEditModal(record)} />
                     </Tooltip>
                     {record.role !== 'admin' && (
                         <>
                             {/* Activate / Deactivate control (lock icon) */}
-                            <Tooltip title={((record.status || '').toString().toLowerCase() === 'active') ? 'Deactivate Account' : 'Activate Account'}>
+                            <Tooltip title={((record.status || '').toString().toLowerCase() === 'active') ? 'Vô hiệu hóa tài khoản' : 'Kích hoạt tài khoản'}>
                                 <Button
                                     type="text"
                                     icon={((record.status || '').toString().toLowerCase() === 'active') ? <UnlockOutlined style={{ color: 'green' }} /> : <LockOutlined style={{ color: 'red' }} />}
@@ -440,12 +458,12 @@ const UserManagement = () => {
                                         <UserOutlined style={{ color: '#1677ff', fontSize: 18 }} />
                                     </div>
                                     <div>
-                                        <div style={{ color: '#4c6ef5', fontSize: 12, fontWeight: 700 }}>Total Users</div>
+                                        <div style={{ color: '#4c6ef5', fontSize: 12, fontWeight: 700 }}>Tổng người dùng</div>
                                         <div style={{ fontSize: 20, fontWeight: 700, color: '#111' }}>{totalUsers}</div>
                                     </div>
                                 </div>
                                 <div style={{ textAlign: 'right' }}>
-                                    <div style={{ fontSize: 13, color: '#8c8c8c' }}>All</div>
+                                    <div style={{ fontSize: 13, color: '#8c8c8c' }}>Tất cả</div>
                                 </div>
                             </div>
                         </Card>
@@ -459,7 +477,7 @@ const UserManagement = () => {
                                         <CheckCircleOutlined style={{ color: '#2D4F36', fontSize: 18 }} />
                                     </div>
                                     <div>
-                                        <div style={{ color: '#3e6b3e', fontSize: 12, fontWeight: 700 }}>Active Users</div>
+                                        <div style={{ color: '#3e6b3e', fontSize: 12, fontWeight: 700 }}>Người dùng hoạt động</div>
                                         <div style={{ fontSize: 20, fontWeight: 700, color: '#111' }}>{activeUsers} <span style={{ fontSize: 11, color: '#8c8c8c', fontWeight: 600 }}>/{totalUsers || 0}</span></div>
                                     </div>
                                 </div>
@@ -478,7 +496,7 @@ const UserManagement = () => {
                                         <LockOutlined style={{ color: '#ff6b6b', fontSize: 18 }} />
                                     </div>
                                     <div>
-                                        <div style={{ color: '#6b6b6b', fontSize: 12, fontWeight: 700 }}>Locked Accounts</div>
+                                        <div style={{ color: '#6b6b6b', fontSize: 12, fontWeight: 700 }}>Tài khoản bị khóa</div>
                                         <div style={{ fontSize: 20, fontWeight: 700, color: '#111' }}>{lockedUsers} <span style={{ fontSize: 11, color: '#8c8c8c', fontWeight: 600 }}>/{totalUsers || 0}</span></div>
                                     </div>
                                 </div>
@@ -497,12 +515,12 @@ const UserManagement = () => {
                                         <TeamOutlined style={{ color: '#722ed1', fontSize: 18 }} />
                                     </div>
                                     <div>
-                                        <div style={{ color: '#6b6b6b', fontSize: 12, fontWeight: 700 }}>Dispatchers</div>
+                                        <div style={{ color: '#6b6b6b', fontSize: 12, fontWeight: 700 }}>Điều phối viên</div>
                                         <div style={{ fontSize: 20, fontWeight: 700, color: '#111' }}>{dispatcherUsers}</div>
                                     </div>
                                 </div>
                                 <div style={{ textAlign: 'right' }}>
-                                    <div style={{ fontSize: 13, color: '#8c8c8c' }}>{staffUsers} staff</div>
+                                    <div style={{ fontSize: 13, color: '#8c8c8c' }}>{staffUsers} nhân viên</div>
                                 </div>
                             </div>
                         </Card>
@@ -516,7 +534,7 @@ const UserManagement = () => {
                         {/* Header Controls */}
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, flexWrap: 'wrap', gap: '16px' }}>
                             <Input
-                                placeholder="Search by name or email"
+                                placeholder="Tìm theo tên hoặc email"
                                 prefix={<SearchOutlined />}
                                 style={{ width: 300, borderRadius: '8px' }}
                                 onChange={(e) => handleSearch(e.target.value)}
@@ -525,19 +543,19 @@ const UserManagement = () => {
 
                             <Space size="middle">
                                 <Select
-                                    placeholder="Role"
+                                    placeholder="Vai trò"
                                     style={{ width: 120, borderRadius: '8px' }}
                                     onChange={(val) => handleFilterChange('role', val)}
                                     allowClear
                                 >
-                                    <Option value="all">All Roles</Option>
-                                    <Option value="customer">Customer</Option>
-                                    <Option value="dispatcher">Dispatcher</Option>
-                                    <Option value="driver">Driver</Option>
-                                    <Option value="staff">Staff</Option>
+                                    <Option value="all">Tất cả vai trò</Option>
+                                    <Option value="customer">Khách hàng</Option>
+                                    <Option value="dispatcher">Điều phối viên</Option>
+                                    <Option value="driver">Tài xế</Option>
+                                    <Option value="staff">Nhân viên</Option>
                                 </Select>
 
-                                <Tooltip title="Refresh">
+                                <Tooltip title="Làm mới">
                                     <Button
                                         icon={<ReloadOutlined />}
                                         style={{
@@ -562,7 +580,7 @@ const UserManagement = () => {
                                     onClick={exportUsers}
                                     disabled={loading}
                                 >
-                                    Export
+                                    Xuất
                                 </Button>
 
                                 <Button
@@ -574,7 +592,7 @@ const UserManagement = () => {
                                         color: '#ffffff'
                                     }}
                                 >
-                                    + Add User
+                                    + Thêm Nhân Viên
                                 </Button>
                             </Space>
                         </div>
@@ -596,7 +614,7 @@ const UserManagement = () => {
                         {/* Reuse same header controls for staff tab */}
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, flexWrap: 'wrap', gap: '16px' }}>
                             <Input
-                                placeholder="Search by name or email"
+                                placeholder="Tìm theo tên hoặc email"
                                 prefix={<SearchOutlined />}
                                 style={{ width: 300, borderRadius: '8px' }}
                                 onChange={(e) => handleSearch(e.target.value)}
@@ -605,19 +623,19 @@ const UserManagement = () => {
 
                             <Space size="middle">
                                 <Select
-                                    placeholder="Role"
+                                    placeholder="Vai trò"
                                     style={{ width: 120, borderRadius: '8px' }}
                                     onChange={(val) => handleFilterChange('role', val)}
                                     allowClear
                                 >
-                                    <Option value="all">All Roles</Option>
-                                    <Option value="customer">Customer</Option>
-                                    <Option value="dispatcher">Dispatcher</Option>
-                                    <Option value="driver">Driver</Option>
-                                    <Option value="staff">Staff</Option>
+                                    <Option value="all">Tất cả vai trò</Option>
+                                    <Option value="customer">Khách hàng</Option>
+                                    <Option value="dispatcher">Điều phối viên</Option>
+                                    <Option value="driver">Tài xế</Option>
+                                    <Option value="staff">Nhân viên</Option>
                                 </Select>
 
-                                <Tooltip title="Refresh">
+                                <Tooltip title="Làm mới">
                                     <Button
                                         icon={<ReloadOutlined />}
                                         style={{
@@ -654,7 +672,7 @@ const UserManagement = () => {
                                         color: '#ffffff'
                                     }}
                                 >
-                                    + Add User
+                                    + Thêm nhân viên
                                 </Button>
                             </Space>
                         </div>

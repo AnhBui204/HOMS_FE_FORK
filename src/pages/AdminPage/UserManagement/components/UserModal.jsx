@@ -127,7 +127,7 @@ const UserModal = ({ visible, onClose, onSuccess, user }) => {
                         <UserAddOutlined style={{ fontSize: 24, color: '#2D4F36' }} />
                     </div>
                     <div>
-                        <Typography.Title level={4} style={{ margin: 0 }}>{user ? 'Edit User' : 'Create New Staff Account'}</Typography.Title>
+                        <Typography.Title level={4} style={{ margin: 0 }}>{user ? 'Chỉnh sửa người dùng' : 'Tạo tài khoản nhân viên mới'}</Typography.Title>
                         <Typography.Text type="secondary">{user ? 'Cập nhật thông tin người dùng' : 'Tạo tài khoản nhân viên mới với mật khẩu mặc định'}</Typography.Text>
                     </div>
                 </div>
@@ -171,8 +171,8 @@ const UserModal = ({ visible, onClose, onSuccess, user }) => {
                     {user && (
                         <Form.Item name="status" label="Status" rules={[{ required: true }]}>
                             <Select placeholder="Select status">
-                                <Option value="active">Active</Option>
-                                <Option value="inactive">Inactive</Option>
+                                <Option value="active">Hoạt động</Option>
+                                <Option value="inactive">Không hoạt động</Option>
                             </Select>
                         </Form.Item>
                     )}
@@ -181,7 +181,7 @@ const UserModal = ({ visible, onClose, onSuccess, user }) => {
                 {/* Footer actions (custom) */}
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 12 }}>
                     <Button onClick={onClose} style={{ borderRadius: 8 }}>
-                        Cancel
+                        Hủy
                     </Button>
                     <Button
                         onMouseEnter={() => setCreateHover(true)}
@@ -196,7 +196,7 @@ const UserModal = ({ visible, onClose, onSuccess, user }) => {
                             boxShadow: createHover ? '0 6px 18px rgba(45,79,54,0.12)' : 'none'
                         }}
                     >
-                        {user ? 'Save Changes' : 'Create'}
+                        {user ? 'Lưu thay đổi' : 'Tạo tài khoản'}
                     </Button>
                 </div>
             </Modal>
